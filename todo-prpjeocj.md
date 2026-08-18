@@ -104,3 +104,6 @@
 - [x] Convert supported form-builder fields into the existing Laravel exam-question contract with clear handling for unsupported fields.
 - [x] Add visual form-builder conversion tests, Arabic RTL documentation, and full frontend/Laravel verification.
 - [x] Apply and verify the question-bank migration in the active Laravel development database so the live exam interface can load bank records.
+- [ ] Reproduce and fix the form-builder space-key bug without blocking spaces inside editable field labels, descriptions, or values.
+- [ ] Add regression coverage for the form-builder keyboard fix and rerun frontend/Laravel verification.
+- [ ] Deliver the form-builder keyboard fix on a dedicated GitHub feature branch with a pull request against main.

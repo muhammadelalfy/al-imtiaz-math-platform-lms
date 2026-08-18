@@ -8,6 +8,14 @@ The adapter only converts the domain-safe subset needed by the Laravel exam cont
 
 During live verification, the new `question_bank_questions` migration was found not to be applied to the active local SQLite database. The migration was applied and the guarded Arabic demo seeder was rerun under the local environment to restore representative bank questions.
 
+## Keyboard investigation note
+
+The visual builder's top-level title input accepted an internal Arabic space through direct input and a real `Space` keydown. Capture and bubble listeners observed no `preventDefault()` call, and the field retained the trailing space. Investigation therefore continues at the field-card editor layer, where the reported issue may be specific to a control rather than a global browser shortcut.
+
+The integration now includes a narrow capture-phase guard on the embedded builder canvas. It stops a literal space key only from propagating beyond text inputs, textareas, and content-editable controls; the input’s native default action remains intact, while checkbox, radio, button, range, upload, and other non-text controls retain their existing keyboard behavior. This prevents builder-level keyboard shortcuts from interfering with Arabic labels or descriptions while avoiding a global space-key override.
+
+During development, Vite hot-module reload returns the dashboard to the default authoring mode. This is development-only state reset behavior; it is separate from normal form-builder input handling and does not affect saved exam-template data.
+
 ## References
 
 [1]: https://github.com/ginkgobioworks/react-json-schema-form-builder "React JSON Schema Form Builder repository"
