@@ -16,8 +16,13 @@ h1 { color: #173f46; font-size: 18pt; margin: 3pt 0; }
 .watermark { color: #b87945; font-size: 25pt; font-weight: bold; opacity: 0.1; text-align: center; }
 .question .watermark { font-size: 11pt; font-weight: normal; opacity: 0.06; margin-top: 5pt; }
 .footer { color: #8a8175; font-size: 8pt; text-align: center; border-top: 1px solid #dfd3c2; padding-top: 5pt; }
+.custom-header { color: #16846d; font-size: 9pt; font-weight: bold; text-align: center; border-bottom: 1px solid #dfd3c2; padding-bottom: 5pt; margin-bottom: 7pt; }
+.question img { max-width: 100%; height: auto; }
 </style>
 <div class="watermark">{{ $watermark }}</div>
+@if($template->print_header)
+    <div class="custom-header">{{ $template->print_header }}</div>
+@endif
 <table class="header" cellpadding="2" cellspacing="0" width="100%">
     <tr>
         <td width="58%"><span class="brand">الامتياز في الرياضيات</span><h1>{{ $template->title }}</h1><span class="muted">{{ $template->department?->name ?: 'اختبار رياضيات' }}</span></td>
@@ -41,4 +46,4 @@ h1 { color: #173f46; font-size: 18pt; margin: 3pt 0; }
         <div class="watermark">{{ $watermark }}</div>
     </div>
 @endforeach
-<div class="footer">نسخة امتحان رسمية — {{ $watermark }}</div>
+<div class="footer">{{ $template->print_footer ?: "نسخة امتحان رسمية — {$watermark}" }}</div>

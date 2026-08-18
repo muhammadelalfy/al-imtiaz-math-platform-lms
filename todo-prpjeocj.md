@@ -118,3 +118,17 @@
 - [x] Integrate the user-approved CKEditor 5 free edition with Arabic RTL configuration and document the open-source licensing choice.
 - [x] Verify in the authenticated browser that a question-bank entry is copied into the active exam, a preview opens, and a template save/update completes.
 - [x] Reconcile CKEditor licensing documentation with the approved GPL free-edition integration and its distribution implications.
+- [x] Assess CKEditor 5 GPL-compatible equation and image plugin options for Arabic RTL exam authoring.
+- [x] Add equation and image authoring controls while preserving stored question HTML and existing question-bank compatibility.
+- [x] Add print-friendly exam-paper header and footer configuration to preview and browser-side PDF export.
+- [x] Implement debounced automatic saving and recovery of in-progress exam drafts without overwriting explicit saved templates.
+- [x] Add regression coverage and live verification for equation/image authoring, printable layout, PDF capture, and autosave recovery.
+- [ ] Deliver the enhanced exam-authoring feature on a dedicated GitHub branch and pull request.
+- [x] Remove the unsupported computer-upload option and verify the supported URL-only image insertion path end to end.
+- [x] Verify a rich-image question end-to-end: insert, save, reopen, preview, browser-PDF capture, and question-bank/template HTML compatibility.
+- [x] Add regression coverage for stored image-rich question HTML across the exam content renderer and persistence contract.
+- [x] Add focused question-bank CRUD and selection coverage proving rich image/equation prompt HTML remains unchanged.
+- [x] Verify in the browser that a rich-media bank question can be saved, selected into an exam, reopened, previewed, and exported to PDF.
+- [x] Fix and verify the rendered question-bank rich-media form save flow without console/API workarounds, then repeat selection, template persistence, preview, and browser-PDF validation.
+- [x] Replace the unreliable native question-bank disclosure toggle with an explicit keyboard-accessible trigger and verify it opens the rich-media form controls in the browser.
+- [ ] Resolve the production Vite bundle termination during chunk rendering and re-run the full frontend build verification.

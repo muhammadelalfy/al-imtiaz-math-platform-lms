@@ -11,7 +11,7 @@ class ExamTemplate extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['department_id', 'created_by', 'title', 'grade', 'duration_minutes', 'instructions', 'watermark_text', 'watermark_opacity', 'status'];
+    protected $fillable = ['department_id', 'created_by', 'title', 'grade', 'duration_minutes', 'instructions', 'watermark_text', 'watermark_opacity', 'print_header', 'print_footer', 'status'];
     protected $casts = ['duration_minutes' => 'integer', 'watermark_opacity' => 'integer'];
 
     public function department(): BelongsTo { return $this->belongsTo(ExamDepartment::class, 'department_id'); }

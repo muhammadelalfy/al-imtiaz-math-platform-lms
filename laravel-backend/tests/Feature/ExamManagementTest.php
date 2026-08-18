@@ -65,6 +65,45 @@ class ExamManagementTest extends TestCase
         $this->assertDatabaseHas('exam_questions', ['type' => 'geometry']);
     }
 
+    public function test_staff_can_store_custom_print_header_and_footer(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        $response = $this->actingAs($teacher, 'sanctum')->postJson('/api/exam-templates', [
+            'title' => 'اختبار بترويسة',
+            'duration_minutes' => 30,
+            'print_header' => 'اختبار نصف العام — الرياضيات',
+            'print_footer' => 'مع تمنياتنا بالتوفيق',
+            'status' => 'draft',
+            'questions' => [[
+                'type' => 'essay', 'prompt_html' => '<p>برهن العبارة.</p>', 'options' => null, 'points' => 2,
+            ]],
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('print_header', 'اختبار نصف العام — الرياضيات')
+            ->assertJsonPath('print_footer', 'مع تمنياتنا بالتوفيق');
+        $this->assertDatabaseHas('exam_templates', ['title' => 'اختبار بترويسة', 'print_footer' => 'مع تمنياتنا بالتوفيق']);
+    }
+
+    public function test_staff_can_persist_url_based_image_question_html(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $imageHtml = '<figure class="image"><img src="https://placehold.co/600x400/png?text=Math+Diagram" alt="رسم رياضي" /></figure>';
+
+        $response = $this->actingAs($teacher, 'sanctum')->postJson('/api/exam-templates', [
+            'title' => 'اختبار بصورة',
+            'duration_minutes' => 30,
+            'status' => 'draft',
+            'questions' => [[
+                'type' => 'mcq', 'prompt_html' => $imageHtml, 'options' => ['أ', 'ب'], 'points' => 2,
+            ]],
+        ]);
+
+        $response->assertCreated()->assertJsonPath('questions.0.prompt_html', $imageHtml);
+        $this->assertDatabaseHas('exam_questions', ['prompt_html' => $imageHtml]);
+    }
+
     public function test_staff_can_download_an_exam_paper_as_pdf(): void
     {
         $teacher = User::factory()->create(['role' => 'teacher']);
