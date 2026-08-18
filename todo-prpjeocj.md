@@ -132,4 +132,4 @@
 - [x] Fix and verify the rendered question-bank rich-media form save flow without console/API workarounds, then repeat selection, template persistence, preview, and browser-PDF validation.
 - [x] Replace the unreliable native question-bank disclosure toggle with an explicit keyboard-accessible trigger and verify it opens the rich-media form controls in the browser.
 - [x] Resolve the production Vite bundle termination during chunk rendering and re-run the full frontend build verification.
-- [ ] Diagnose and fix failing GitHub CI checks on pull request #3, then verify the corrected run.
+- [x] Diagnose and fix failing GitHub CI checks on pull request #3, then verify the corrected run.
