@@ -1,25 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
-import {
-  BlockQuote,
-  Bold,
-  ClassicEditor,
-  CodeBlock,
-  Essentials,
-  Heading,
-  Image,
-  ImageCaption,
-  ImageInsertViaUrl,
-  ImageResize,
-  ImageStyle,
-  ImageTextAlternative,
-  ImageToolbar,
-  Italic,
-  Link,
-  List,
-  Paragraph,
-  Undo,
-} from "ckeditor5";
+import { BlockQuote } from "@ckeditor/ckeditor5-block-quote";
+import { Bold, Italic } from "@ckeditor/ckeditor5-basic-styles";
+import { ClassicEditor } from "@ckeditor/ckeditor5-editor-classic";
+import { CodeBlock } from "@ckeditor/ckeditor5-code-block";
+import { Essentials } from "@ckeditor/ckeditor5-essentials";
+import { Heading } from "@ckeditor/ckeditor5-heading";
+import { Image, ImageCaption, ImageInsertViaUrl, ImageResize, ImageStyle, ImageTextAlternative, ImageToolbar } from "@ckeditor/ckeditor5-image";
+import { Link } from "@ckeditor/ckeditor5-link";
+import { List } from "@ckeditor/ckeditor5-list";
+import { Paragraph } from "@ckeditor/ckeditor5-paragraph";
+import { Undo } from "@ckeditor/ckeditor5-undo";
 import arabicTranslations from "ckeditor5/translations/ar.js";
 import "ckeditor5/ckeditor5.css";
 import "mathlive";
