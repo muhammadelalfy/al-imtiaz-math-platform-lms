@@ -142,3 +142,6 @@
 - [x] Migrate the shared theme layer to Sass variables and mixins while retaining the light/dark token contract.
 - [x] Refactor the active dashboard and exam theme surfaces to Tailwind-first utility composition with Sass reserved for global tokens and complex responsive patterns.
 - [x] Install and validate the Sass build pipeline without regressing RTL behavior, responsive layout, or CI production builds.
+- [x] Simplify the Arabic RTL exam authoring page hierarchy and keep the primary form in a single natural document flow.
+- [x] Remove constrained internal scrolling from the exam authoring form and template library while retaining responsive usability.
+- [x] Add regression/browser verification for the simplified no-nested-scroll exam workspace.
