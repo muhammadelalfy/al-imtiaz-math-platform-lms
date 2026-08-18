@@ -131,4 +131,7 @@
 - [x] Verify in the browser that a rich-media bank question can be saved, selected into an exam, reopened, previewed, and exported to PDF.
 - [x] Fix and verify the rendered question-bank rich-media form save flow without console/API workarounds, then repeat selection, template persistence, preview, and browser-PDF validation.
 - [x] Replace the unreliable native question-bank disclosure toggle with an explicit keyboard-accessible trigger and verify it opens the rich-media form controls in the browser.
-- [ ] Resolve the production Vite bundle termination during chunk rendering and re-run the full frontend build verification.
+- [x] Resolve the production Vite bundle termination during chunk rendering and re-run the full frontend build verification.
+- [x] Diagnose and fix failing GitHub CI checks on pull request #3, then verify the corrected run.
+- [x] Configure GitHub main branch protection to require passing Frontend checks and Laravel checks before merging.
+- [x] Apply and verify the required CI checks after the repository visibility change to public.

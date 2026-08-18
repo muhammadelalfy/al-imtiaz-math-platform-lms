@@ -9,14 +9,66 @@ use App\Models\PluginProduct;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Nwidart\Modules\Facades\Module;
 use RuntimeException;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
+use ZipArchive;
 
 class PluginStoreTest extends TestCase
 {
     use RefreshDatabase;
+
+    /** @return array{path: string, sha256: string} */
+    private function createAttendanceInsightsArtifact(): array
+    {
+        $relativePath = 'plugins/artifacts/attendance-insights.zip';
+        $path = Storage::disk('local')->path($relativePath);
+        File::ensureDirectoryExists(dirname($path));
+
+        $zip = new ZipArchive();
+        $this->assertTrue($zip->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true);
+        $zip->addFromString('AttendanceInsights/module.json', json_encode([
+            'name' => 'AttendanceInsights',
+            'alias' => 'attendance-insights',
+            'description' => 'Attendance insights for the Al-Imtiaz mathematics center.',
+            'priority' => 0,
+            'providers' => ['Modules\\AttendanceInsights\\Providers\\AttendanceInsightsServiceProvider'],
+            'files' => [],
+            'version' => '1.0.0',
+            'config' => ['navigation_label' => 'تحليلات الحضور', 'enabled' => true],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        $zip->addFromString('AttendanceInsights/Providers/AttendanceInsightsServiceProvider.php', <<<'PHP'
+<?php
+namespace Modules\AttendanceInsights\Providers;
+use Illuminate\Support\ServiceProvider;
+class AttendanceInsightsServiceProvider extends ServiceProvider
+{
+    public function register(): void { $this->mergeConfigFrom(__DIR__ . '/../Config/config.php', 'attendance-insights'); }
+    public function boot(): void { $this->loadRoutesFrom(__DIR__ . '/../Routes/api.php'); }
+}
+PHP);
+        $zip->addFromString('AttendanceInsights/Config/config.php', "<?php\nreturn ['enabled' => true];\n");
+        $zip->addFromString('AttendanceInsights/Routes/api.php', "<?php\n");
+        $zip->addFromString('AttendanceInsights/Services/AttendanceInsightsReport.php', <<<'PHP'
+<?php
+namespace Modules\AttendanceInsights\Services;
+use App\Models\AttendanceRecord;
+use Illuminate\Support\Carbon;
+final class AttendanceInsightsReport
+{
+    public function summarize(?Carbon $from = null, ?Carbon $to = null): array
+    {
+        $records = AttendanceRecord::query()->whereBetween('date_at', [$from ?? now()->startOfMonth(), $to ?? now()->endOfDay()])->get();
+        return ['totals' => ['records' => $records->count(), 'present' => $records->where('status', 'present')->count(), 'late' => $records->where('status', 'late')->count(), 'absent' => $records->where('status', 'absent')->count()]];
+    }
+}
+PHP);
+        $zip->close();
+
+        return ['path' => $relativePath, 'sha256' => hash_file('sha256', $path)];
+    }
 
     protected function tearDown(): void
     {
@@ -27,14 +79,15 @@ class PluginStoreTest extends TestCase
     public function test_admin_can_purchase_and_install_a_valid_module_zip(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
+        $artifact = $this->createAttendanceInsightsArtifact();
         $plugin = PluginProduct::create([
             'slug' => 'attendance-insights',
             'name' => 'تحليلات الحضور',
             'description' => 'وحدة تجريبية',
             'version' => '1.0.0',
             'module_name' => 'AttendanceInsights',
-            'artifact_path' => 'plugins/artifacts/attendance-insights.zip',
-            'artifact_sha256' => 'c91600cd5ec365daee974159f041af14b38d734bdd9430b60542e52ae485d21e',
+            'artifact_path' => $artifact['path'],
+            'artifact_sha256' => $artifact['sha256'],
             'price' => 0,
             'is_active' => true,
         ]);
@@ -56,10 +109,11 @@ class PluginStoreTest extends TestCase
     public function test_failed_replacement_restores_the_previous_module(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
+        $artifact = $this->createAttendanceInsightsArtifact();
         $plugin = PluginProduct::create([
             'slug' => 'attendance-insights', 'name' => 'تحليلات الحضور', 'version' => '1.0.0',
-            'module_name' => 'AttendanceInsights', 'artifact_path' => 'plugins/artifacts/attendance-insights.zip',
-            'artifact_sha256' => 'c91600cd5ec365daee974159f041af14b38d734bdd9430b60542e52ae485d21e',
+            'module_name' => 'AttendanceInsights', 'artifact_path' => $artifact['path'],
+            'artifact_sha256' => $artifact['sha256'],
             'price' => 0, 'is_active' => true,
         ]);
         File::ensureDirectoryExists(base_path('Modules/AttendanceInsights'));

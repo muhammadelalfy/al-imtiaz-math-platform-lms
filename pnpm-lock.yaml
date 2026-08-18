@@ -22,9 +22,42 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.693.0
         version: 3.1111.0
+      '@ckeditor/ckeditor5-basic-styles':
+        specifier: 48.4.0
+        version: 48.4.0
+      '@ckeditor/ckeditor5-block-quote':
+        specifier: 48.4.0
+        version: 48.4.0
+      '@ckeditor/ckeditor5-code-block':
+        specifier: 48.4.0
+        version: 48.4.0
+      '@ckeditor/ckeditor5-editor-classic':
+        specifier: 48.4.0
+        version: 48.4.0
+      '@ckeditor/ckeditor5-essentials':
+        specifier: 48.4.0
+        version: 48.4.0
+      '@ckeditor/ckeditor5-heading':
+        specifier: 48.4.0
+        version: 48.4.0
+      '@ckeditor/ckeditor5-image':
+        specifier: 48.4.0
+        version: 48.4.0
+      '@ckeditor/ckeditor5-link':
+        specifier: 48.4.0
+        version: 48.4.0
+      '@ckeditor/ckeditor5-list':
+        specifier: 48.4.0
+        version: 48.4.0
+      '@ckeditor/ckeditor5-paragraph':
+        specifier: 48.4.0
+        version: 48.4.0
       '@ckeditor/ckeditor5-react':
         specifier: ^11.2.0
         version: 11.2.0(ckeditor5@48.4.0)(react@19.2.1)
+      '@ckeditor/ckeditor5-undo':
+        specifier: 48.4.0
+        version: 48.4.0
       '@emotion/react':
         specifier: ^11.14.0
         version: 11.14.0(@types/react@19.2.1)(react@19.2.1)
