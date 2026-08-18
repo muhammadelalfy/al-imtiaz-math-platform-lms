@@ -123,7 +123,7 @@
 - [x] Add print-friendly exam-paper header and footer configuration to preview and browser-side PDF export.
 - [x] Implement debounced automatic saving and recovery of in-progress exam drafts without overwriting explicit saved templates.
 - [x] Add regression coverage and live verification for equation/image authoring, printable layout, PDF capture, and autosave recovery.
-- [ ] Deliver the enhanced exam-authoring feature on a dedicated GitHub branch and pull request.
+- [x] Deliver the enhanced exam-authoring feature on a dedicated GitHub branch and pull request: https://github.com/muhammadelalfy/al-imtiaz-math-platform-lms/pull/3
 - [x] Remove the unsupported computer-upload option and verify the supported URL-only image insertion path end to end.
 - [x] Verify a rich-image question end-to-end: insert, save, reopen, preview, browser-PDF capture, and question-bank/template HTML compatibility.
 - [x] Add regression coverage for stored image-rich question HTML across the exam content renderer and persistence contract.
