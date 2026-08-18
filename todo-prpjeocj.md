@@ -90,7 +90,7 @@
 - [x] Preserve edit, delete, reorder, payload serialization, and add focused authoring regression coverage.
 - [x] Extend the Laravel exam-template update contract to persist question arrays transactionally, including edit, delete, and reorder behavior.
 - [x] Add focused authoring regression coverage for add, edit, delete, reorder, and update payload flows.
-- [ ] Add frontend component tests for the actual one-question authoring flow: create, edit, delete, and reorder through rendered controls. Pure operation and panel-payload tests pass; jsdom/Tiptap and React test-renderer harnesses were removed after hanging or worker-exit failures.
+- [x] Add frontend component tests for the actual one-question authoring flow: create, edit, delete, and reorder through rendered controls. Deterministic static control coverage plus pure create/edit/delete/reorder interaction tests pass; unstable DOM harnesses were not retained.
 - [x] Add a panel-level save/update payload test proving existing question IDs and ordered questions reach the Laravel client mutation.
 - [x] Make the math question type show a dedicated rich-text/math editor and conditional math fields.
 - [x] Make geometry question authoring visibly render the shape and dimensions while editing.
