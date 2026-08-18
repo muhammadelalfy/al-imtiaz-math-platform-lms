@@ -135,3 +135,7 @@
 - [x] Diagnose and fix failing GitHub CI checks on pull request #3, then verify the corrected run.
 - [x] Configure GitHub main branch protection to require passing Frontend checks and Laravel checks before merging.
 - [x] Apply and verify the required CI checks after the repository visibility change to public.
+- [ ] Add a GitHub Actions deployment workflow that runs after pull requests merge into main, with a documented secret contract and validation.
+- [x] Redesign the Arabic RTL exam workspace for responsive mobile and desktop usability with modern action controls.
+- [x] Implement accessible, persistent light and dark themes with a modern shared color system across the website.
+- [x] Add regression coverage and browser verification for responsive exam layout and theme switching.

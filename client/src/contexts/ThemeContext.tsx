@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "light" | "dark";
+export type Theme = "light" | "dark";
+
+export function themeFromStorage(value: string | null, fallback: Theme): Theme {
+  return value === "dark" || value === "light" ? value : fallback;
+}
+
+export function nextTheme(theme: Theme): Theme {
+  return theme === "light" ? "dark" : "light";
+}
 
 interface ThemeContextType {
   theme: Theme;
@@ -23,8 +31,7 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (switchable) {
-      const stored = localStorage.getItem("theme");
-      return (stored as Theme) || defaultTheme;
+      return themeFromStorage(localStorage.getItem("theme"), defaultTheme);
     }
     return defaultTheme;
   });
@@ -44,7 +51,7 @@ export function ThemeProvider({
 
   const toggleTheme = switchable
     ? () => {
-        setTheme(prev => (prev === "light" ? "dark" : "light"));
+        setTheme(nextTheme);
       }
     : undefined;
 
