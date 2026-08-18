@@ -42,4 +42,23 @@ class QuestionBankTest extends TestCase
         $this->actingAs($student, 'sanctum')->getJson('/api/question-bank')->assertForbidden();
         $this->actingAs($student, 'sanctum')->postJson('/api/question-bank', ['type' => 'math', 'prompt_html' => '<p>لا</p>', 'points' => 1])->assertForbidden();
     }
+
+    public function test_staff_can_preserve_rich_image_and_equation_html_in_question_bank(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $richHtml = '<p>حل \(x^2 + 1\)</p><figure class="image"><img src="https://placehold.co/600x400/png?text=Math+Diagram" alt="رسم رياضي" /></figure>';
+
+        $created = $this->actingAs($teacher, 'sanctum')->postJson('/api/question-bank', [
+            'title' => 'سؤال غني بالوسائط',
+            'type' => 'math',
+            'prompt_html' => $richHtml,
+            'options' => ['notation' => '\\frac{x}{2}'],
+            'points' => 3,
+        ])->assertCreated()->assertJsonPath('prompt_html', $richHtml);
+
+        $questionId = $created->json('id');
+        $this->actingAs($teacher, 'sanctum')->getJson('/api/question-bank?search=غني')
+            ->assertOk()->assertJsonPath('data.0.id', $questionId)->assertJsonPath('data.0.prompt_html', $richHtml);
+        $this->assertDatabaseHas('question_bank_questions', ['id' => $questionId, 'prompt_html' => $richHtml]);
+    }
 }

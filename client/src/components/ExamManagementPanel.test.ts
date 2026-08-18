@@ -26,4 +26,9 @@ describe("ExamManagementPanel question payloads", () => {
       { type: "math", prompt_html: "<p>مسألة من البنك</p>", options: { notation: "س^2" }, correct_answer: "٩", points: 3, sort_order: 1 },
     ]);
   });
+
+  it("includes optional print header and footer metadata without changing question serialization", () => {
+    const payload = buildExamTemplatePayload({ editingId: null, departmentId: "", title: "امتحان", grade: "أولى", duration: "30", instructions: "", watermark: "الامتياز", printHeader: "اختبار نصف العام", printFooter: "مع تمنياتنا بالتوفيق", questions: [] });
+    expect(payload).toMatchObject({ print_header: "اختبار نصف العام", print_footer: "مع تمنياتنا بالتوفيق", questions: [] });
+  });
 });

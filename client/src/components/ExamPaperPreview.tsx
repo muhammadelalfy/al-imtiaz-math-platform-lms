@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import { CheckCircle2, Download, X } from "lucide-react";
 import type { ExamQuestion, ExamTemplate, MathQuestionOptions } from "@/lib/laravelApi";
 import { GeometryDiagram, isGeometryDiagram } from "./GeometryDiagram";
+import ExamRichContent from "./ExamRichContent";
 
 type ExamPaperProps = {
   template: ExamTemplate;
@@ -78,6 +79,7 @@ export async function exportExamPaperWithFallback(
 export function ExamPaper({ template, mode = "preview", paperRef }: ExamPaperProps) {
   return (
     <article ref={paperRef} className={`exam-paper exam-paper--${mode}`} dir="rtl">
+      {template.print_header && <div className="exam-paper-custom-header"><bdi>{template.print_header}</bdi></div>}
       <div className="exam-paper-watermark" style={{ opacity: template.watermark_opacity / 100 }} aria-hidden="true">
         {template.watermark_text || "الامتياز في الرياضيات"}
       </div>
@@ -110,9 +112,9 @@ export function ExamPaper({ template, mode = "preview", paperRef }: ExamPaperPro
               <strong><CheckCircle2 size={17} aria-hidden="true" /> السؤال {index + 1}</strong>
               <span>{question.points} درجة</span>
             </div>
-            <div className="exam-question-prompt" dangerouslySetInnerHTML={{ __html: question.prompt_html }} />
+            <ExamRichContent html={question.prompt_html} />
             {question.type === "geometry" && isGeometryDiagram(question.options) && <GeometryDiagram spec={question.options} />}
-            {getMathNotation(question) && <div className="exam-paper-math-notation" dir="ltr" aria-label="الترميز الرياضي">{getMathNotation(question)}</div>}
+            {getMathNotation(question) && <div className="exam-paper-math-notation" dir="ltr" aria-label="الترميز الرياضي"><ExamRichContent html={`<p>\\(${getMathNotation(question)}\\)</p>`} /></div>}
             {question.type === "mcq" && Array.isArray(question.options) && (
               <ol className="exam-paper-options">
                 {question.options.map((option) => <li key={option}><span className="exam-option-checkbox" aria-hidden="true" /><span className="exam-option-text" dir="rtl">{option}</span></li>)}
@@ -122,6 +124,7 @@ export function ExamPaper({ template, mode = "preview", paperRef }: ExamPaperPro
           </section>
         ))}
       </div>
+      {template.print_footer && <footer className="exam-paper-custom-footer"><bdi>{template.print_footer}</bdi></footer>}
     </article>
   );
 }

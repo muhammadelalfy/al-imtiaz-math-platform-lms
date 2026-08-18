@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Check, Pencil, Plus, Trash2, X } from "lucide-react";
-import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import type { ExamQuestion, MathQuestionOptions } from "@/lib/laravelApi";
 import { GeometryDiagram, isGeometryDiagram, type GeometryDiagramSpec } from "./GeometryDiagram";
+import CkRichEditor from "./CkRichEditor";
 
 export type AuthoringQuestionType = "mcq" | "true_false" | "essay" | "math" | "geometry";
 export type AuthoringQuestion = Omit<ExamQuestion, "id"> & { id?: number };
@@ -33,27 +32,7 @@ const questionTypeLabels: Record<AuthoringQuestionType, string> = {
 };
 
 export function RichEditor({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: value,
-    editorProps: { attributes: { class: "rich-editor", dir: "rtl" } },
-    onUpdate: ({ editor: instance }) => onChange(instance.getHTML()),
-  });
-  useEffect(() => {
-    if (editor && value !== editor.getHTML()) editor.commands.setContent(value, { emitUpdate: false });
-  }, [editor, value]);
-  if (!editor) return <div className="rich-editor">جارٍ تحميل المحرر...</div>;
-  return (
-    <div className="tiptap-editor">
-      <div className="tiptap-toolbar" role="toolbar" aria-label="تنسيق نص السؤال">
-        <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive("bold") ? "active" : ""}>عريض</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive("italic") ? "active" : ""}>مائل</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()}>قائمة</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleCodeBlock().run()}>رموز</button>
-      </div>
-      <EditorContent editor={editor} />
-    </div>
-  );
+  return <CkRichEditor value={value} onChange={onChange} />;
 }
 
 function geometryFromQuestion(question?: ExamQuestion): { shape: GeometryDiagramSpec["shape"]; dimensions: string } {

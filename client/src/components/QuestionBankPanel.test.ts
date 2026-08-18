@@ -22,4 +22,29 @@ describe("question bank selection", () => {
     expect(snapshot).toMatchObject({ type: "geometry", prompt_html: item.prompt_html, options: item.options, points: 4, sort_order: 0 });
     expect(snapshot).not.toHaveProperty("id");
   });
+
+  it("preserves rich equation and CORS-enabled image HTML in the copied exam snapshot", () => {
+    const richHtml = '<p>حل \\(x^2 + 1\\)</p><figure class="image"><img src="https://placehold.co/600x400/png?text=Math+Diagram" alt="رسم رياضي" /></figure>';
+    const item: QuestionBankQuestion = {
+      id: 42,
+      type: "math",
+      title: "سؤال غني",
+      grade: "الثاني الإعدادي",
+      prompt_html: richHtml,
+      options: { notation: "\\frac{x}{2}" },
+      correct_answer: null,
+      points: 3,
+      sort_order: 0,
+      tags: "معادلات، صور",
+      is_active: true,
+      department_id: null,
+    };
+
+    expect(questionBankSnapshot(item)).toMatchObject({
+      type: "math",
+      prompt_html: richHtml,
+      options: { notation: "\\frac{x}{2}" },
+      points: 3,
+    });
+  });
 });

@@ -2,12 +2,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import ExamQuestionComposer from "./ExamQuestionComposer";
-
-vi.mock("@tiptap/starter-kit", () => ({ default: {} }));
-vi.mock("@tiptap/react", () => ({
-  useEditor: () => ({ getHTML: () => "<p>نص</p>", commands: { setContent: vi.fn() }, chain: () => ({ focus: () => ({ toggleBold: () => ({ run: vi.fn() }), toggleItalic: () => ({ run: vi.fn() }), toggleBulletList: () => ({ run: vi.fn() }), toggleCodeBlock: () => ({ run: vi.fn() }) }) }), isActive: () => false }),
-  EditorContent: () => React.createElement("div", { className: "editor-content" }),
-}));
+import CkRichEditor from "./CkRichEditor";
 
 describe("ExamQuestionComposer rendered controls", () => {
   it("renders the one-question controls and all supported type choices", () => {
@@ -28,5 +23,10 @@ describe("ExamQuestionComposer rendered controls", () => {
     expect(html).toContain("تعديل");
     expect(html).toContain("حذف");
     expect(html).toContain("svg");
+  });
+
+  it("keeps CKEditor browser-only while exposing an Arabic loading boundary to static rendering", () => {
+    const html = renderToStaticMarkup(<CkRichEditor value="<p>سؤال</p>" onChange={vi.fn()} />);
+    expect(html).toContain("جارٍ تحميل CKEditor");
   });
 });

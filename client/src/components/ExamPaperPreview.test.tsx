@@ -31,11 +31,11 @@ describe("ExamPaper", () => {
     expect(html).toContain("exam-paper-answer-lines");
   });
 
-  it("renders persisted math notation and extracts it from typed options", () => {
-    const mathTemplate = { ...template, questions: [{ id: 12, type: "math" as const, prompt_html: "<p>أوجد القيمة.</p>", options: { notation: "س^2 + 2س + 1" }, points: 3 }] };
+  it("renders persisted math notation through KaTeX and extracts it from typed options", () => {
+    const mathTemplate = { ...template, questions: [{ id: 12, type: "math" as const, prompt_html: "<p>أوجد القيمة.</p>", options: { notation: "\\frac{x}{2}" }, points: 3 }] };
     const html = renderToStaticMarkup(<ExamPaper template={mathTemplate} />);
-    expect(getMathNotation(mathTemplate.questions[0])).toBe("س^2 + 2س + 1");
-    expect(html).toContain("س^2 + 2س + 1");
+    expect(getMathNotation(mathTemplate.questions[0])).toBe("\\frac{x}{2}");
+    expect(html).toContain("katex");
     expect(html).toContain("exam-paper-math-notation");
   });
 });
