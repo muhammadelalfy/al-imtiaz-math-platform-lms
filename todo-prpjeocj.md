@@ -114,7 +114,7 @@
 - [x] Simplify the exam-management page hierarchy and reduce simultaneous authoring controls without removing core workflows.
 - [x] Replace the current question rich-text editor surface with CKEditor-compatible editing while preserving stored HTML and RTL support.
 - [x] Add regression coverage and live verification for simplified authoring, question-bank selection, preview, and template persistence.
-- [ ] Deliver the simplified CKEditor authoring update in a dedicated GitHub feature branch and pull request.
+- [x] Deliver the simplified CKEditor authoring update in a dedicated GitHub feature branch and pull request: https://github.com/muhammadelalfy/al-imtiaz-math-platform-lms/pull/2
 - [x] Integrate the user-approved CKEditor 5 free edition with Arabic RTL configuration and document the open-source licensing choice.
 - [x] Verify in the authenticated browser that a question-bank entry is copied into the active exam, a preview opens, and a template save/update completes.
 - [x] Reconcile CKEditor licensing documentation with the approved GPL free-edition integration and its distribution implications.
