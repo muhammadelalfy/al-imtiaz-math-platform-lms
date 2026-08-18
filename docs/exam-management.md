@@ -50,6 +50,14 @@ The `ExamPaper` component has rendering regression tests covering Arabic metadat
 
 Question-bank records are persisted separately from exam-template questions with ownership, department, grade, tags, active state, rich-text HTML, typed options, and point value. The list endpoint supports bounded pagination plus search by title, prompt, or tags and filtering by type or grade. CRUD writes are restricted to administrators and teachers; foreign keys use nullable ownership and department references so deleting a user or department does not corrupt the bank.
 
+## Second authoring mode: visual form builder
+
+Exam creation now exposes two intentional authoring modes. **السؤال الواحد** remains the default for rich-text, mathematical notation, and dimensioned geometry editing. **منشئ النموذج** is the second option: an Arabic RTL visual JSON Schema builder where staff can add, reorder, and configure form fields. It is lazily loaded so the standard one-question workflow does not pay the cost of the extra authoring UI until the second mode is selected.
+
+The converter keeps the existing Laravel question contract as the source of truth. A field with two or more choices becomes an MCQ question, a boolean becomes true/false, a number or integer becomes a math question, and a string becomes an essay question. Nested form sections are flattened with their section title preserved in the generated prompt. Unsupported JSON Schema types are shown as warnings and are never silently persisted as invalid exam data. The import action copies the converted result into the current draft as ordinary ordered question snapshots, returns staff to the one-question mode for detailed review, and then uses the same create/update transaction and validation path as manually authored questions.
+
+The active local Laravel database was migrated and reseeded after the question-bank table was introduced, so the live exam screen now loads its reusable bank records without a missing-table error.
+
 ## Dimensioned geometry questions
 
 Geometry questions use a small internal SVG contract rather than embedding a full interactive authoring board. This keeps the model KISS/DRY, produces deterministic browser-PDF captures, and supports accessible SVG output. The current contract supports `rectangle`, `triangle`, `circle`, and `angle` shapes with named dimension values such as `width`, `height`, `base`, `radius`, or `angle`. The authoring form stores one `name=value` dimension per line, and the same renderer is used in administrator preview, student exam mode, and browser image-PDF capture.

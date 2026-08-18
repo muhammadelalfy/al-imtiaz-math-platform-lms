@@ -99,3 +99,8 @@
 - [x] Render math notation/options in exam paper and preview flows and add math-specific serialization/display coverage.
 - [x] Add loading and empty states to the question-bank search results.
 - [x] Add frontend coverage for question-bank selection reaching the ordered exam create/update payload.
+- [x] Research and select a popular React-compatible visual form-builder library suitable for Arabic RTL exam authoring.
+- [x] Add a second «منشئ النموذج» option in exam building without disrupting the existing one-question composer.
+- [x] Convert supported form-builder fields into the existing Laravel exam-question contract with clear handling for unsupported fields.
+- [x] Add visual form-builder conversion tests, Arabic RTL documentation, and full frontend/Laravel verification.
+- [x] Apply and verify the question-bank migration in the active Laravel development database so the live exam interface can load bank records.

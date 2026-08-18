@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BookOpen, ClipboardList, Target } from "lucide-react";
 import { toast } from "sonner";
 import { ApiError, laravelApi, type ExamDepartment, type ExamQuestion, type ExamTemplate } from "@/lib/laravelApi";
@@ -6,6 +6,8 @@ import ExamPaperPreview from "@/components/ExamPaperPreview";
 import ExamQuestionComposer, { type AuthoringQuestion } from "@/components/ExamQuestionComposer";
 import QuestionBankPanel from "@/components/QuestionBankPanel";
 import ExamTemplateActions from "@/components/ExamTemplateActions";
+
+const ExamFormBuilder = lazy(() => import("@/components/ExamFormBuilder"));
 
 type Props = { onRefresh: () => Promise<void> };
 
@@ -54,6 +56,7 @@ export default function ExamManagementPanel({ onRefresh }: Props) {
   const [instructions, setInstructions] = useState("");
   const [questions, setQuestions] = useState<AuthoringQuestion[]>([]);
   const [initialQuestions, setInitialQuestions] = useState<ExamQuestion[]>([]);
+  const [authoringMode, setAuthoringMode] = useState<"composer" | "form-builder">("composer");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -83,6 +86,7 @@ export default function ExamManagementPanel({ onRefresh }: Props) {
     setInstructions("");
     setQuestions([]);
     setInitialQuestions([]);
+    setAuthoringMode("composer");
     setMessage("");
   };
 
@@ -121,6 +125,7 @@ export default function ExamManagementPanel({ onRefresh }: Props) {
     setInstructions(template.instructions || "");
     setInitialQuestions(template.questions || []);
     setQuestions((template.questions || []).map((question, index) => ({ ...question, sort_order: index })));
+    setAuthoringMode("composer");
     setMessage("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -181,7 +186,11 @@ export default function ExamManagementPanel({ onRefresh }: Props) {
           {editingId && <button type="button" className="text-button" onClick={resetAuthoring}>بدء قالب جديد</button>}
           <div className="exam-form-grid"><label>عنوان الامتحان<input required value={title} onChange={event => setTitle(event.target.value)} placeholder="اختبار الوحدة الأولى" /></label><label>القسم<select value={departmentId} onChange={event => setDepartmentId(event.target.value)}><option value="">بدون قسم</option>{departments.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>الصف<input value={grade} onChange={event => setGrade(event.target.value)} placeholder="الأول الإعدادي" /></label><label>المدة بالدقائق<input type="number" min="1" max="600" value={duration} onChange={event => setDuration(event.target.value)} /></label><label>العلامة المائية<input value={watermark} onChange={event => setWatermark(event.target.value)} /></label></div>
           <label>التعليمات<textarea value={instructions} onChange={event => setInstructions(event.target.value)} placeholder="تعليمات الطالب قبل البدء" /></label>
-          <ExamQuestionComposer initialQuestions={questions} onChange={setQuestions} />
+          <div className="exam-authoring-mode-switch" role="tablist" aria-label="طريقة بناء الأسئلة">
+            <button type="button" role="tab" aria-selected={authoringMode === "composer"} className={authoringMode === "composer" ? "active" : ""} onClick={() => setAuthoringMode("composer")}>1. السؤال الواحد</button>
+            <button type="button" role="tab" aria-selected={authoringMode === "form-builder"} className={authoringMode === "form-builder" ? "active" : ""} onClick={() => setAuthoringMode("form-builder")}>2. منشئ النموذج</button>
+          </div>
+          {authoringMode === "composer" ? <ExamQuestionComposer initialQuestions={questions} onChange={setQuestions} /> : <Suspense fallback={<div className="exam-form-builder-loading">جارٍ تجهيز منشئ النموذج...</div>}><ExamFormBuilder onImport={imported => { setQuestions(current => [...current, ...imported].map((question, index) => ({ ...question, sort_order: index }))); setAuthoringMode("composer"); toast(`تمت إضافة ${imported.length} سؤالاً من منشئ النموذج. راجعها الآن في وضع السؤال الواحد.`); }} /></Suspense>}
           <QuestionBankPanel departments={departments} onSelect={question => setQuestions(current => appendQuestionToExam(current, question))} />
           {message && <p className="qr-result">{message}</p>}
           <button className="primary" disabled={saving}>{saving ? "جارٍ الحفظ..." : editingId ? "حفظ بيانات الامتحان" : "حفظ الامتحان كمسودة"}</button>
