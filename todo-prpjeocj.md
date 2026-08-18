@@ -104,3 +104,17 @@
 - [x] Convert supported form-builder fields into the existing Laravel exam-question contract with clear handling for unsupported fields.
 - [x] Add visual form-builder conversion tests, Arabic RTL documentation, and full frontend/Laravel verification.
 - [x] Apply and verify the question-bank migration in the active Laravel development database so the live exam interface can load bank records.
+- [x] Reproduce and fix the form-builder space-key bug without blocking spaces inside editable field labels, descriptions, or values.
+- [x] Add regression coverage for the form-builder keyboard fix and rerun frontend/Laravel verification.
+- [x] Deliver the form-builder keyboard fix on a dedicated GitHub feature branch with a pull request against main: https://github.com/muhammadelalfy/al-imtiaz-math-platform-lms/pull/1
+- [x] Reproduce the space-key issue inside the actual visual form-builder field-card editor controls and document the failing interaction. The editable controls are mounted only after the field-card edit action; the drag-card keyboard layer previously risks consuming space events.
+- [x] Verify the scoped space-key fix on the exact field-card editor control in the browser and add integration-level regression coverage for that path. The live «نص السؤال» control retained a real trailing space, kept focus, and did not bubble the event to builder/global shortcuts; deterministic guard tests cover the same event boundary.
+- [x] Compare the actual field-card space-key behavior with the guard temporarily disabled, then restore the guarded implementation and record the before/after result. Without the guard, Space announced a draggable-card move and reached the bubble shortcut handler; with the guard, the label retained the space without that shortcut.
+- [x] Add integration-boundary coverage proving the embedded builder canvas binds the space-key guard for field-card text entry.
+- [x] Simplify the exam-management page hierarchy and reduce simultaneous authoring controls without removing core workflows.
+- [x] Replace the current question rich-text editor surface with CKEditor-compatible editing while preserving stored HTML and RTL support.
+- [x] Add regression coverage and live verification for simplified authoring, question-bank selection, preview, and template persistence.
+- [ ] Deliver the simplified CKEditor authoring update in a dedicated GitHub feature branch and pull request.
+- [x] Integrate the user-approved CKEditor 5 free edition with Arabic RTL configuration and document the open-source licensing choice.
+- [x] Verify in the authenticated browser that a question-bank entry is copied into the active exam, a preview opens, and a template save/update completes.
+- [x] Reconcile CKEditor licensing documentation with the approved GPL free-edition integration and its distribution implications.
