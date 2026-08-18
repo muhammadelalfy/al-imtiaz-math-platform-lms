@@ -133,3 +133,5 @@
 - [x] Replace the unreliable native question-bank disclosure toggle with an explicit keyboard-accessible trigger and verify it opens the rich-media form controls in the browser.
 - [x] Resolve the production Vite bundle termination during chunk rendering and re-run the full frontend build verification.
 - [x] Diagnose and fix failing GitHub CI checks on pull request #3, then verify the corrected run.
+- [x] Configure GitHub main branch protection to require passing Frontend checks and Laravel checks before merging.
+- [x] Apply and verify the required CI checks after the repository visibility change to public.
