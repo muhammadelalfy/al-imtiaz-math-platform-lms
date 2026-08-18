@@ -8,6 +8,18 @@ The adapter only converts the domain-safe subset needed by the Laravel exam cont
 
 During live verification, the new `question_bank_questions` migration was found not to be applied to the active local SQLite database. The migration was applied and the guarded Arabic demo seeder was rerun under the local environment to restore representative bank questions.
 
+## Keyboard investigation note
+
+The visual builder's top-level title input accepted an internal Arabic space through direct input and a real `Space` keydown. Capture and bubble listeners observed no `preventDefault()` call, and the field retained the trailing space. Investigation therefore continues at the field-card editor layer, where the reported issue may be specific to a control rather than a global browser shortcut.
+
+The integration now includes a narrow capture-phase guard on the embedded builder canvas. It stops a literal space key only from propagating beyond text inputs, textareas, and content-editable controls; the input’s native default action remains intact, while checkbox, radio, button, range, upload, and other non-text controls retain their existing keyboard behavior. This prevents builder-level keyboard shortcuts from interfering with Arabic labels or descriptions while avoiding a global space-key override.
+
+During development, Vite hot-module reload returns the dashboard to the default authoring mode. This is development-only state reset behavior; it is separate from normal form-builder input handling and does not affect saved exam-template data.
+
+The field-card editor was then opened through its visible edit action. Its live **نص السؤال** input accepted a real space keypress, retained the trailing space, kept focus in the input, and allowed the event to reach window capture but not window bubble. This confirms the scoped canvas guard applies to the actual editable label control while preventing builder-level shortcut propagation.
+
+For a direct before/after comparison, the guard was temporarily removed in the isolated feature branch. In the actual visible field-card label control, pressing Space then triggered the builder's draggable-item announcement (`Draggable item root_question_one was moved over droppable area root_question_one`) and reached the global bubble phase with `defaultPrevented: true`; the unwanted drag action is the reported defect. After restoring the boundary, the same control retained the space and produced no bubble-phase shortcut event. The test suite now additionally asserts that the canvas boundary itself binds this guard, alongside the targeted browser verification.
+
 ## References
 
 [1]: https://github.com/ginkgobioworks/react-json-schema-form-builder "React JSON Schema Form Builder repository"
