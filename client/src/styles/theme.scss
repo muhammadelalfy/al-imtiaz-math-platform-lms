@@ -1,0 +1,131 @@
+@use "sass:map";
+
+$light: (
+  "app-bg": #f3f7fa,
+  "surface": #ffffff,
+  "surface-subtle": #f7fafc,
+  "text": #102a43,
+  "text-muted": #5f7183,
+  "line": #dbe5ee,
+  "accent": #0f9b8e,
+  "accent-strong": #087a70,
+  "accent-soft": #def8f3,
+  "accent-ink": #075f58,
+  "warm": #d97706,
+  "danger": #c43d3d,
+  "sidebar": #0b2633,
+  "sidebar-raised": #123e4e,
+  "sidebar-text": #d9f3ef,
+  "shadow": 0 18px 48px rgba(22, 45, 64, 0.09),
+  "focus": rgba(15, 155, 142, 0.34)
+);
+
+$dark: (
+  "app-bg": #09131f,
+  "surface": #101e2d,
+  "surface-subtle": #142638,
+  "text": #eef6fb,
+  "text-muted": #a8bac9,
+  "line": #284258,
+  "accent": #2dd4bf,
+  "accent-strong": #5eead4,
+  "accent-soft": #123f42,
+  "accent-ink": #a7f3e8,
+  "warm": #f6ba66,
+  "danger": #ff8787,
+  "sidebar": #07131e,
+  "sidebar-raised": #0d2635,
+  "sidebar-text": #d6f4ef,
+  "shadow": 0 20px 54px rgba(0, 0, 0, 0.28),
+  "focus": rgba(94, 234, 212, 0.42)
+);
+
+@mixin theme-vars($palette) {
+  @each $name, $value in $palette {
+    --#{$name}: #{$value};
+  }
+}
+
+@mixin focus-ring {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+:root {
+  @include theme-vars($light);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.dark {
+  color-scheme: dark;
+  @include theme-vars($dark);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--app-bg);
+    color: var(--text);
+    transition:
+      background-color 200ms var(--ease-out),
+      color 200ms var(--ease-out);
+  }
+}
+
+@layer components {
+  .theme-surface {
+    background: var(--surface);
+    border-color: var(--line);
+    box-shadow: var(--shadow);
+    color: var(--text);
+  }
+
+  .theme-control {
+    background: var(--surface-subtle);
+    border-color: var(--line);
+    color: var(--text);
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+  }
+
+  .theme-toggle {
+    background: var(--surface);
+    border-color: var(--line);
+    box-shadow: var(--shadow);
+    color: var(--text);
+
+    svg {
+      color: var(--warm);
+    }
+
+    &:focus-visible {
+      @include focus-ring;
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+  }
+
+  .dark .theme-toggle svg {
+    color: var(--accent-strong);
+  }
+
+  .theme-primary-action {
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    box-shadow: 0 10px 22px rgba(15, 155, 142, 0.2);
+
+    &:hover {
+      box-shadow: 0 14px 28px rgba(15, 155, 142, 0.29);
+      filter: saturate(1.05);
+    }
+  }
+}

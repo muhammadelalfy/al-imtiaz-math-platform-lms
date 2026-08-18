@@ -108,22 +108,22 @@ export default function ExamQuestionComposer({ initialQuestions = [], onChange }
   const geometrySpec = draft?.type === "geometry" && isGeometryDiagram(draft.options) ? draft.options : { shape: geometry.shape, dimensions: parseGeometryDimensions(geometry.dimensions) };
 
   return (
-    <div className="exam-question-composer">
-      <div className="exam-question-composer-head">
+    <div className="exam-question-composer grid gap-3">
+      <div className="exam-question-composer-head theme-surface flex flex-col gap-4 rounded-2xl border p-4 sm:flex-row sm:items-start sm:justify-between sm:p-[18px]">
         <div><span className="eyebrow">بناء الأسئلة</span><h3>سؤال واحد في كل مرة</h3><p className="muted">أضف السؤال واحفظه، ثم استخدم زر + لإضافة السؤال التالي.</p></div>
-        <button type="button" className="secondary-button" onClick={beginAdd}><Plus size={16} /> إضافة سؤال</button>
+        <button type="button" className="secondary-button inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl px-4 font-extrabold" onClick={beginAdd}><Plus size={16} /> إضافة سؤال</button>
       </div>
-      {questions.length === 0 && !draft && <div className="exam-question-empty">لم تتم إضافة أسئلة بعد. ابدأ من زر «إضافة سؤال».</div>}
+      {questions.length === 0 && !draft && <div className="exam-question-empty theme-surface rounded-xl border border-dashed px-5 py-7 text-center">لم تتم إضافة أسئلة بعد. ابدأ من زر «إضافة سؤال».</div>}
       <div className="exam-question-list">
         {questions.map((question, index) => (
-          <article className="exam-question-summary" key={question.id ?? `draft-${index}`}>
+          <article className="exam-question-summary theme-surface flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between" key={question.id ?? `draft-${index}`}>
             <div><span className="question-number">{index + 1}</span><div><strong>{questionTypeLabels[question.type as AuthoringQuestionType]}</strong><p dangerouslySetInnerHTML={{ __html: question.prompt_html }} /></div></div>
             <div className="exam-question-summary-actions"><button type="button" className="icon-button" title="نقل لأعلى" onClick={() => move(index, -1)} disabled={index === 0}><ArrowUp size={15} /></button><button type="button" className="icon-button" title="نقل لأسفل" onClick={() => move(index, 1)} disabled={index === questions.length - 1}><ArrowDown size={15} /></button><button type="button" className="text-button" onClick={() => beginEdit(index)}><Pencil size={14} /> تعديل</button><button type="button" className="text-button danger-text" onClick={() => remove(index)}><Trash2 size={14} /> حذف</button></div>
           </article>
         ))}
       </div>
       {draft && (
-        <div className="exam-question-editor card">
+        <div className="exam-question-editor card theme-surface rounded-2xl border p-4 sm:p-5">
           <div className="card-head"><div><span className="eyebrow">{editingIndex === null ? "سؤال جديد" : `تعديل السؤال ${editingIndex + 1}`}</span><h3>بيانات السؤال</h3></div><button type="button" className="icon-button" onClick={cancel} title="إلغاء"><X size={16} /></button></div>
           <div className="exam-question-editor-grid">
             <label>نوع السؤال<select value={draft.type} onChange={event => setDraft(current => current ? { ...current, type: event.target.value as AuthoringQuestionType, options: event.target.value === "mcq" ? ["الإجابة الأولى", "الإجابة الثانية"] : event.target.value === "geometry" ? { shape: "rectangle", dimensions: { width: "6", height: "4" } } : event.target.value === "math" ? { notation: "" } : null } : current)}>{Object.entries(questionTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
@@ -134,7 +134,7 @@ export default function ExamQuestionComposer({ initialQuestions = [], onChange }
           {draft.type === "math" && <div className="math-authoring-fields"><label>الترميز الرياضي<textarea dir="ltr" value={math.notation || ""} onChange={event => setDraft(current => current ? { ...current, options: { ...(math as MathQuestionOptions), notation: event.target.value } } : current)} placeholder="س^2 + 2س + 1" /></label><p className="muted">استخدم محرر السؤال للنص العربي، واكتب الترميز هنا ليظهر للطالب كجزء من السؤال الرياضي.</p></div>}
           {draft.type === "geometry" && <div className="geometry-authoring-fields"><div><label>نوع الشكل<select value={geometry.shape} onChange={event => setDraft(current => current ? { ...current, options: { shape: event.target.value as GeometryDiagramSpec["shape"], dimensions: parseGeometryDimensions(geometry.dimensions) } } : current)}><option value="rectangle">مستطيل</option><option value="triangle">مثلث</option><option value="circle">دائرة</option><option value="angle">زاوية</option></select></label><GeometryDiagram spec={geometrySpec} /></div><label>الأبعاد، اسم=قيمة في كل سطر<textarea value={geometry.dimensions} onChange={event => setDraft(current => current ? { ...current, options: { shape: geometry.shape, dimensions: parseGeometryDimensions(event.target.value) } } : current)} placeholder="width=6\nheight=4" /></label></div>}
           {error && <p className="live-error">{error}</p>}
-          <div className="exam-question-editor-actions"><button type="button" className="primary" onClick={saveDraft}><Check size={15} /> حفظ السؤال</button><button type="button" className="text-button" onClick={cancel}>إلغاء</button></div>
+          <div className="exam-question-editor-actions flex flex-col gap-2 sm:flex-row sm:items-center"><button type="button" className="primary theme-primary-action inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 font-extrabold" onClick={saveDraft}><Check size={15} /> حفظ السؤال</button><button type="button" className="text-button min-h-[40px] px-3" onClick={cancel}>إلغاء</button></div>
         </div>
       )}
     </div>

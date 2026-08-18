@@ -139,3 +139,6 @@
 - [x] Redesign the Arabic RTL exam workspace for responsive mobile and desktop usability with modern action controls.
 - [x] Implement accessible, persistent light and dark themes with a modern shared color system across the website.
 - [x] Add regression coverage and browser verification for responsive exam layout and theme switching.
+- [x] Migrate the shared theme layer to Sass variables and mixins while retaining the light/dark token contract.
+- [x] Refactor the active dashboard and exam theme surfaces to Tailwind-first utility composition with Sass reserved for global tokens and complex responsive patterns.
+- [x] Install and validate the Sass build pipeline without regressing RTL behavior, responsive layout, or CI production builds.

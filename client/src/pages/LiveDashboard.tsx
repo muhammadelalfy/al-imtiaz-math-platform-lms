@@ -50,7 +50,7 @@ function ThemeToggle({ floating = false }: { floating?: boolean }) {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
 
-  return <button type="button" className={`theme-toggle${floating ? " theme-toggle--floating" : ""}`} onClick={toggleTheme} aria-label={isDark ? "تفعيل الوضع المضيء" : "تفعيل الوضع الداكن"} aria-pressed={isDark}>{isDark ? <Sun size={17} /> : <Moon size={17} />}<span>{isDark ? "مضيء" : "داكن"}</span></button>;
+  return <button type="button" className={`theme-toggle inline-flex min-h-10 items-center gap-2 rounded-full border px-3 text-xs font-extrabold transition-[transform,background-color,color] duration-200 active:scale-[.97]${floating ? " theme-toggle--floating" : ""}`} onClick={toggleTheme} aria-label={isDark ? "تفعيل الوضع المضيء" : "تفعيل الوضع الداكن"} aria-pressed={isDark}>{isDark ? <Sun size={17} /> : <Moon size={17} />}<span>{isDark ? "مضيء" : "داكن"}</span></button>;
 }
 
 function AuthenticatedDashboard({ user, onLogout }: { user: Awaited<ReturnType<typeof laravelApi.me>>; onLogout: () => Promise<void> }) {
