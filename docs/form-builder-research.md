@@ -16,6 +16,10 @@ The integration now includes a narrow capture-phase guard on the embedded builde
 
 During development, Vite hot-module reload returns the dashboard to the default authoring mode. This is development-only state reset behavior; it is separate from normal form-builder input handling and does not affect saved exam-template data.
 
+The field-card editor was then opened through its visible edit action. Its live **نص السؤال** input accepted a real space keypress, retained the trailing space, kept focus in the input, and allowed the event to reach window capture but not window bubble. This confirms the scoped canvas guard applies to the actual editable label control while preventing builder-level shortcut propagation.
+
+For a direct before/after comparison, the guard was temporarily removed in the isolated feature branch. In the actual visible field-card label control, pressing Space then triggered the builder's draggable-item announcement (`Draggable item root_question_one was moved over droppable area root_question_one`) and reached the global bubble phase with `defaultPrevented: true`; the unwanted drag action is the reported defect. After restoring the boundary, the same control retained the space and produced no bubble-phase shortcut event. The test suite now additionally asserts that the canvas boundary itself binds this guard, alongside the targeted browser verification.
+
 ## References
 
 [1]: https://github.com/ginkgobioworks/react-json-schema-form-builder "React JSON Schema Form Builder repository"

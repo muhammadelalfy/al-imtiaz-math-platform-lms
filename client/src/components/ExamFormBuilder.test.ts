@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { isBuilderTextEntryTarget, preserveBuilderSpaceKey } from "./ExamFormBuilder";
+import { BuilderKeyboardBoundary, isBuilderTextEntryTarget, preserveBuilderSpaceKey } from "./ExamFormBuilder";
 
 describe("visual form-builder keyboard guard", () => {
   it("identifies editable text inputs, textareas, and content-editable elements", () => {
@@ -16,6 +16,15 @@ describe("visual form-builder keyboard guard", () => {
     expect(stopPropagation).toHaveBeenCalledOnce();
     expect(preserveBuilderSpaceKey({ key: "Enter", target: { tagName: "INPUT", type: "text" } as unknown as EventTarget, stopPropagation })).toBe(false);
     expect(preserveBuilderSpaceKey({ key: " ", target: { tagName: "BUTTON" } as unknown as EventTarget, stopPropagation })).toBe(false);
+    expect(stopPropagation).toHaveBeenCalledOnce();
+  });
+
+  it("binds the guard at the embedded builder canvas boundary used by field-card editors", () => {
+    const boundary = BuilderKeyboardBoundary({ children: null });
+    const stopPropagation = vi.fn();
+    const handler = boundary.props.onKeyDownCapture as (event: { key: string; target: EventTarget | null; stopPropagation: () => void }) => void;
+    handler({ key: " ", target: { tagName: "INPUT", type: "text" } as unknown as EventTarget, stopPropagation });
+    expect(boundary.props.className).toBe("exam-form-builder-canvas");
     expect(stopPropagation).toHaveBeenCalledOnce();
   });
 });
