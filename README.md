@@ -4,21 +4,21 @@
 
 ## Architecture
 
-| Area | Stack and responsibility |
-|---|---|
+| Area     | Stack and responsibility                                                                                                     |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | Frontend | React 19, TypeScript, Inertia 2, Laravel Vite, Tailwind CSS 4, Sass tokens, Arabic RTL UI, and browser-side exam PDF capture |
-| Backend | Laravel 13, PHP 8.3, Eloquent ORM, Sanctum role-specific authentication |
-| Modules | `Modules/Attendance` and plugin-store boundaries using `nwidart/laravel-modules` |
-| Data | MySQL-compatible production configuration and SQLite test workflow |
-| Quality | Vitest, TypeScript checks, Laravel feature tests, PHP syntax checks, and Vite production builds |
+| Backend  | Laravel 13, PHP 8.3, Eloquent ORM, Sanctum role-specific authentication                                                      |
+| Modules  | `Modules/Attendance` and plugin-store boundaries using `nwidart/laravel-modules`                                             |
+| Data     | MySQL-compatible production configuration and SQLite test workflow                                                           |
+| Quality  | Vitest, TypeScript checks, Laravel feature tests, PHP syntax checks, and Vite production builds                              |
 
 ## Local development
 
-The canonical application lives in `laravel-backend`. The React source is located in `laravel-backend/resources/js`, Laravel serves the Inertia shell through `routes/web.php`, and the existing Sanctum API continues to be available under `/api`.
+The repository root is the canonical Laravel application. The React source is located in `resources/js`, Laravel serves the Inertia shell through `routes/web.php`, and the existing Sanctum API continues to be available under `/api`.
 
-Install PHP dependencies with `composer install` and frontend dependencies with `pnpm install` from `laravel-backend`. Configure the local Laravel environment, generate an application key, and apply migrations. Start Laravel and the React Vite server together with `composer run dev`, or run `pnpm dev:full` from `laravel-backend`.
+Install PHP dependencies with `composer install` and frontend dependencies with `pnpm install` from the repository root. Configure the local Laravel environment, generate an application key, and apply migrations. Start Laravel and the React Vite server together with `composer run dev`, or run `pnpm dev:full`.
 
-Run the React checks from `laravel-backend` with `pnpm lint`, `pnpm check`, `pnpm test:frontend`, and `pnpm build`. Run Laravel checks from the same directory with `php artisan test` and the PHP syntax command documented in `.github/workflows/ci.yml`.
+Run the React checks from the repository root with `pnpm lint`, `pnpm check`, `pnpm test:frontend`, and `pnpm build`. Run Laravel checks from the same directory with `php artisan test` and the PHP syntax command documented in `.github/workflows/ci.yml`.
 
 ## Agile Git workflow
 
@@ -28,14 +28,14 @@ Pull Requests are required for all merges. A PR should describe the user story, 
 
 ## Branch convention
 
-| Branch | Purpose |
-|---|---|
-| `main` | Protected release branch |
-| `backend` | Laravel, Eloquent, migrations, modules, API, and backend tests |
-| `frontend` | React, styling, client API integration, and frontend tests |
-| `feature/backend-*` | Short-lived backend feature branch |
-| `feature/frontend-*` | Short-lived frontend feature branch |
-| `bugfix/*` | Reproducible defect fix |
-| `chore/*` | Tooling, documentation, or maintenance |
+| Branch               | Purpose                                                        |
+| -------------------- | -------------------------------------------------------------- |
+| `main`               | Protected release branch                                       |
+| `backend`            | Laravel, Eloquent, migrations, modules, API, and backend tests |
+| `frontend`           | React, styling, client API integration, and frontend tests     |
+| `feature/backend-*`  | Short-lived backend feature branch                             |
+| `feature/frontend-*` | Short-lived frontend feature branch                            |
+| `bugfix/*`           | Reproducible defect fix                                        |
+| `chore/*`            | Tooling, documentation, or maintenance                         |
 
 See [`docs/git-agile-workflow.md`](docs/git-agile-workflow.md) and the PR template for the complete process. CI runs on every push and Pull Request through `.github/workflows/ci.yml`.

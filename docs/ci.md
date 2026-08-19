@@ -14,14 +14,21 @@ pnpm lint
 pnpm check
 pnpm test -- --run
 pnpm build
-
-cd laravel-backend
 composer install --no-interaction --prefer-dist --no-progress
-cp .env.example .env
-php artisan key:generate
 mkdir -p database
 touch database/database.sqlite
-printf '\nDB_CONNECTION=sqlite\nDB_DATABASE=%s\n' "$PWD/database/database.sqlite" >> .env
+cat > .env <<EOF
+APP_ENV=testing
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost
+DB_CONNECTION=sqlite
+DB_DATABASE=$PWD/database/database.sqlite
+CACHE_STORE=array
+SESSION_DRIVER=array
+QUEUE_CONNECTION=sync
+EOF
+php artisan key:generate
 php artisan migrate --force
 find app Modules tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
 php artisan test --compact

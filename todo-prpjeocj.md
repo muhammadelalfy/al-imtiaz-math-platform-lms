@@ -149,3 +149,8 @@
 - [x] Move the React application into Laravel’s supported Vite frontend structure while preserving Arabic RTL assets and existing application features.
 - [x] Reconcile Laravel API routing, session/authentication behavior, tests, CI, and production build scripts with the integrated React frontend.
 - [x] Validate the integrated Laravel React application locally and document its build, development, and deployment workflows.
+- [x] Audit root-level file collisions and preserve a rollback-safe migration boundary before promoting Laravel to the repository root.
+- [x] Move Laravel’s application core and canonical React resources from laravel-backend to the repository root.
+- [x] Remove or archive the obsolete split Node/Express and standalone client structure after the root Laravel application is validated.
+- [x] Update root scripts, GitHub Actions, documentation, tests, and developer commands for the Laravel-root architecture.
+- [x] Verify the Laravel-root application build, API tests, React tests, and hosted web shell.

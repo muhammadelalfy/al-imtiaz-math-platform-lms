@@ -6,11 +6,11 @@ The LMS now combines **Tailwind CSS 4** for component-level layout and interacti
 
 ## Ownership model
 
-| Styling concern | Primary owner | Rationale |
-|---|---|---|
-| Layout, spacing, responsive stacking, and target size | Tailwind utilities in JSX | The visual intent remains adjacent to the rendered control or layout. |
-| Theme colors, surface hierarchy, focus rings, and palette changes | `client/src/styles/theme.scss` | Sass maps and mixins keep the light/dark contracts centralized and prevent duplicated values. |
-| Existing specialized editor, diagram, PDF, and legacy module styles | `client/src/index.css` | These remain stable while their behavior is not directly affected by the active dashboard and exam-theme migration. |
+| Styling concern                                                     | Primary owner                    | Rationale                                                                                                           |
+| ------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Layout, spacing, responsive stacking, and target size               | Tailwind utilities in JSX        | The visual intent remains adjacent to the rendered control or layout.                                               |
+| Theme colors, surface hierarchy, focus rings, and palette changes   | `resources/js/styles/theme.scss` | Sass maps and mixins keep the light/dark contracts centralized and prevent duplicated values.                       |
+| Existing specialized editor, diagram, PDF, and legacy module styles | `resources/js/index.css`         | These remain stable while their behavior is not directly affected by the active dashboard and exam-theme migration. |
 
 ## Theme contract
 
@@ -22,13 +22,13 @@ The Sass layer defines the light and dark palette maps, emits the corresponding 
 
 The authenticated theme toggle, exam page header, authoring/layout grid, template library, one-question composer, and question-bank toolbar and action rows use Tailwind utility composition for their current responsive layout and action affordances. Their visual surfaces and light/dark palette still resolve from the Sass-defined semantic tokens.
 
-| Verification | Result |
-|---|---|
-| Sass compiler installation and Vite processing | Passed |
-| TypeScript | Passed |
-| Frontend test suite | Passed: 47 tests across 16 files |
-| Production bundle | Passed |
-| Authenticated browser review | Dashboard and responsive exam workspace loaded correctly after the migration |
+| Verification                                   | Result                                                                       |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- |
+| Sass compiler installation and Vite processing | Passed                                                                       |
+| TypeScript                                     | Passed                                                                       |
+| Frontend test suite                            | Passed: 47 tests across 16 files                                             |
+| Production bundle                              | Passed                                                                       |
+| Authenticated browser review                   | Dashboard and responsive exam workspace loaded correctly after the migration |
 
 ## Maintenance guidance
 
