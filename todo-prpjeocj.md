@@ -154,3 +154,4 @@
 - [x] Remove or archive the obsolete split Node/Express and standalone client structure after the root Laravel application is validated.
 - [x] Update root scripts, GitHub Actions, documentation, tests, and developer commands for the Laravel-root architecture.
 - [x] Verify the Laravel-root application build, API tests, React tests, and hosted web shell.
+- [x] Confirm no tracked Laravel application content remains under the former laravel-backend directory and remove any residual tracked artifacts.
