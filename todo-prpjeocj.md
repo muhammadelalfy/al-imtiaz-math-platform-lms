@@ -145,3 +145,7 @@
 - [x] Simplify the Arabic RTL exam authoring page hierarchy and keep the primary form in a single natural document flow.
 - [x] Remove constrained internal scrolling from the exam authoring form and template library while retaining responsive usability.
 - [x] Add regression/browser verification for the simplified no-nested-scroll exam workspace.
+- [x] Audit the split frontend and Laravel backend architecture, dependencies, routes, and deployment assumptions for a Laravel-hosted React migration.
+- [x] Move the React application into Laravel’s supported Vite frontend structure while preserving Arabic RTL assets and existing application features.
+- [x] Reconcile Laravel API routing, session/authentication behavior, tests, CI, and production build scripts with the integrated React frontend.
+- [x] Validate the integrated Laravel React application locally and document its build, development, and deployment workflows.
