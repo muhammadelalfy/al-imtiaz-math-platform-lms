@@ -211,4 +211,9 @@
 - [x] Design the first offline synchronization release around authorized recorded operations, snapshots, idempotency, and conflict handling.
 - [x] Implement scoped server snapshots and idempotent reconciliation for attendance, exam results, payments, and worksheet submissions.
 - [x] Replace raw localStorage mutation replay with an IndexedDB-backed role-scoped snapshot and typed outbox, including status feedback and reconnect sync.
-- [ ] Add factories, seed coverage, backend/frontend regression tests, SRS and operations documentation, full validation, checkpoint, and a dedicated GitHub pull request for offline synchronization.
+- [x] Add factories, seed coverage, backend/frontend regression tests, SRS and operations documentation, full validation, checkpoint, and a dedicated GitHub pull request for offline synchronization. Published PR #8 stacked on the independently passing optional Octane PR #7; both GitHub Actions gates passed.
+- [x] Audit the Laravel-hosted React/Vite frontend, client API, routing, assets, scripts, and CI boundary before the Next.js migration.
+- [x] Scaffold the latest stable Next.js frontend with TypeScript, Tailwind, ESLint, Vitest, React Testing Library, and Playwright.
+- [x] Migrate Arabic RTL design, authentication, typed Laravel API client, offline synchronization, and role-aware dashboard navigation to Next.js.
+- [x] Migrate LMS feature workspaces and preserve backend API contracts for students, attendance, QR, exams, worksheets, payments, academic groups, notifications, and authorization.
+- [ ] Update CI/documentation, run backend and Next.js quality gates, checkpoint the migration, and publish a dedicated GitHub pull request.
