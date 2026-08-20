@@ -172,3 +172,14 @@
 - [x] Add stable API resources with explicit department, purchase, and installation relationship-loading rules.
 - [x] Refactor question-bank and plugin-store controllers to use repositories and resources without breaking role-safe responses.
 - [x] Add regression coverage and validate Larastan, Laravel API tests, and frontend checks for the repository-resource extension.
+- [x] Audit plugin purchase persistence, current store UI, and existing payment integration configuration.
+- [x] Define a payment lifecycle that creates pending purchases, verifies provider payment events, and grants immutable completed entitlements idempotently.
+- [ ] Configure secure Stripe project credentials, then add provider checkout and webhook fulfillment; this is blocked pending the owner’s Stripe Settings → Payment configuration.
+- [x] Update the plugin-store UI to initiate checkout and show pending, paid, failed, and entitlement states.
+- [x] Add payment lifecycle, webhook-boundary, authorization, idempotency, and UI regression coverage; validate all quality checks.
+- [x] Add privileged payment-method configuration for public Vodafone Cash, InstaPay, and Fawry instructions without exposing provider secrets to teachers or students.
+- [x] Implement manual-reference and administrator-verification workflows for Vodafone Cash and InstaPay payments pending verified merchant API contracts.
+- [x] Extend plugin checkout UI with selectable payment methods, Egyptian payment instructions, pending status, and payment-proof/reference submission.
+- [x] Add administrator payment-review controls that idempotently approve or reject manual payments before granting plugin entitlements.
+- [x] Add Fawry as an administrator-configured plugin payment method with the same pending-reference and verified-fulfillment safeguards.
+- [x] Run backend feature tests, frontend tests, static analysis, production build, and CI-workflow validation for every requested feature before checkpointing it.

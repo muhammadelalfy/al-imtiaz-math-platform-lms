@@ -3286,6 +3286,108 @@ nav {
   border-radius: 8px;
   padding: 7px 9px;
 }
+.plugin-payment-sheet,
+.plugin-admin-payments {
+  margin: 0 0 18px;
+  padding: 18px;
+}
+.plugin-payment-sheet h3,
+.plugin-admin-payments h3 {
+  margin: 6px 0;
+}
+.plugin-payment-methods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.plugin-payment-methods > p,
+.plugin-payment-methods .empty-state {
+  grid-column: 1 / -1;
+  color: #69756c;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.plugin-payment-reference,
+.plugin-method-config {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #e5eee8;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface, #fff) 94%, #e8f6f0);
+}
+.plugin-payment-reference label,
+.plugin-method-config label {
+  display: grid;
+  gap: 6px;
+  color: #32534c;
+  font-size: 12px;
+  font-weight: 700;
+}
+.plugin-payment-reference input,
+.plugin-payment-reference textarea,
+.plugin-method-config input:not([type="checkbox"]),
+.plugin-method-config textarea {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #dfe8e2;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--surface, #fff);
+  color: var(--foreground, #183d36);
+}
+.plugin-payment-reference textarea,
+.plugin-method-config textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+.plugin-method-config .check-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.plugin-payment-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #9d6826;
+  background: #fff6df;
+  border-radius: 8px;
+  padding: 7px 9px;
+  font-size: 11px;
+}
+.plugin-admin-payments summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #174c45;
+  font-weight: 800;
+}
+.plugin-admin-payments > p {
+  color: #68776e;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.plugin-review-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid #e7eee9;
+  padding: 12px 0;
+  color: #38574f;
+  font-size: 12px;
+}
+.plugin-review-row > div {
+  display: flex;
+  gap: 6px;
+}
+.plugin-review-row button {
+  padding: 7px 10px;
+  font-size: 11px;
+}
 @media (max-width: 900px) {
   .plugin-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3308,6 +3410,9 @@ nav {
   .plugin-actions button {
     flex: 1;
     justify-content: center;
+  }
+  .plugin-review-row {
+    grid-template-columns: 1fr;
   }
 }
 

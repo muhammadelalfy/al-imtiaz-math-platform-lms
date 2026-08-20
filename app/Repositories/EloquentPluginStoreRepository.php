@@ -18,15 +18,18 @@ final class EloquentPluginStoreRepository implements PluginStoreRepositoryInterf
             ->with([
                 'purchases' => fn ($query) => $query->where('user_id', $user->id)->where('status', 'completed'),
                 'installations' => fn ($query) => $query->where('status', 'installed'),
+                'paymentTransactions' => fn ($query) => $query->where('user_id', $user->id)->whereIn('status', ['pending', 'submitted'])->latest(),
             ])
             ->orderBy('name')
             ->get()
             ->each(function (PluginProduct $plugin): void {
                 $installation = $plugin->installations->first();
+                $payment = $plugin->paymentTransactions->first();
 
                 $plugin->setAttribute('purchased', $plugin->purchases->isNotEmpty());
                 $plugin->setAttribute('installed', $installation !== null);
                 $plugin->setAttribute('installed_module', $installation?->getAttribute('module_name'));
+                $plugin->setAttribute('payment_status', $payment?->getAttribute('status'));
             });
     }
 

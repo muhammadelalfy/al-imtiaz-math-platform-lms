@@ -29,4 +29,9 @@ class PluginProduct extends Model
     {
         return $this->hasMany(InstalledModule::class);
     }
+
+    public function paymentTransactions(): HasMany
+    {
+        return $this->hasMany(PluginPaymentTransaction::class);
+    }
 }

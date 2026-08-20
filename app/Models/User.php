@@ -44,6 +44,11 @@ class User extends Authenticatable
         return $this->hasMany(PluginPurchase::class);
     }
 
+    public function pluginPaymentTransactions(): HasMany
+    {
+        return $this->hasMany(PluginPaymentTransaction::class);
+    }
+
     public function installedModules(): HasMany
     {
         return $this->hasMany(InstalledModule::class, 'installed_by');

@@ -37,6 +37,7 @@ class PluginStoreController extends Controller
     public function purchase(Request $request, PluginProduct $plugin): JsonResponse
     {
         abort_unless($plugin->is_active, 404);
+        abort_if((float) $plugin->price > 0, 422, 'اختر وسيلة دفع لإتمام شراء الإضافة.');
         $purchase = $this->plugins->purchase($request->user(), $plugin);
 
         return response()->json(

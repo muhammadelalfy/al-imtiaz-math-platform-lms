@@ -47,7 +47,29 @@ export type PluginProduct = {
   purchased: boolean;
   installed: boolean;
   installed_module?: string | null;
+  payment_status?: "pending" | "submitted" | null;
   metadata?: Record<string, unknown> | null;
+};
+export type PluginPaymentMethod = {
+  id: number;
+  code: "vodafone_cash" | "instapay" | "fawry";
+  label: string;
+  recipient?: string | null;
+  instructions?: string | null;
+  is_enabled: boolean;
+};
+export type PluginPaymentTransaction = {
+  id: number;
+  status: "pending" | "submitted" | "approved" | "rejected";
+  amount: string;
+  currency: string;
+  reference?: string | null;
+  customer_note?: string | null;
+  review_note?: string | null;
+  reviewed_at?: string | null;
+  fulfilled_at?: string | null;
+  plugin?: PluginProduct;
+  method?: PluginPaymentMethod;
 };
 export type Assignment = {
   id: number;
@@ -539,6 +561,66 @@ export const laravelApi = {
   },
   async purchasePlugin(id: number) {
     return request(`/plugins/${id}/purchase`, { method: "POST" });
+  },
+  async pluginPaymentMethods() {
+    return requestCollection<PluginPaymentMethod>("/plugin-payment-methods");
+  },
+  async beginPluginCheckout(
+    id: number,
+    payment_method: PluginPaymentMethod["code"]
+  ) {
+    return request<PluginPaymentTransaction>(`/plugins/${id}/checkout`, {
+      method: "POST",
+      body: JSON.stringify({ payment_method }),
+    });
+  },
+  async pluginPayments() {
+    return requestCollection<PluginPaymentTransaction>("/plugin-payments");
+  },
+  async submitPluginPaymentReference(
+    paymentId: number,
+    reference: string,
+    customer_note?: string
+  ) {
+    return request<PluginPaymentTransaction>(
+      `/plugin-payments/${paymentId}/reference`,
+      { method: "POST", body: JSON.stringify({ reference, customer_note }) }
+    );
+  },
+  async adminPluginPaymentMethods() {
+    return requestCollection<PluginPaymentMethod>(
+      "/admin/plugin-payment-methods"
+    );
+  },
+  async updatePluginPaymentMethod(
+    code: PluginPaymentMethod["code"],
+    input: Pick<
+      PluginPaymentMethod,
+      "recipient" | "instructions" | "is_enabled"
+    >
+  ) {
+    return request<PluginPaymentMethod>(
+      `/admin/plugin-payment-methods/${code}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(input),
+      }
+    );
+  },
+  async pluginPaymentReviewQueue() {
+    return requestCollection<PluginPaymentTransaction>(
+      "/admin/plugin-payments/review-queue"
+    );
+  },
+  async reviewPluginPayment(
+    paymentId: number,
+    action: "approve" | "reject",
+    review_note?: string
+  ) {
+    return request<PluginPaymentTransaction>(
+      `/admin/plugin-payments/${paymentId}/${action}`,
+      { method: "POST", body: JSON.stringify({ review_note }) }
+    );
   },
   async installPlugin(id: number) {
     return request<{

@@ -282,3 +282,49 @@ describe("question bank API", () => {
     ]);
   });
 });
+
+describe("plugin payment API", () => {
+  it("maps Fawry checkout, reference submission, and administrator review requests", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(
+        () =>
+          new Response(
+            JSON.stringify({ data: [], id: 17, status: "pending" }),
+            { status: 200 }
+          )
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await laravelApi.pluginPaymentMethods();
+    await laravelApi.beginPluginCheckout(6, "fawry");
+    await laravelApi.submitPluginPaymentReference(
+      17,
+      "FAWRY-REF-17",
+      "تم الدفع"
+    );
+    await laravelApi.adminPluginPaymentMethods();
+    await laravelApi.updatePluginPaymentMethod("fawry", {
+      recipient: "77881",
+      instructions: "ادفع لدى فوري",
+      is_enabled: true,
+    });
+    await laravelApi.pluginPaymentReviewQueue();
+    await laravelApi.reviewPluginPayment(17, "approve", "تمت المراجعة");
+
+    expect(
+      fetchMock.mock.calls.map(([url, init]) => [url, init?.method])
+    ).toEqual([
+      ["/api/plugin-payment-methods", undefined],
+      ["/api/plugins/6/checkout", "POST"],
+      ["/api/plugin-payments/17/reference", "POST"],
+      ["/api/admin/plugin-payment-methods", undefined],
+      ["/api/admin/plugin-payment-methods/fawry", "PUT"],
+      ["/api/admin/plugin-payments/review-queue", undefined],
+      ["/api/admin/plugin-payments/17/approve", "POST"],
+    ]);
+    expect(fetchMock.mock.calls[1]?.[1]?.body).toBe(
+      JSON.stringify({ payment_method: "fawry" })
+    );
+  });
+});

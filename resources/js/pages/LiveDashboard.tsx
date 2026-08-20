@@ -570,6 +570,7 @@ function AuthenticatedDashboard({
             exams={exams}
             payments={payments}
             worksheets={worksheets}
+            role={user.role}
             onRefresh={load}
           />
         )}
@@ -727,6 +728,7 @@ function AdminView({
   exams,
   payments,
   worksheets,
+  role,
   onRefresh,
 }: {
   tab: Tab;
@@ -735,6 +737,7 @@ function AdminView({
   exams: ExamResult[];
   payments: Payment[];
   worksheets: Worksheet[];
+  role: Role;
   onRefresh: () => Promise<void>;
 }) {
   if (tab === "classes") return <ClassNavigator students={students} />;
@@ -758,7 +761,8 @@ function AdminView({
         payments={payments}
       />
     );
-  if (tab === "plugins") return <PluginStorePanel onRefresh={onRefresh} />;
+  if (tab === "plugins")
+    return <PluginStorePanel onRefresh={onRefresh} role={role} />;
   if (tab === "settings") return <SettingsView />;
   if (tab === "attendance")
     return (

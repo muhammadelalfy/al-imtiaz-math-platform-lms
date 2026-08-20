@@ -22,6 +22,8 @@ Run the React checks from the repository root with `pnpm lint`, `pnpm check`, `p
 
 See [`docs/laravel-api-architecture.md`](docs/laravel-api-architecture.md) for the repository contracts, cache policy, form-request validation, API-resource boundaries, and strict-loading rules used by the Laravel API.
 
+See [`docs/plugin-payments.md`](docs/plugin-payments.md) for the plugin-store payment lifecycle, administrator approval controls, Egyptian payment-method configuration, and Stripe credential boundary.
+
 ## Publishing
 
 The selected production release model is **manual built-in publishing**. After a pull request has been merged and the required CI checks have passed, create or select the latest project checkpoint and use the **Publish** control in the project management interface. This model intentionally does not add a GitHub Actions deployment workflow, deploy-hook secret, SSH credential, or external hosting contract. GitHub Actions continues to validate code changes; the release decision remains an explicit project-owner action in the built-in publishing interface.
