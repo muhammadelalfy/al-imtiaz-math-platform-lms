@@ -1,8 +1,14 @@
 <?php
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AuthorizationManagementController;
 use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\AcademicGroupController;
 use App\Http\Controllers\Api\ExamResultController;
 use App\Http\Controllers\Api\ExamManagementController;
+use App\Http\Controllers\Api\NotificationCampaignController;
+use App\Http\Controllers\Api\NotificationChannelSettingController;
+use App\Http\Controllers\Api\NotificationInboxController;
+use App\Http\Controllers\Api\ScheduledNotificationQueueController;
 use App\Http\Controllers\Api\QuestionBankController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PluginStoreController;
@@ -14,11 +20,56 @@ use Illuminate\Support\Facades\Route;
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/admin/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'admin'));
+Route::post('/auth/teacher/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'teacher'));
 Route::post('/auth/parent/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'parent'));
 Route::post('/auth/student/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'student'));
+Route::post('/scheduled/notifications/drain', ScheduledNotificationQueueController::class)
+    ->middleware('signed')
+    ->name('scheduled.notifications.drain');
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::get('/notifications', [NotificationInboxController::class, 'index']);
+    Route::post('/notifications/{notification}/read', [NotificationInboxController::class, 'markRead']);
+
+    Route::middleware(['role.guard:admin,teacher', 'can:notifications.channels.manage'])
+        ->prefix('staff/notification-channels')
+        ->group(function (): void {
+            Route::get('/', [NotificationChannelSettingController::class, 'index']);
+            Route::put('/{notificationChannelSetting}', [NotificationChannelSettingController::class, 'update']);
+        });
+
+    Route::middleware(['role.guard:admin,teacher', 'can:groups.manage'])
+        ->prefix('staff/academic-groups')
+        ->group(function (): void {
+            Route::get('/', [AcademicGroupController::class, 'index']);
+            Route::post('/', [AcademicGroupController::class, 'store']);
+            Route::get('/{academicGroup}', [AcademicGroupController::class, 'show']);
+            Route::put('/{academicGroup}', [AcademicGroupController::class, 'update']);
+            Route::delete('/{academicGroup}', [AcademicGroupController::class, 'destroy']);
+            Route::put('/{academicGroup}/students', [AcademicGroupController::class, 'syncStudents']);
+        });
+
+    Route::middleware(['role.guard:admin,teacher', 'can:notifications.send'])
+        ->prefix('staff/notifications')
+        ->group(function (): void {
+            Route::get('/audience-catalog', [NotificationCampaignController::class, 'audienceCatalog']);
+            Route::get('/', [NotificationCampaignController::class, 'index']);
+            Route::post('/', [NotificationCampaignController::class, 'store']);
+        });
+
+    Route::middleware(['role.guard:admin,teacher', 'can:authorization.manage'])
+        ->prefix('staff/authorization')
+        ->group(function (): void {
+            Route::get('/catalog', [AuthorizationManagementController::class, 'index']);
+            Route::post('/permissions', [AuthorizationManagementController::class, 'storePermission']);
+            Route::put('/permissions/{permission}', [AuthorizationManagementController::class, 'updatePermission']);
+            Route::delete('/permissions/{permission}', [AuthorizationManagementController::class, 'destroyPermission']);
+            Route::post('/roles', [AuthorizationManagementController::class, 'storeRole']);
+            Route::put('/roles/{role}', [AuthorizationManagementController::class, 'updateRole']);
+            Route::delete('/roles/{role}', [AuthorizationManagementController::class, 'destroyRole']);
+            Route::put('/staff/{user}/roles', [AuthorizationManagementController::class, 'syncStaffRoles']);
+        });
     Route::apiResource('students', StudentController::class)->only(['index','store','show','update','destroy']);
     Route::get('/students/{student}/qr', [StudentController::class, 'qr']);
     Route::apiResource('worksheets', WorksheetController::class)->only(['index','store','show']);

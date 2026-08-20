@@ -186,3 +186,22 @@
 - [x] Produce an Arabic Software Requirements Specification that traces delivered LMS capabilities, current payment methods, security boundaries, and the roadmap for future modules.
 - [x] Document the owner-gated Stripe activation prerequisite in the SRS; live Checkout and webhook work remains blocked in checklist item 177.
 - [x] Add Arabic diagrams to the SRS for role access, core LMS workflows, payment fulfillment, and the Stripe integration boundary.
+- [x] Audit the current Laravel authentication guards, role checks, teacher-panel navigation, and all authorization-sensitive API routes before multi-guard migration.
+- [x] Design a least-privilege multi-guard model for administrators, teachers, parents, and students, including role/permission ownership and migration safety.
+- [x] Implement secure role and permission CRUD with server-side authorization, validation, resources, factories, seeders, and regression coverage.
+- [x] Add an Arabic teacher-panel interface for authorized role/permission administrators without allowing teachers to grant protected administrator capabilities.
+- [x] Validate multi-guard authentication and role/permission management with backend/frontend tests, static analysis, production build, documentation, and CI-equivalent checks.
+- [x] Audit connected GitHub branch and remote state, then synchronize completed payment and Arabic SRS checkpoints without publishing unfinished multi-guard work. Published branch `chore/payment-and-srs-checkpoints` and opened pull request #4.
+- [x] Repair the GitHub Actions frontend-test CI environment and Laravel-test asset preparation so protected-branch checks can pass on the synchronization pull request. The repaired CI run passed both required checks.
+- [x] Audit parent/student relationships, grades, existing notification support, and free database-queue constraints for targeted messages.
+- [x] Design least-privilege in-app audiences for all parents, all students, selected recipients, a specific academic level, and a specific academic group, with scheduled queue-drain, retry, and failure semantics.
+- [x] Implement database-backed notification delivery, queued fan-out jobs, sender authorization, recipient inbox APIs, read-state tracking, and a signed scheduled queue-drain endpoint.
+- [x] Build an Arabic teacher/admin message composer plus parent/student notification inboxes with audience and delivery feedback.
+- [x] Add notification/group factories, regression coverage, SRS and operational documentation, full quality validation, and schedule setup instructions; dedicated GitHub pull-request publication is the remaining release action.
+- [x] Deliver the first notification release through the free in-app inbox and scheduled database-queue drain; WhatsApp and SMS remain credential-gated and inactive until the owner configures a provider and consent process.
+- [x] Add academic-group CRUD scoped to grade levels, with eager-loaded student counts and bulk multi-select member assignment/removal.
+- [x] Extend staff notification targeting to a specific academic group, retaining least-privilege sender authorization and group membership counts.
+- [x] Add channel-adapter contracts and delivery records for in-app, WhatsApp Cloud API, and SMS, with in-app active by default and external channels inactive until secure credentials and recipient consent are configured.
+- [x] Enforce that WhatsApp group automation is not enabled without a verified Official Business Account, invite-only group design, provider-limit validation, recipient consent, and an approved implementation; retain in-app and individual-recipient delivery in the current release.
+- [x] Audit and remove query-in-loop patterns from all touched grouping and notification code through eager loading, repository/service boundaries, bulk inserts, and strict lazy-loading tests.
+- [x] Provide dynamic teacher-managed non-secret WhatsApp/SMS channel settings while restricting access tokens, webhook secrets, and sender credentials to the project owner or administrator.

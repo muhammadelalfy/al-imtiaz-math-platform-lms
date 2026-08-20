@@ -46,6 +46,10 @@ return [
             'driver' => 'sanctum',
             'provider' => 'users',
         ],
+        'teacher' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
+        ],
         'parents' => [
             'driver' => 'sanctum',
             'provider' => 'users',

@@ -11,7 +11,40 @@ export type ApiUser = {
   name: string;
   email: string;
   role: Role;
+  can_manage_authorization?: boolean;
+  can_send_notifications?: boolean;
+  can_manage_groups?: boolean;
+  can_manage_notification_channels?: boolean;
   student_account?: { student?: Student } | null;
+};
+export type AuthorizationPermission = {
+  id: number;
+  name: string;
+  label: string;
+  description?: string | null;
+  is_system: boolean;
+};
+export type AuthorizationRole = {
+  id: number;
+  name: string;
+  label: string;
+  description?: string | null;
+  is_system: boolean;
+  permissions: AuthorizationPermission[];
+  permission_ids: number[];
+};
+export type AuthorizationStaff = {
+  id: number;
+  name: string;
+  email: string;
+  base_role: "admin" | "teacher";
+  roles: AuthorizationRole[];
+  role_ids: number[];
+};
+export type AuthorizationCatalog = {
+  permissions: AuthorizationPermission[];
+  roles: AuthorizationRole[];
+  staff: AuthorizationStaff[];
 };
 export type Student = {
   id: number;
@@ -174,6 +207,65 @@ export type Payment = {
   student?: Student;
 };
 
+export type AcademicGroup = {
+  id: number;
+  grade: string;
+  name: string;
+  is_active: boolean;
+  students_count?: number;
+  students?: Pick<Student, "id" | "name" | "grade" | "group">[];
+};
+
+export type NotificationChannel = "in_app" | "whatsapp" | "sms";
+export type NotificationAudience =
+  | "all_parents"
+  | "all_students"
+  | "selected"
+  | "grade"
+  | "academic_group";
+export type NotificationChannelSetting = {
+  id: number;
+  code: NotificationChannel;
+  label: string;
+  is_enabled: boolean;
+  is_provider_ready: boolean;
+  settings: {
+    sender_label?: string | null;
+    template_name?: string | null;
+    auto_create_group?: boolean;
+  };
+  updated_at?: string | null;
+};
+export type NotificationCampaign = {
+  id: number;
+  audience: NotificationAudience;
+  grade?: string | null;
+  academic_group_id?: number | null;
+  title: string;
+  body: string;
+  recipient_count: number;
+  channels: NotificationChannel[];
+  queued_at?: string | null;
+  completed_at?: string | null;
+};
+export type InAppNotification = {
+  id: string;
+  title: string;
+  body: string;
+  campaign_id?: number | null;
+  created_at?: string | null;
+  read_at?: string | null;
+};
+export type NotificationAudienceCatalog = {
+  grades: string[];
+  recipients: Pick<ApiUser, "id" | "name" | "role">[];
+  academic_groups: AcademicGroup[];
+  channels: Pick<
+    NotificationChannelSetting,
+    "code" | "label" | "is_enabled" | "is_provider_ready"
+  >[];
+};
+
 const API_URL = (import.meta.env.VITE_LARAVEL_API_URL || "/api").replace(
   /\/$/,
   ""
@@ -185,8 +277,8 @@ function saveToken(token: string): void {
 }
 
 async function requestCollection<T>(path: string): Promise<T[]> {
-  const result = await request<{ data: T[] }>(path);
-  return result.data;
+  const result = await request<{ data: T[] } | T[]>(path);
+  return Array.isArray(result) ? result : result.data;
 }
 
 export class ApiError extends Error {
@@ -279,7 +371,7 @@ export const laravelApi = {
     return result.user;
   },
   async loginAsRole(
-    role: "admin" | "parent" | "student",
+    role: "admin" | "teacher" | "parent" | "student",
     payload: { email: string; password: string }
   ) {
     const result = await request<{
@@ -309,6 +401,72 @@ export const laravelApi = {
   },
   async me() {
     return request<ApiUser>("/auth/me");
+  },
+  async authorizationCatalog() {
+    return request<AuthorizationCatalog>("/staff/authorization/catalog");
+  },
+  async createAuthorizationPermission(
+    payload: Pick<AuthorizationPermission, "name" | "label" | "description">
+  ) {
+    return request<AuthorizationPermission>(
+      "/staff/authorization/permissions",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+  async updateAuthorizationPermission(
+    id: number,
+    payload: Partial<
+      Pick<AuthorizationPermission, "name" | "label" | "description">
+    >
+  ) {
+    return request<AuthorizationPermission>(
+      `/staff/authorization/permissions/${id}`,
+      { method: "PUT", body: JSON.stringify(payload) }
+    );
+  },
+  async deleteAuthorizationPermission(id: number) {
+    return request<void>(`/staff/authorization/permissions/${id}`, {
+      method: "DELETE",
+    });
+  },
+  async createAuthorizationRole(
+    payload: Pick<
+      AuthorizationRole,
+      "name" | "label" | "description" | "permission_ids"
+    >
+  ) {
+    return request<AuthorizationRole>("/staff/authorization/roles", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  async updateAuthorizationRole(
+    id: number,
+    payload: Partial<
+      Pick<
+        AuthorizationRole,
+        "name" | "label" | "description" | "permission_ids"
+      >
+    >
+  ) {
+    return request<AuthorizationRole>(`/staff/authorization/roles/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+  async deleteAuthorizationRole(id: number) {
+    return request<void>(`/staff/authorization/roles/${id}`, {
+      method: "DELETE",
+    });
+  },
+  async syncStaffAuthorizationRoles(userId: number, roleIds: number[]) {
+    return request<AuthorizationStaff>(
+      `/staff/authorization/staff/${userId}/roles`,
+      { method: "PUT", body: JSON.stringify({ role_ids: roleIds }) }
+    );
   },
   async logout() {
     await request("/auth/logout", { method: "POST" });
@@ -547,6 +705,85 @@ export const laravelApi = {
   },
   async deletePayment(id: number) {
     return request<void>(`/payments/${id}`, { method: "DELETE" });
+  },
+  async academicGroups() {
+    return requestCollection<AcademicGroup>("/staff/academic-groups");
+  },
+  async academicGroup(id: number) {
+    return request<AcademicGroup>(`/staff/academic-groups/${id}`);
+  },
+  async createAcademicGroup(
+    payload: Pick<AcademicGroup, "grade" | "name"> & { is_active?: boolean }
+  ) {
+    return request<AcademicGroup>("/staff/academic-groups", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  async updateAcademicGroup(
+    id: number,
+    payload: Partial<Pick<AcademicGroup, "grade" | "name" | "is_active">>
+  ) {
+    return request<AcademicGroup>(`/staff/academic-groups/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+  async deleteAcademicGroup(id: number) {
+    return request<void>(`/staff/academic-groups/${id}`, { method: "DELETE" });
+  },
+  async syncAcademicGroupStudents(id: number, studentIds: number[]) {
+    return request<AcademicGroup>(`/staff/academic-groups/${id}/students`, {
+      method: "PUT",
+      body: JSON.stringify({ student_ids: studentIds }),
+    });
+  },
+  async notificationAudienceCatalog() {
+    return request<NotificationAudienceCatalog>(
+      "/staff/notifications/audience-catalog"
+    );
+  },
+  async notificationCampaigns() {
+    return requestCollection<NotificationCampaign>("/staff/notifications");
+  },
+  async createNotificationCampaign(payload: {
+    audience: NotificationAudience;
+    title: string;
+    body: string;
+    grade?: string;
+    academic_group_id?: number;
+    recipient_ids?: number[];
+    channels?: NotificationChannel[];
+  }) {
+    return request<NotificationCampaign>("/staff/notifications", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  async notificationInbox() {
+    return requestCollection<InAppNotification>("/notifications");
+  },
+  async markNotificationRead(id: string) {
+    return request<InAppNotification>(`/notifications/${id}/read`, {
+      method: "POST",
+    });
+  },
+  async notificationChannels() {
+    return requestCollection<NotificationChannelSetting>(
+      "/staff/notification-channels"
+    );
+  },
+  async updateNotificationChannel(
+    id: number,
+    payload: Pick<NotificationChannelSetting, "is_enabled" | "settings">
+  ) {
+    return request<NotificationChannelSetting>(
+      `/staff/notification-channels/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      }
+    );
   },
   async reportSummary() {
     return request<{

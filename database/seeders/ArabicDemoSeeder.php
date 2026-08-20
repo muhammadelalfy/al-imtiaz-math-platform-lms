@@ -14,6 +14,9 @@ use App\Models\Payment;
 use App\Models\QuestionBankQuestion;
 use App\Models\PluginProduct;
 use App\Models\PluginPurchase;
+use App\Models\AcademicGroup;
+use App\Models\AuthorizationPermission;
+use App\Models\AuthorizationRole;
 use App\Models\Student;
 use App\Models\StudentAccount;
 use App\Models\User;
@@ -40,7 +43,9 @@ class ArabicDemoSeeder extends Seeder
 
         $admin = $this->user(self::ADMIN_EMAIL, 'مدير الامتياز', 'admin', self::ADMIN_PASSWORD);
         $teacher = $this->user(self::TEACHER_EMAIL, 'أستاذ الرياضيات', 'teacher', self::TEACHER_PASSWORD);
+        $this->seedAuthorization($teacher);
         $students = $this->seedStudents();
+        $this->seedAcademicGroups($students);
         $this->seedExams($teacher, $students);
         $this->seedQuestionBank($teacher);
         $this->seedPlugins($admin);
@@ -98,6 +103,47 @@ class ArabicDemoSeeder extends Seeder
         foreach ($questions as $question) {
             QuestionBankQuestion::updateOrCreate(['title' => $question['title']], [...$question, 'created_by' => $teacher->id, 'is_active' => true]);
         }
+    }
+
+    private function seedAuthorization(User $teacher): void
+    {
+        $systemPermissions = [
+            'authorization.manage' => ['إدارة الأدوار والصلاحيات', 'الوصول إلى لوحة إدارة الأدوار والصلاحيات للعاملين.'],
+            'students.read' => ['عرض الطلاب', 'عرض سجلات الطلاب ضمن صلاحيات العمل.'],
+            'attendance.manage' => ['إدارة الحضور', 'تسجيل الحضور وتحديثه.'],
+            'exams.manage' => ['إدارة الاختبارات', 'إعداد الاختبارات والأسئلة ومتابعتها.'],
+            'worksheets.manage' => ['إدارة الشيتات', 'إنشاء الشيتات وتعيينها للطلاب.'],
+            'reports.read' => ['عرض التقارير', 'عرض مؤشرات وتقارير المركز.'],
+            'notifications.send' => ['إرسال الإشعارات', 'إرسال إشعارات داخل المنصة للطلاب وأولياء الأمور ضمن الجمهور المحدد.'],
+            'notifications.channels.manage' => ['إدارة قنوات الإشعار', 'إدارة خيارات قنوات الإشعار غير السرية والقوالب المعتمدة دون الوصول إلى مفاتيح مزودي الخدمة.'],
+            'groups.manage' => ['إدارة المجموعات الدراسية', 'إنشاء المجموعات الدراسية وتحديد طلابها وإدارتها.'],
+        ];
+
+        foreach ($systemPermissions as $name => [$label, $description]) {
+            AuthorizationPermission::query()->updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['label' => $label, 'description' => $description, 'is_system' => true],
+            );
+        }
+
+        $manager = AuthorizationRole::query()->updateOrCreate(
+            ['name' => 'staff-permission-manager', 'guard_name' => 'web'],
+            ['label' => 'مسؤول صلاحيات العاملين', 'description' => 'دور نظامي يمنح للمعلم المصرح له إدارة الأدوار والصلاحيات غير النظامية.', 'is_system' => true],
+        );
+        $manager->syncPermissions(AuthorizationPermission::query()->where('name', 'authorization.manage')->firstOrFail());
+
+        $notifier = AuthorizationRole::query()->updateOrCreate(
+            ['name' => 'staff-notification-sender', 'guard_name' => 'web'],
+            ['label' => 'مرسل إشعارات العاملين', 'description' => 'دور نظامي يمنح للمعلم المصرح له إرسال الإشعارات الداخلية للطلاب وأولياء الأمور.', 'is_system' => true],
+        );
+        $notifier->syncPermissions(AuthorizationPermission::query()->whereIn('name', ['notifications.send', 'notifications.channels.manage'])->get());
+
+        $groupManager = AuthorizationRole::query()->updateOrCreate(
+            ['name' => 'staff-academic-group-manager', 'guard_name' => 'web'],
+            ['label' => 'مسؤول المجموعات الدراسية', 'description' => 'دور نظامي يمنح للمعلم المصرح له إدارة مجموعات الطلاب الدراسية.', 'is_system' => true],
+        );
+        $groupManager->syncPermissions(AuthorizationPermission::query()->where('name', 'groups.manage')->firstOrFail());
+        $teacher->syncRoles([$manager, $notifier, $groupManager]);
     }
 
     private function seedExams(User $teacher, array $students): void
@@ -222,6 +268,18 @@ class ArabicDemoSeeder extends Seeder
             $student->ensureQrToken();
             return $student;
         })->all();
+    }
+
+    /** @param array<int, Student> $students */
+    private function seedAcademicGroups(array $students): void
+    {
+        foreach (collect($students)->groupBy('grade') as $grade => $gradeStudents) {
+            $group = AcademicGroup::query()->updateOrCreate(
+                ['grade' => $grade, 'name' => 'مجموعة '.$grade],
+                ['is_active' => true],
+            );
+            $group->students()->sync($gradeStudents->pluck('id')->all());
+        }
     }
 
     private function user(string $email, string $name, string $role, string $password): User

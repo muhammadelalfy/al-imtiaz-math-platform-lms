@@ -31,14 +31,22 @@ class AuthController extends Controller
 
     public function loginAsRole(Request $request, string $role)
     {
-        abort_unless(in_array($role, ['admin', 'parent', 'student'], true), 404);
+        abort_unless(in_array($role, ['admin', 'teacher', 'parent', 'student'], true), 404);
 
         return $this->loginForRole($request, $role);
     }
 
     public function me(Request $request)
     {
-        return $request->user()->load('studentAccount.student');
+        /** @var User $user */
+        $user = $request->user();
+        $user->load(['studentAccount.student', 'roles.permissions', 'permissions']);
+        $user->setAttribute('can_manage_authorization', $user->can('authorization.manage'));
+        $user->setAttribute('can_send_notifications', $user->can('notifications.send'));
+        $user->setAttribute('can_manage_groups', $user->can('groups.manage'));
+        $user->setAttribute('can_manage_notification_channels', $user->can('notifications.channels.manage'));
+
+        return $user;
     }
 
     public function logout(Request $request)
@@ -53,23 +61,26 @@ class AuthController extends Controller
         $data = $request->validate(['email' => 'required|email', 'password' => 'required|string']);
         $query = User::where('email', $data['email']);
 
-        if ($role === 'admin') {
-            $query->whereIn('role', ['admin', 'teacher']);
-        } elseif ($role !== 'general') {
+        if ($role !== 'general') {
             $query->where('role', $role);
         }
 
         $user = $query->first();
         abort_unless($user && Hash::check($data['password'], $user->password), 422, 'بيانات الدخول غير صحيحة لهذا النوع من الحسابات.');
 
-        return $this->tokenResponse($user, $role === 'admin' ? 'admin' : $role);
+        return $this->tokenResponse($user, $role === 'general' ? $user->role : $role);
     }
 
     private function tokenResponse(User $user, ?string $loginType = null): array
     {
         return [
-            'user' => $user->load('studentAccount.student'),
-            'token' => $user->createToken('lms-web')->plainTextToken,
+            'user' => tap($user->load(['studentAccount.student', 'roles.permissions', 'permissions']), function (User $loadedUser): void {
+                $loadedUser->setAttribute('can_manage_authorization', $loadedUser->can('authorization.manage'));
+                $loadedUser->setAttribute('can_send_notifications', $loadedUser->can('notifications.send'));
+                $loadedUser->setAttribute('can_manage_groups', $loadedUser->can('groups.manage'));
+                $loadedUser->setAttribute('can_manage_notification_channels', $loadedUser->can('notifications.channels.manage'));
+            }),
+            'token' => $user->createToken('lms-'.$loginType, ['guard:'.$loginType])->plainTextToken,
             'login_type' => $loginType ?? $user->role,
         ];
     }
