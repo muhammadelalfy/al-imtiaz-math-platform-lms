@@ -32,19 +32,19 @@ import * as QRCode from "qrcode";
 import QrScanner from "qr-scanner";
 import {
   ApiError,
+  isQueuedOfflineOperation,
   laravelApi,
+  offlineScopeForUser,
   syncOfflineQueue,
   type Attendance,
   type ExamResult,
   type Payment,
   type Role,
   type Student,
+  type TeacherSlackLogDestination,
   type Worksheet,
 } from "@/lib/laravelApi";
-import {
-  cacheDashboardSnapshot,
-  readDashboardSnapshot,
-} from "@/lib/offlineStore";
+import { cacheOfflineSnapshot, readOfflineSnapshot } from "@/lib/offlineStore";
 import {
   formatExamTime,
   shouldAutoSubmit,
@@ -53,6 +53,8 @@ import {
 import PluginStorePanel from "@/components/PluginStorePanel";
 import AuthorizationManagementPanel from "@/components/AuthorizationManagementPanel";
 import NotificationManagementPanel from "@/components/NotificationManagementPanel";
+import SuperAdminPlatformPanel from "@/components/SuperAdminPlatformPanel";
+import TeacherSubscriptionPanel from "@/components/TeacherSubscriptionPanel";
 import NotificationInbox from "@/components/NotificationInbox";
 import MathUniverseBackground from "@/components/MathUniverseBackground";
 import ExamWarningBanner from "@/components/ExamWarningBanner";
@@ -81,6 +83,8 @@ type Tab =
   | "plugins"
   | "notifications"
   | "authorization"
+  | "subscription"
+  | "platform"
   | "settings";
 type Portal = "admin" | "teacher" | "parent" | "student";
 const portalLabels: Record<Portal, string> = {
@@ -408,6 +412,7 @@ function AuthenticatedDashboard({
   const [payments, setPayments] = useState<Payment[]>([]);
   const [busy, setBusy] = useState(true);
   const [online, setOnline] = useState(() => navigator.onLine);
+  const [syncing, setSyncing] = useState(false);
   const restricted = user.role === "student" || user.role === "parent";
   const load = async () => {
     setBusy(true);
@@ -430,21 +435,22 @@ function AuthenticatedDashboard({
       setAttendance(nextAttendance);
       setExams(nextExams);
       setPayments(nextPayments);
-      cacheDashboardSnapshot({
-        students: nextStudents,
-        worksheets: nextWorksheets,
-        attendance: nextAttendance,
-        exams: nextExams,
-        payments: nextPayments,
-      });
+      const offlineSnapshot = await laravelApi.offlineSnapshot();
+      await cacheOfflineSnapshot(offlineScopeForUser(user), offlineSnapshot);
     } catch (caught) {
-      const snapshot = readDashboardSnapshot();
+      const snapshot = await readOfflineSnapshot<{
+        students: Student[];
+        worksheets: Worksheet[];
+        attendance: Attendance[];
+        exams: ExamResult[];
+        payments: Payment[];
+      }>(offlineScopeForUser(user));
       if (snapshot) {
-        setStudents(snapshot.students as Student[]);
-        setWorksheets(snapshot.worksheets as Worksheet[]);
-        setAttendance(snapshot.attendance as Attendance[]);
-        setExams(snapshot.exams as ExamResult[]);
-        setPayments(snapshot.payments as Payment[]);
+        setStudents(snapshot.students);
+        setWorksheets(snapshot.worksheets);
+        setAttendance(snapshot.attendance);
+        setExams(snapshot.exams);
+        setPayments(snapshot.payments);
         toast("يتم عرض آخر بيانات محفوظة محلياً");
       } else
         toast(
@@ -454,18 +460,42 @@ function AuthenticatedDashboard({
       setBusy(false);
     }
   };
+  const replayOfflineOperations = async () => {
+    if (!navigator.onLine) {
+      toast("اتصل بالإنترنت أولاً لمزامنة العمليات المحفوظة.");
+      return;
+    }
+    setSyncing(true);
+    try {
+      const summary = await syncOfflineQueue();
+      if (summary.applied) toast(`تمت مزامنة ${summary.applied} عملية`);
+      else if (!summary.pending && !summary.conflicts && !summary.rejected)
+        toast("لا توجد عمليات محلية بانتظار المزامنة.");
+      if (summary.conflicts || summary.rejected)
+        toast("توجد عمليات تحتاج مراجعة قبل إعادة المحاولة");
+      await load();
+    } finally {
+      setSyncing(false);
+    }
+  };
   useEffect(() => {
     const handleOnline = () => {
       setOnline(true);
-      void syncOfflineQueue().then(count => {
-        if (count) toast(`تمت مزامنة ${count} عملية`);
-        void load();
-      });
+      void replayOfflineOperations();
     };
     const handleOffline = () => setOnline(false);
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
     void load();
+    if (user.role === "teacher") {
+      void laravelApi.teacherSubscription().then(subscription => {
+        if (subscription.show_expiry_reminder && subscription.subscription) {
+          toast(
+            `تذكير: ينتهي اشتراك مركزك خلال ${subscription.subscription.days_remaining} أيام. راجع الإدارة لتجديد الباقة.`
+          );
+        }
+      });
+    }
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
@@ -516,6 +546,12 @@ function AuthenticatedDashboard({
                 { id: "reports", label: "التقارير", icon: BarChart3 },
                 { id: "plugins", label: "متجر الإضافات", icon: Package },
                 {
+                  id: "subscription",
+                  label: "اشتراك المركز",
+                  icon: CreditCard,
+                },
+                { id: "platform", label: "إدارة المنصة", icon: Activity },
+                {
                   id: "notifications",
                   label: "المجموعات والإشعارات",
                   icon: Bell,
@@ -532,6 +568,10 @@ function AuthenticatedDashboard({
               item =>
                 item.id !== "authorization" || user.can_manage_authorization
             )
+            .filter(
+              item => item.id !== "subscription" || user.role === "teacher"
+            )
+            .filter(item => item.id !== "platform" || user.is_super_admin)
             .map(item => {
               const Icon = item.icon;
               return (
@@ -565,6 +605,14 @@ function AuthenticatedDashboard({
               {online ? "متصل" : "غير متصل — بيانات محفوظة"}
             </div>
             <ThemeToggle />
+            <button
+              className="outline"
+              disabled={!online || syncing}
+              onClick={() => void replayOfflineOperations()}
+            >
+              <RefreshCw className={syncing ? "spin" : ""} size={15} />
+              {syncing ? "جارٍ المزامنة" : "مزامنة المحفوظات"}
+            </button>
             <button className="outline" onClick={load}>
               <RefreshCw size={15} /> تحديث البيانات
             </button>
@@ -596,6 +644,7 @@ function AuthenticatedDashboard({
             canManageChannels={Boolean(user.can_manage_notification_channels)}
             canManageGroups={Boolean(user.can_manage_groups)}
             canSendNotifications={Boolean(user.can_send_notifications)}
+            isSuperAdmin={Boolean(user.is_super_admin)}
             onRefresh={load}
           />
         )}
@@ -759,6 +808,7 @@ function AdminView({
   canManageChannels,
   canManageGroups,
   canSendNotifications,
+  isSuperAdmin,
   onRefresh,
 }: {
   tab: Tab;
@@ -772,6 +822,7 @@ function AdminView({
   canManageChannels: boolean;
   canManageGroups: boolean;
   canSendNotifications: boolean;
+  isSuperAdmin: boolean;
   onRefresh: () => Promise<void>;
 }) {
   if (tab === "classes") return <ClassNavigator students={students} />;
@@ -797,6 +848,9 @@ function AdminView({
     );
   if (tab === "plugins")
     return <PluginStorePanel onRefresh={onRefresh} role={role} />;
+  if (tab === "subscription" && role === "teacher")
+    return <TeacherSubscriptionPanel />;
+  if (tab === "platform" && isSuperAdmin) return <SuperAdminPlatformPanel />;
   if (tab === "notifications" && (canManageGroups || canSendNotifications))
     return (
       <NotificationManagementPanel
@@ -809,7 +863,7 @@ function AdminView({
     return (
       <AuthorizationManagementPanel canAssignStaffRoles={role === "admin"} />
     );
-  if (tab === "settings") return <SettingsView />;
+  if (tab === "settings") return <SettingsView role={role} />;
   if (tab === "attendance")
     return (
       <CrudPanel
@@ -1375,7 +1429,7 @@ function ReportsView({
     </section>
   );
 }
-function SettingsView() {
+function SettingsView({ role }: { role: Role }) {
   return (
     <section className="live-page">
       <div className="page-head">
@@ -1397,7 +1451,139 @@ function SettingsView() {
           <b>تلقائية عند عودة الاتصال</b>
         </div>
       </div>
+      {role === "teacher" && <TeacherSlackLogSettings />}
     </section>
+  );
+}
+
+function TeacherSlackLogSettings() {
+  const [destination, setDestination] =
+    useState<TeacherSlackLogDestination | null>(null);
+  const [channelLabel, setChannelLabel] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [enabled, setEnabled] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void laravelApi
+      .teacherSlackLogDestination()
+      .then(next => {
+        setDestination(next);
+        setChannelLabel(next.channel_label || "");
+        setEnabled(next.is_enabled);
+      })
+      .catch(caught =>
+        toast(
+          caught instanceof ApiError
+            ? caught.message
+            : "تعذر تحميل إعدادات Slack"
+        )
+      );
+  }, []);
+
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const next = await laravelApi.updateTeacherSlackLogDestination({
+        channel_label: channelLabel.trim(),
+        ...(webhookUrl.trim() ? { webhook_url: webhookUrl.trim() } : {}),
+        is_enabled: enabled,
+      });
+      setDestination(next);
+      setWebhookUrl("");
+      toast("تم حفظ إعداد قناة Slack الخاصة بك");
+    } catch (caught) {
+      toast(
+        caught instanceof ApiError ? caught.message : "تعذر حفظ إعدادات Slack"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const clear = async () => {
+    setSaving(true);
+    try {
+      await laravelApi.clearTeacherSlackLogDestination();
+      setDestination({ configured: false, is_enabled: false });
+      setWebhookUrl("");
+      setEnabled(false);
+      toast("تم حذف رابط Slack المشفر وإيقاف السجل الخارجي");
+    } catch (caught) {
+      toast(
+        caught instanceof ApiError ? caught.message : "تعذر حذف إعدادات Slack"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form className="card settings-card slack-log-settings" onSubmit={save}>
+      <div className="settings-card__head">
+        <div>
+          <span className="eyebrow">سجل خارجي خاص بالمدرس</span>
+          <h3>سجل العمليات إلى Slack</h3>
+        </div>
+        <span
+          className={
+            destination?.configured ? "payment-paid" : "sync-badge offline"
+          }
+        >
+          {destination?.configured ? "تم الربط" : "غير مهيأ"}
+        </span>
+      </div>
+      <p>
+        تُرسل عمليات الحفظ والتعديلات والأخطاء إلى القناة التي تختارها فقط. لا
+        يُحفظ سجل العمليات داخل المنصة، ولا يظهر رابط Slack بعد حفظه.
+      </p>
+      <label>
+        اسم القناة للعرض
+        <input
+          value={channelLabel}
+          onChange={event => setChannelLabel(event.target.value)}
+          placeholder="مثال: سجلات أستاذ أحمد"
+        />
+      </label>
+      <label>
+        رابط Slack Incoming Webhook
+        <input
+          type="password"
+          value={webhookUrl}
+          onChange={event => setWebhookUrl(event.target.value)}
+          placeholder={
+            destination?.configured
+              ? "اتركه فارغاً للاحتفاظ بالرابط الحالي"
+              : "https://hooks.slack.com/services/..."
+          }
+          autoComplete="off"
+        />
+      </label>
+      <label className="check slack-log-settings__toggle">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={event => setEnabled(event.target.checked)}
+        />
+        تفعيل إرسال سجل العمليات إلى قناتي
+      </label>
+      <div className="slack-log-settings__actions">
+        <button className="primary" disabled={saving}>
+          {saving ? "جارٍ الحفظ..." : "حفظ إعدادات Slack"}
+        </button>
+        {destination?.configured && (
+          <button
+            className="outline"
+            type="button"
+            disabled={saving}
+            onClick={() => void clear()}
+          >
+            إلغاء الربط
+          </button>
+        )}
+      </div>
+    </form>
   );
 }
 
@@ -1665,10 +1851,15 @@ function CrudPanel<T extends { id: number }>({
         max_score: form.max_score ? Number(form.max_score) : undefined,
         amount: form.amount ? Number(form.amount) : undefined,
       };
-      if (editing) await update(editing, payload);
-      else await create(payload);
+      const result = editing
+        ? await update(editing, payload)
+        : await create(payload);
       setForm({});
       setEditing(null);
+      if (isQueuedOfflineOperation(result)) {
+        toast("تم حفظ العملية محلياً وستتم مزامنتها عند عودة الاتصال");
+        return;
+      }
       await onRefresh();
       toast("تم حفظ السجل");
     } catch (caught) {

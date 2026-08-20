@@ -1,0 +1,30 @@
+import { defineConfig, devices } from "@playwright/test";
+
+export default defineConfig({
+  testDir: "./tests/e2e",
+  fullyParallel: false,
+  reporter: "list",
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
+  retries: process.env.CI ? 2 : 0,
+  workers: 1,
+  use: {
+    baseURL: "http://127.0.0.1:3001",
+    trace: "on-first-retry",
+    ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH
+      ? {
+          launchOptions: {
+            executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH,
+            args: ["--no-sandbox", "--disable-dev-shm-usage"],
+          },
+        }
+      : {}),
+  },
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  webServer: {
+    command:
+      "HOSTNAME=127.0.0.1 PORT=3001 NODE_ENV=production node .next/standalone/server.js",
+    url: "http://127.0.0.1:3001",
+    reuseExistingServer: !process.env.CI,
+  },
+});

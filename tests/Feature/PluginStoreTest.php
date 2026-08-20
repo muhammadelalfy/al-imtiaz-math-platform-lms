@@ -144,6 +144,30 @@ PHP);
         $this->postJson("/api/plugins/{$plugin->id}/install")->assertForbidden();
     }
 
+    public function test_teacher_catalog_includes_active_core_payment_center_without_exposing_payment_configuration(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        PluginProduct::updateOrCreate(['slug' => 'payment-center'], [
+            'name' => 'مركز المدفوعات والاشتراكات',
+            'version' => '1.0.0',
+            'module_name' => 'CorePayments',
+            'price' => 0,
+            'is_active' => true,
+            'metadata' => ['category' => 'payments', 'core_feature' => true],
+        ]);
+        Sanctum::actingAs($teacher, ['guard:teacher']);
+
+        $this->getJson('/api/plugins')
+            ->assertOk()
+            ->assertJsonFragment([
+                'slug' => 'payment-center',
+                'name' => 'مركز المدفوعات والاشتراكات',
+                'core_feature' => true,
+            ])
+            ->assertJsonMissing(['recipient'])
+            ->assertJsonMissing(['instructions']);
+    }
+
     public function test_unsafe_artifact_paths_are_rejected(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

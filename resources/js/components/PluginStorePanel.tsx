@@ -283,16 +283,18 @@ export default function PluginStorePanel({ onRefresh, role }: Props) {
                     <span className="eyebrow">v{plugin.version}</span>
                     <span
                       className={
-                        plugin.installed
+                        plugin.core_feature || plugin.installed
                           ? "plugin-status installed"
                           : "plugin-status"
                       }
                     >
-                      {plugin.installed
-                        ? "مثبتة"
-                        : plugin.payment_status
-                          ? paymentStatusLabel[plugin.payment_status]
-                          : "متاحة"}
+                      {plugin.core_feature
+                        ? "مضمنة"
+                        : plugin.installed
+                          ? "مثبتة"
+                          : plugin.payment_status
+                            ? paymentStatusLabel[plugin.payment_status]
+                            : "متاحة"}
                     </span>
                   </div>
                   <h3>{plugin.name}</h3>
@@ -311,7 +313,11 @@ export default function PluginStorePanel({ onRefresh, role }: Props) {
                       : `${plugin.price} جنيه`}
                   </strong>
                   <div className="plugin-actions">
-                    {plugin.installed ? (
+                    {plugin.core_feature ? (
+                      <span className="plugin-payment-pending">
+                        <CheckCircle2 size={14} /> متاحة داخل النظام
+                      </span>
+                    ) : plugin.installed ? (
                       <button
                         className="outline danger-text"
                         disabled={working}

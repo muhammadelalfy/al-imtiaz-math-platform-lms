@@ -23,4 +23,11 @@ export default defineConfig({
       ignored: ["**/storage/framework/views/**"],
     },
   },
+  test: {
+    include: [
+      "resources/js/**/*.test.{ts,tsx}",
+      "frontend/src/**/*.test.{ts,tsx}",
+    ],
+    exclude: ["frontend/tests/e2e/**"],
+  },
 });

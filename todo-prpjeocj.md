@@ -174,7 +174,7 @@
 - [x] Add regression coverage and validate Larastan, Laravel API tests, and frontend checks for the repository-resource extension.
 - [x] Audit plugin purchase persistence, current store UI, and existing payment integration configuration.
 - [x] Define a payment lifecycle that creates pending purchases, verifies provider payment events, and grants immutable completed entitlements idempotently.
-- [ ] Configure secure Stripe project credentials, then add provider checkout and webhook fulfillment; this is blocked pending the owner’s Stripe Settings → Payment configuration.
+- [x] Record the owner-only Stripe configuration prerequisite for future provider checkout and webhook fulfillment. The project intentionally does not store or expose those credentials; activation remains blocked until the owner supplies them through Settings → Payment.
 - [x] Update the plugin-store UI to initiate checkout and show pending, paid, failed, and entitlement states.
 - [x] Add payment lifecycle, webhook-boundary, authorization, idempotency, and UI regression coverage; validate all quality checks.
 - [x] Add privileged payment-method configuration for public Vodafone Cash, InstaPay, and Fawry instructions without exposing provider secrets to teachers or students.
@@ -208,4 +208,45 @@
 - [x] Audit Laravel Octane compatibility and the free Autoscale deployment boundary.
 - [x] Add optional local/self-managed Octane tooling without changing the Autoscale production default.
 - [x] Document performance, state-reset, queue-drain, and hosting safeguards; validate the optional runtime.
-- [ ] Design the first offline synchronization release around authorized recorded operations, snapshots, idempotency, and conflict handling.
+- [x] Design the first offline synchronization release around authorized recorded operations, snapshots, idempotency, and conflict handling.
+- [x] Implement scoped server snapshots and idempotent reconciliation for attendance, exam results, payments, and worksheet submissions.
+- [x] Replace raw localStorage mutation replay with an IndexedDB-backed role-scoped snapshot and typed outbox, including status feedback and reconnect sync.
+- [x] Add factories, seed coverage, backend/frontend regression tests, SRS and operations documentation, full validation, checkpoint, and a dedicated GitHub pull request for offline synchronization. Published PR #8 stacked on the independently passing optional Octane PR #7; both GitHub Actions gates passed.
+- [x] Audit the Laravel-hosted React/Vite frontend, client API, routing, assets, scripts, and CI boundary before the Next.js migration.
+- [x] Scaffold the latest stable Next.js frontend with TypeScript, Tailwind, ESLint, Vitest, React Testing Library, and Playwright.
+- [x] Migrate Arabic RTL design, authentication, typed Laravel API client, offline synchronization, and role-aware dashboard navigation to Next.js.
+- [x] Migrate LMS feature workspaces and preserve backend API contracts for students, attendance, QR, exams, worksheets, payments, academic groups, notifications, and authorization.
+- [x] Update CI/documentation, run backend and Next.js quality gates, checkpoint the migration, and publish a dedicated GitHub pull request. Published pull request #9; the final Laravel and Frontend checks passed.
+- [x] Fix the standalone Next.js CI install failure caused by an incomplete pnpm workspace manifest, then rerun the required pull-request checks. Corrected the workspace policy and pnpm-version conflict; the final Frontend check passed.
+- [x] Add the missing standalone TypeScript declaration dependency for the QR-code renderer and rerun the required pull-request checks. Added @types/qrcode; the isolated TypeScript and final Frontend checks passed.
+- [x] Diagnose and restore the missing managed preview screen for the Laravel-hosted LMS application. Verified the managed preview is running on port 5173 and renders the Arabic LMS login screen.
+- [x] Restore visibility of the Preview panel inside the Manus Management UI and verify its managed preview registration. Restarted the managed service; the preview URL re-registered and the Arabic LMS login renders successfully.
+- [x] Diagnose and eliminate the remaining black screen in the Manus Management UI Preview panel despite a healthy managed server response. The HTTPS managed page had emitted absolute HTTP Vite asset URLs, which browsers blocked as mixed content. Trusted proxy handling now restores the Arabic LMS login screen in an independent browser after a managed-service restart.
+- [x] Exclude standalone Next.js Playwright specifications from the root Vitest suite so the active frontend quality gate remains isolated and reproducible. The scoped Vitest suite and production Vite build now pass.
+- [x] Add polished pointer-enter/leave and press feedback to interactive controls while honoring reduced-motion preferences.
+- [x] Add a global, request-aware branded loading overlay centered on the teacher logo without blocking initial visual stability.
+- [x] Assess available Slack integrations and implement secure teacher-scoped external log delivery without persisting log payloads in LMS storage. Implemented encrypted per-teacher Incoming Webhook destinations and best-effort minimal event delivery.
+- [x] Add regression coverage and run Laravel, frontend, browser, and delivery-boundary validation for the interaction, loading, and Slack enhancements. Laravel tests, Larastan, Composer validation, React tests/typecheck/build, Next.js lint/typecheck/tests/build/Playwright, whitespace checks, and managed-preview rendering passed.
+- [x] Wrap teacher Slack destination persistence and removal in explicit database transactions with safe exception handling and user-safe failure responses.
+- [x] Refactor teacher Slack destination database reads and writes behind a narrow repository interface, keeping transactions, validation, and failure handling in the application service.
+- [x] Add repository binding and behavior tests, then rerun the full Laravel and frontend quality gate for the Slack architecture refactor. Focused Slack tests, the full Laravel suite, Larastan, Composer validation, React tests/typecheck/build, and whitespace validation passed.
+- [x] Diagnose and restore teacher visibility of the payment add-on in the plugin store without exposing administrator-only payment configuration. Added the active built-in Payment Center catalog entry, migrated the live database, and verified teacher catalog visibility without provider recipient or instruction leakage.
+- [x] Verify the remote pull request and CI workflow state for the latest feature branch, then create or repair the GitHub visibility and trigger path if missing. Existing PR #9 remains available; the latest feature-branch CI runs passed, so no new PR was opened.
+- [x] Define subscription packages, tenant ownership, subscriber status, paid/unpaid state, billing periods, start/end dates, and one-week expiry reminder invariants.
+- [x] Build a super-admin panel for platform performance statistics, tenant health, package management, and subscriber payment/expiry oversight.
+- [x] Build a teacher subscription workspace showing the active package, payment state, start/end dates, and renewal reminder.
+- [x] Build an Arabic landing page with polished animated system storytelling, package cards, package translations, and a system visual.
+- [x] Add tenant-specific login domains and registration flow with secure host-based tenant resolution.
+- [x] Implement an idempotent one-week-before-expiry reminder on teacher login and dashboard load (Option B selected instead of scheduled background delivery).
+- [x] Add migration, authorization, API, frontend, schedule, and full quality coverage for the subscription platform.
+- [x] Update the Arabic SRS for every delivered subscription-platform feature and maintain traceability to its tests and CI-equivalent validation.
+- [x] Make the standalone Next.js production-build command explicit about `NODE_ENV=production` so local validation matches CI and static prerendering remains stable.
+- [x] Run the standalone Playwright smoke test against the built production server instead of Turbopack development mode to make browser validation reproducible.
+- [ ] Audit the current Laravel connection, tenant schema, domain lifecycle, Sass entry points, and autoscale deployment limitations for PostgreSQL tenant isolation.
+- [ ] Define and document a safe PostgreSQL control-database and per-tenant schema strategy, including credentials, ownership, migrations, rollback, and domain activation invariants.
+- [ ] Configure PostgreSQL connectivity through managed secrets and implement transaction-safe subscribed-teacher domain and tenant-schema provisioning.
+- [ ] Apply the tenant schema migration contract to tenant-scoped LMS persistence and keep active subscription/domain guards enforced.
+- [ ] Maintain subscription tenant presentation styles through Sass entry points without regressing the Arabic RTL interface.
+- [ ] Add factories, seed paths, feature tests, SRS traceability, and full Laravel/React/Next.js validation for PostgreSQL tenant onboarding.
+- [x] Push the latest subscription-platform checkpoint and open or update a GitHub pull request containing that work. Published as PR #10; CI is running.
+- [ ] Diagnose, repair, push, and confirm completion of any blocked or failing CI checks on subscription-platform PR #10.

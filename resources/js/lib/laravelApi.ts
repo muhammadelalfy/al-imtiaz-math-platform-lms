@@ -1,8 +1,13 @@
 import {
-  enqueueMutation,
-  readMutationQueue,
-  replaceMutationQueue,
+  clearOfflineScope,
+  enqueueOfflineOperation,
+  readOfflineOperations,
+  removeOfflineOperation,
+  replaceOfflineOperation,
+  type OfflineOperationType,
+  type OfflineScope,
 } from "./offlineStore";
+import { trackRequestActivity } from "./requestActivity";
 
 export type Role = "admin" | "teacher" | "parent" | "student";
 
@@ -15,7 +20,65 @@ export type ApiUser = {
   can_send_notifications?: boolean;
   can_manage_groups?: boolean;
   can_manage_notification_channels?: boolean;
+  is_super_admin?: boolean;
   student_account?: { student?: Student } | null;
+};
+export type SubscriptionPackage = {
+  id: number;
+  code: string;
+  name: string;
+  tagline?: string | null;
+  description?: string | null;
+  price_cents: number;
+  currency: string;
+  duration_days: number;
+  teacher_limit: number;
+  student_limit: number;
+  features: string[];
+  is_active: boolean;
+  sort_order: number;
+  subscriptions_count?: number;
+};
+export type Tenant = {
+  id: number;
+  name: string;
+  slug: string;
+  login_domain?: string | null;
+  domain_status: "pending" | "active";
+};
+export type TenantSubscription = {
+  id: number;
+  status: "pending" | "active" | "past_due" | "cancelled" | "expired";
+  payment_status: "unpaid" | "pending" | "paid" | "refunded";
+  starts_at?: string | null;
+  ends_at?: string | null;
+  paid_at?: string | null;
+  payment_reference?: string | null;
+  admin_note?: string | null;
+  days_remaining?: number | null;
+  tenant?: Tenant;
+  package?: SubscriptionPackage;
+};
+export type TeacherSubscriptionStatus = {
+  subscription: TenantSubscription | null;
+  show_expiry_reminder: boolean;
+};
+export type PlatformOverview = {
+  health: {
+    database: string;
+    database_latency_ms: number;
+    storage: string;
+    php_version: string;
+  };
+  counts: {
+    tenants: number;
+    teachers: number;
+    students: number;
+    active_subscriptions: number;
+    paid_subscriptions: number;
+    unpaid_subscriptions: number;
+    expiring_within_week: number;
+  };
 };
 export type AuthorizationPermission = {
   id: number;
@@ -81,6 +144,7 @@ export type PluginProduct = {
   installed: boolean;
   installed_module?: string | null;
   payment_status?: "pending" | "submitted" | null;
+  core_feature: boolean;
   metadata?: Record<string, unknown> | null;
 };
 export type PluginPaymentMethod = {
@@ -256,6 +320,12 @@ export type InAppNotification = {
   created_at?: string | null;
   read_at?: string | null;
 };
+export type TeacherSlackLogDestination = {
+  channel_label?: string | null;
+  is_enabled: boolean;
+  configured: boolean;
+  updated_at?: string | null;
+};
 export type NotificationAudienceCatalog = {
   grades: string[];
   recipients: Pick<ApiUser, "id" | "name" | "role">[];
@@ -265,15 +335,55 @@ export type NotificationAudienceCatalog = {
     "code" | "label" | "is_enabled" | "is_provider_ready"
   >[];
 };
+export type OfflineSyncSnapshot = {
+  generated_at: string;
+  scope: { user_id: number; role: Role; student_id: number | null };
+  students: Student[];
+  worksheets: Worksheet[];
+  attendance: Attendance[];
+  exams: ExamResult[];
+  payments: Payment[];
+};
+export type QueuedOfflineOperation = {
+  queued: true;
+  operationId: string;
+  type: OfflineOperationType;
+};
+export type OfflineSyncSummary = {
+  applied: number;
+  rejected: number;
+  conflicts: number;
+  pending: number;
+};
 
 const API_URL = (import.meta.env.VITE_LARAVEL_API_URL || "/api").replace(
   /\/$/,
   ""
 );
 const TOKEN_KEY = "al-imtiaz-laravel-token";
+let activeOfflineScope: OfflineScope | null = null;
 
 function saveToken(token: string): void {
   window.localStorage.setItem(TOKEN_KEY, token);
+}
+
+function rememberOfflineScope(user: ApiUser): void {
+  activeOfflineScope = { userId: user.id, role: user.role };
+}
+
+export function offlineScopeForUser(user: ApiUser): OfflineScope {
+  return { userId: user.id, role: user.role };
+}
+
+export function isQueuedOfflineOperation(
+  result: unknown
+): result is QueuedOfflineOperation {
+  return (
+    typeof result === "object" &&
+    result !== null &&
+    "queued" in result &&
+    (result as { queued?: unknown }).queued === true
+  );
 }
 
 async function requestCollection<T>(path: string): Promise<T[]> {
@@ -292,72 +402,128 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = window.localStorage.getItem(TOKEN_KEY);
-  const method = (init.method || "GET").toUpperCase();
   const headers = {
     Accept: "application/json",
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(init.headers || {}),
   };
-  if (!navigator.onLine && method !== "GET") {
-    enqueueMutation({
-      path,
-      method,
-      body: typeof init.body === "string" ? init.body : undefined,
-    });
-    throw new ApiError(
-      0,
-      "تم حفظ العملية محلياً وستتم مزامنتها عند عودة الاتصال."
-    );
-  }
-  try {
-    const response = await fetch(`${API_URL}${path}`, { ...init, headers });
-    const body = await response.json().catch(() => null);
-    if (!response.ok)
-      throw new ApiError(response.status, body?.message || "تعذر إتمام الطلب");
-    return body as T;
-  } catch (error) {
-    if (method !== "GET" && !(error instanceof ApiError && error.status > 0)) {
-      enqueueMutation({
-        path,
-        method,
-        body: typeof init.body === "string" ? init.body : undefined,
-      });
-      throw new ApiError(0, "تعذر الاتصال. تم حفظ العملية للمزامنة لاحقاً.");
+  if (!navigator.onLine) throw new ApiError(0, "لا يوجد اتصال بالخادم حالياً.");
+  return trackRequestActivity(async () => {
+    try {
+      const response = await fetch(`${API_URL}${path}`, { ...init, headers });
+      const body = await response.json().catch(() => null);
+      if (!response.ok)
+        throw new ApiError(
+          response.status,
+          body?.message || "تعذر إتمام الطلب"
+        );
+      return body as T;
+    } catch (error) {
+      if (!(error instanceof ApiError))
+        throw new ApiError(0, "تعذر الاتصال بالخادم.");
+      throw error;
     }
+  });
+}
+
+async function queueSupportedOperation(
+  type: OfflineOperationType,
+  data: Record<string, unknown>,
+  baseUpdatedAt?: string
+): Promise<QueuedOfflineOperation> {
+  if (!activeOfflineScope)
+    throw new ApiError(0, "سجّل الدخول قبل حفظ العمليات للعمل دون اتصال.");
+  const operation = await enqueueOfflineOperation(activeOfflineScope, {
+    type,
+    data,
+    occurredAt: new Date().toISOString(),
+    ...(baseUpdatedAt ? { baseUpdatedAt } : {}),
+  });
+  return { queued: true, operationId: operation.id, type };
+}
+
+async function createOrQueue<T>(
+  path: string,
+  type: OfflineOperationType,
+  data: Record<string, unknown>,
+  baseUpdatedAt?: string
+): Promise<T | QueuedOfflineOperation> {
+  try {
+    return await request<T>(path, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 0)
+      return queueSupportedOperation(type, data, baseUpdatedAt);
     throw error;
   }
 }
 
-export async function syncOfflineQueue(): Promise<number> {
-  if (!navigator.onLine) return 0;
-  const queue = readMutationQueue();
-  const remaining = [...queue];
-  let synced = 0;
-  for (const mutation of queue) {
-    try {
-      const token = window.localStorage.getItem(TOKEN_KEY);
-      const response = await fetch(`${API_URL}${mutation.path}`, {
-        method: mutation.method,
-        body: mutation.body,
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-      if (!response.ok) throw new Error("sync failed");
-      remaining.splice(
-        remaining.findIndex(item => item.id === mutation.id),
-        1
-      );
-      synced += 1;
-    } catch {
-      break;
+export async function syncOfflineQueue(): Promise<OfflineSyncSummary> {
+  if (!navigator.onLine || !activeOfflineScope)
+    return { applied: 0, rejected: 0, conflicts: 0, pending: 0 };
+  const operations = (await readOfflineOperations(activeOfflineScope)).filter(
+    operation => operation.status === "queued"
+  );
+  if (!operations.length)
+    return { applied: 0, rejected: 0, conflicts: 0, pending: 0 };
+  try {
+    const result = await request<{
+      data: {
+        operations: {
+          id: string;
+          outcome: "applied" | "duplicate" | "rejected" | "conflict";
+          error_code?: string | null;
+        }[];
+      };
+    }>("/sync/operations", {
+      method: "POST",
+      body: JSON.stringify({
+        operations: operations.map(operation => ({
+          id: operation.id,
+          type: operation.type,
+          occurred_at: operation.occurredAt,
+          ...(operation.baseUpdatedAt
+            ? { base_updated_at: operation.baseUpdatedAt }
+            : {}),
+          data: operation.data,
+        })),
+      }),
+    });
+    let applied = 0;
+    let rejected = 0;
+    let conflicts = 0;
+    for (const outcome of result.data.operations) {
+      const operation = operations.find(item => item.id === outcome.id);
+      if (!operation) continue;
+      if (outcome.outcome === "applied" || outcome.outcome === "duplicate") {
+        await removeOfflineOperation(operation.id);
+        applied += 1;
+      } else {
+        await replaceOfflineOperation({
+          ...operation,
+          status: outcome.outcome,
+          errorCode: outcome.error_code || undefined,
+          retryCount: operation.retryCount + 1,
+        });
+        if (outcome.outcome === "conflict") conflicts += 1;
+        else rejected += 1;
+      }
     }
+    const pending = (await readOfflineOperations(activeOfflineScope)).filter(
+      operation => operation.status === "queued"
+    ).length;
+    return { applied, rejected, conflicts, pending };
+  } catch {
+    return {
+      applied: 0,
+      rejected: 0,
+      conflicts: 0,
+      pending: operations.length,
+    };
   }
-  replaceMutationQueue(remaining);
-  return synced;
 }
 
 export const laravelApi = {
@@ -368,6 +534,7 @@ export const laravelApi = {
       { method: "POST", body: JSON.stringify(payload) }
     );
     saveToken(result.token);
+    rememberOfflineScope(result.user);
     return result.user;
   },
   async loginAsRole(
@@ -383,6 +550,7 @@ export const laravelApi = {
       body: JSON.stringify(payload),
     });
     saveToken(result.token);
+    rememberOfflineScope(result.user);
     return result.user;
   },
   async register(payload: {
@@ -397,10 +565,13 @@ export const laravelApi = {
       { method: "POST", body: JSON.stringify(payload) }
     );
     saveToken(result.token);
+    rememberOfflineScope(result.user);
     return result.user;
   },
   async me() {
-    return request<ApiUser>("/auth/me");
+    const user = await request<ApiUser>("/auth/me");
+    rememberOfflineScope(user);
+    return user;
   },
   async authorizationCatalog() {
     return request<AuthorizationCatalog>("/staff/authorization/catalog");
@@ -470,6 +641,8 @@ export const laravelApi = {
   },
   async logout() {
     await request("/auth/logout", { method: "POST" });
+    if (activeOfflineScope) await clearOfflineScope(activeOfflineScope);
+    activeOfflineScope = null;
     window.localStorage.removeItem(TOKEN_KEY);
   },
   async students(
@@ -517,6 +690,12 @@ export const laravelApi = {
   },
   async payments() {
     return requestCollection<Payment>("/payments");
+  },
+  async offlineSnapshot() {
+    const result = await request<{ data: OfflineSyncSnapshot }>(
+      "/sync/snapshot"
+    );
+    return result.data;
   },
   async examDepartments() {
     return requestCollection<ExamDepartment>("/exam-departments");
@@ -581,29 +760,31 @@ export const laravelApi = {
   },
   async downloadExamPdf(templateId: number) {
     const token = window.localStorage.getItem(TOKEN_KEY);
-    const response = await fetch(
-      `${API_URL}/exam-templates/${templateId}/pdf`,
-      {
-        headers: {
-          Accept: "application/pdf",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      }
-    );
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      throw new ApiError(
-        response.status,
-        body?.message || "تعذر تحميل ملف PDF"
+    return trackRequestActivity(async () => {
+      const response = await fetch(
+        `${API_URL}/exam-templates/${templateId}/pdf`,
+        {
+          headers: {
+            Accept: "application/pdf",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
       );
-    }
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `exam-${templateId}.pdf`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new ApiError(
+          response.status,
+          body?.message || "تعذر تحميل ملف PDF"
+        );
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `exam-${templateId}.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    });
   },
   async createExamTemplate(
     payload: Omit<ExamTemplate, "id" | "department" | "questions"> & {
@@ -656,10 +837,11 @@ export const laravelApi = {
     });
   },
   async createAttendance(payload: Omit<Attendance, "id" | "student">) {
-    return request<Attendance>("/attendance", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    return createOrQueue<Attendance>(
+      "/attendance",
+      "attendance.create",
+      payload
+    );
   },
   async scanAttendance(payload: string) {
     return request<{ already_recorded: boolean; attendance: Attendance }>(
@@ -677,10 +859,7 @@ export const laravelApi = {
     return request<void>(`/attendance/${id}`, { method: "DELETE" });
   },
   async createExam(payload: Omit<ExamResult, "id" | "student">) {
-    return request<ExamResult>("/exams", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    return createOrQueue<ExamResult>("/exams", "exam_result.create", payload);
   },
   async updateExam(id: number, payload: Partial<ExamResult>) {
     return request<ExamResult>(`/exams/${id}`, {
@@ -692,10 +871,19 @@ export const laravelApi = {
     return request<void>(`/exams/${id}`, { method: "DELETE" });
   },
   async createPayment(payload: Omit<Payment, "id" | "student">) {
-    return request<Payment>("/payments", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    return createOrQueue<Payment>("/payments", "payment.create", payload);
+  },
+  async submitWorksheet(
+    assignmentId: number,
+    payload: Pick<Assignment, "score" | "max_score" | "feedback">,
+    baseUpdatedAt?: string
+  ) {
+    return createOrQueue<Assignment>(
+      `/assignments/${assignmentId}/submit`,
+      "worksheet_submission.submit",
+      { assignment_id: assignmentId, ...payload },
+      baseUpdatedAt
+    );
   },
   async updatePayment(id: number, payload: Partial<Payment>) {
     return request<Payment>(`/payments/${id}`, {
@@ -793,6 +981,26 @@ export const laravelApi = {
       payments: Payment[];
     }>("/reports/summary");
   },
+  async teacherSlackLogDestination() {
+    return request<TeacherSlackLogDestination>(
+      "/teacher/slack-log-destination"
+    );
+  },
+  async updateTeacherSlackLogDestination(payload: {
+    channel_label?: string;
+    webhook_url?: string;
+    is_enabled: boolean;
+  }) {
+    return request<TeacherSlackLogDestination>(
+      "/teacher/slack-log-destination",
+      { method: "PUT", body: JSON.stringify(payload) }
+    );
+  },
+  async clearTeacherSlackLogDestination() {
+    return request<void>("/teacher/slack-log-destination", {
+      method: "DELETE",
+    });
+  },
   async plugins() {
     return requestCollection<PluginProduct>("/plugins");
   },
@@ -867,5 +1075,79 @@ export const laravelApi = {
   },
   async uninstallPlugin(id: number) {
     return request(`/plugins/${id}/install`, { method: "DELETE" });
+  },
+  async publicSubscriptionPackages() {
+    return requestCollection<SubscriptionPackage>(
+      "/public/subscription-packages"
+    );
+  },
+  async registerTenantTeacher(payload: {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+    organization_name: string;
+    tenant_slug: string;
+    package_id: number;
+  }) {
+    return request<{
+      user: Pick<ApiUser, "id" | "name" | "email" | "role">;
+      message: string;
+    }>("/public/teacher-register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  async teacherSubscription() {
+    return request<TeacherSubscriptionStatus>("/teacher/subscription");
+  },
+  async superAdminOverview() {
+    return request<PlatformOverview>("/super-admin/overview");
+  },
+  async superAdminPackages() {
+    return requestCollection<SubscriptionPackage>("/super-admin/packages");
+  },
+  async createSubscriptionPackage(
+    payload: Omit<SubscriptionPackage, "id" | "subscriptions_count">
+  ) {
+    return request<SubscriptionPackage>("/super-admin/packages", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  async updateSubscriptionPackage(
+    id: number,
+    payload: Partial<Omit<SubscriptionPackage, "id" | "subscriptions_count">>
+  ) {
+    return request<SubscriptionPackage>(`/super-admin/packages/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+  async superAdminSubscriptions() {
+    return requestCollection<TenantSubscription>("/super-admin/subscriptions");
+  },
+  async updateTenantSubscription(
+    id: number,
+    payload: {
+      subscription_package_id?: number;
+      status: TenantSubscription["status"];
+      payment_status: TenantSubscription["payment_status"];
+      starts_at?: string | null;
+      ends_at?: string | null;
+      payment_reference?: string | null;
+      admin_note?: string | null;
+    }
+  ) {
+    return request<TenantSubscription>(`/super-admin/subscriptions/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+  async updateTenantDomain(id: number, login_domain: string | null) {
+    return request<Tenant>(`/super-admin/tenants/${id}/domain`, {
+      method: "PUT",
+      body: JSON.stringify({ login_domain }),
+    });
   },
 };

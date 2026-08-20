@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { laravelApi } from "./laravelApi";
+import { indexedDB } from "fake-indexeddb";
+import { isQueuedOfflineOperation, laravelApi } from "./laravelApi";
 
 const storage = new Map<string, string>();
 
 beforeEach(() => {
   storage.clear();
   vi.stubGlobal("window", {
+    indexedDB,
     localStorage: {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => storage.set(key, value),
@@ -161,15 +163,25 @@ describe("laravelApi", () => {
   });
 
   it("maps teacher login and staff authorization CRUD to the guarded Laravel endpoints", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockImplementation(
-        () =>
-          new Response(
-            JSON.stringify({ permissions: [], roles: [], staff: [], id: 4 }),
-            { status: 200 }
-          )
-      );
+    const fetchMock = vi.fn().mockImplementation(
+      () =>
+        new Response(
+          JSON.stringify({
+            user: {
+              id: 4,
+              name: "معلم",
+              email: "teacher@test.local",
+              role: "teacher",
+            },
+            token: "teacher-token",
+            permissions: [],
+            roles: [],
+            staff: [],
+            id: 4,
+          }),
+          { status: 200 }
+        )
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     await laravelApi.loginAsRole("teacher", {
@@ -199,15 +211,44 @@ describe("laravelApi", () => {
     ]);
   });
 
-  it("queues mutating requests when the browser is offline", async () => {
+  it("queues supported recorded operations when the browser is offline", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            user: {
+              id: 17,
+              name: "معلم",
+              email: "teacher@test.local",
+              role: "teacher",
+            },
+            token: "offline-token",
+          }),
+          { status: 200 }
+        )
+      )
+    );
+    await laravelApi.login({
+      email: "teacher@test.local",
+      password: "Secret123!",
+    });
+    vi.stubGlobal("navigator", { onLine: false });
+    const result = await laravelApi.createAttendance({
+      student_id: 10,
+      date_at: "2026-08-20T08:00:00Z",
+      status: "present",
+    });
+
+    expect(isQueuedOfflineOperation(result)).toBe(true);
+  });
+
+  it("does not queue unsupported destructive mutations when the browser is offline", async () => {
     vi.stubGlobal("navigator", { onLine: false });
     vi.stubGlobal("fetch", vi.fn());
     await expect(laravelApi.deleteAttendance(10)).rejects.toMatchObject({
       status: 0,
     });
-    expect(
-      JSON.parse(storage.get("al-imtiaz-offline-mutations") || "[]")
-    ).toHaveLength(1);
   });
 
   it("maps group membership, group-targeted campaigns, and dynamic channel settings to guarded endpoints", async () => {
@@ -401,5 +442,50 @@ describe("plugin payment API", () => {
     expect(fetchMock.mock.calls[1]?.[1]?.body).toBe(
       JSON.stringify({ payment_method: "fawry" })
     );
+  });
+});
+
+describe("subscription platform API", () => {
+  it("maps public packages, teacher registration, teacher status, and super-admin operations", async () => {
+    const fetchMock = vi.fn().mockImplementation(
+      () =>
+        new Response(JSON.stringify({ data: [], id: 21, health: {} }), {
+          status: 200,
+        })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await laravelApi.publicSubscriptionPackages();
+    await laravelApi.registerTenantTeacher({
+      name: "منى",
+      email: "mona@example.test",
+      password: "TeacherSecure!2026",
+      password_confirmation: "TeacherSecure!2026",
+      organization_name: "مركز منى",
+      tenant_slug: "mona-math",
+      package_id: 3,
+    });
+    await laravelApi.teacherSubscription();
+    await laravelApi.superAdminOverview();
+    await laravelApi.superAdminPackages();
+    await laravelApi.superAdminSubscriptions();
+    await laravelApi.updateTenantSubscription(21, {
+      status: "active",
+      payment_status: "paid",
+    });
+    await laravelApi.updateTenantDomain(7, "academy.example.com");
+
+    expect(
+      fetchMock.mock.calls.map(([url, init]) => [url, init?.method])
+    ).toEqual([
+      ["/api/public/subscription-packages", undefined],
+      ["/api/public/teacher-register", "POST"],
+      ["/api/teacher/subscription", undefined],
+      ["/api/super-admin/overview", undefined],
+      ["/api/super-admin/packages", undefined],
+      ["/api/super-admin/subscriptions", undefined],
+      ["/api/super-admin/subscriptions/21", "PUT"],
+      ["/api/super-admin/tenants/7/domain", "PUT"],
+    ]);
   });
 });

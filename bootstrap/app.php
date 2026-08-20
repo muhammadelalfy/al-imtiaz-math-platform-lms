@@ -13,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // The managed preview terminates TLS before forwarding requests to PHP.
+        // Trust the proxy header so generated Vite asset links keep the browser-facing HTTPS scheme.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'role.guard' => \App\Http\Middleware\EnsureAccessTokenMatchesRole::class,
         ]);

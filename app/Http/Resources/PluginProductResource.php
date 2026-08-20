@@ -29,6 +29,7 @@ class PluginProductResource extends JsonResource
             'installed' => $installation !== null,
             'installed_module' => $installation?->getAttribute('module_name'),
             'payment_status' => $this->resource->getAttribute('payment_status'),
+            'core_feature' => (bool) data_get($this->metadata, 'core_feature', false),
             'metadata' => $this->metadata,
         ];
     }
