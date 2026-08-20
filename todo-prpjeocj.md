@@ -219,3 +219,5 @@
 - [x] Update CI/documentation, run backend and Next.js quality gates, checkpoint the migration, and publish a dedicated GitHub pull request. Published pull request #9; the final Laravel and Frontend checks passed.
 - [x] Fix the standalone Next.js CI install failure caused by an incomplete pnpm workspace manifest, then rerun the required pull-request checks. Corrected the workspace policy and pnpm-version conflict; the final Frontend check passed.
 - [x] Add the missing standalone TypeScript declaration dependency for the QR-code renderer and rerun the required pull-request checks. Added @types/qrcode; the isolated TypeScript and final Frontend checks passed.
+- [x] Diagnose and restore the missing managed preview screen for the Laravel-hosted LMS application. Verified the managed preview is running on port 5173 and renders the Arabic LMS login screen.
+- [x] Restore visibility of the Preview panel inside the Manus Management UI and verify its managed preview registration. Restarted the managed service; the preview URL re-registered and the Arabic LMS login renders successfully.
