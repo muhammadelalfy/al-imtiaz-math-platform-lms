@@ -5,9 +5,12 @@ namespace Tests\Feature;
 use App\Contracts\Observability\CacheObservabilityInterface;
 use App\Contracts\Repositories\DashboardMetricsRepositoryInterface;
 use App\Contracts\Repositories\ExamTemplateRepositoryInterface;
+use App\Contracts\Repositories\PluginStoreRepositoryInterface;
+use App\Contracts\Repositories\QuestionBankRepositoryInterface;
 use App\Contracts\Repositories\StudentRepositoryInterface;
 use App\Contracts\Repositories\WorksheetRepositoryInterface;
 use App\Models\ExamDepartment;
+use App\Models\PluginProduct;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -26,6 +29,8 @@ class ApiArchitectureTest extends TestCase
         $this->assertInstanceOf(DashboardMetricsRepositoryInterface::class, app(DashboardMetricsRepositoryInterface::class));
         $this->assertInstanceOf(WorksheetRepositoryInterface::class, app(WorksheetRepositoryInterface::class));
         $this->assertInstanceOf(ExamTemplateRepositoryInterface::class, app(ExamTemplateRepositoryInterface::class));
+        $this->assertInstanceOf(QuestionBankRepositoryInterface::class, app(QuestionBankRepositoryInterface::class));
+        $this->assertInstanceOf(PluginStoreRepositoryInterface::class, app(PluginStoreRepositoryInterface::class));
         $this->assertTrue(Model::preventsLazyLoading());
     }
 
@@ -188,5 +193,38 @@ class ApiArchitectureTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.department.id', $department->id)
             ->assertJsonPath('data.0.questions.0.type', 'mcq');
+    }
+
+    public function test_question_bank_and_plugin_store_repositories_preserve_resource_contracts(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $department = ExamDepartment::create(['name' => 'الهندسة', 'slug' => 'geometry', 'is_active' => true]);
+        Sanctum::actingAs($teacher);
+
+        $this->postJson('/api/question-bank', [
+            'department_id' => $department->id,
+            'type' => 'geometry',
+            'title' => 'سؤال مورد',
+            'prompt_html' => '<p>احسب المحيط.</p>',
+            'points' => 2,
+            'is_active' => true,
+        ])->assertCreated()
+            ->assertJsonPath('department.slug', 'geometry')
+            ->assertJsonPath('is_active', true);
+
+        PluginProduct::create([
+            'slug' => 'repository-plugin',
+            'name' => 'إضافة المستودعات',
+            'version' => '1.0.0',
+            'module_name' => 'RepositoryPlugin',
+            'artifact_path' => 'plugins/artifacts/repository-plugin.zip',
+            'price' => 0,
+            'is_active' => true,
+        ]);
+
+        $this->getJson('/api/plugins')
+            ->assertOk()
+            ->assertJsonPath('data.0.purchased', false)
+            ->assertJsonPath('data.0.installed', false);
     }
 }

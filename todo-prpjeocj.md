@@ -167,3 +167,8 @@
 - [x] Extend repository and API resource boundaries to worksheets and exam templates with explicit relationship loading.
 - [x] Add cache hit/miss observability for dashboard metrics without recording sensitive learner data.
 - [x] Add regression coverage and validate PHP tests, Larastan, CI configuration, and frontend checks.
+- [x] Audit question-bank and plugin-store API contracts, persistence models, client expectations, and authorization boundaries.
+- [x] Add narrow repository interfaces and Eloquent implementations for question-bank queries and plugin catalog/entitlement reads.
+- [x] Add stable API resources with explicit department, purchase, and installation relationship-loading rules.
+- [x] Refactor question-bank and plugin-store controllers to use repositories and resources without breaking role-safe responses.
+- [x] Add regression coverage and validate Larastan, Laravel API tests, and frontend checks for the repository-resource extension.

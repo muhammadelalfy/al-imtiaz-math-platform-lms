@@ -8,7 +8,7 @@ The LMS API uses thin controllers, **role-aware form requests**, stable **JSON r
 | ------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | Controller                | `app/Http/Controllers/Api`   | Authorization hand-off, HTTP status selection, and request-to-use-case coordination.                                         |
 | Form request              | `app/Http/Requests`          | Input validation and staff authorization for student, attendance, payment, exam-result, worksheet, and exam-template writes. |
-| Repository contract       | `app/Contracts/Repositories` | Narrow abstractions for student, worksheet, exam-template, and dashboard metrics reads.                                      |
+| Repository contract       | `app/Contracts/Repositories` | Narrow abstractions for student, worksheet, exam-template, question-bank, plugin-store, and dashboard metrics reads.         |
 | Repository implementation | `app/Repositories`           | Eloquent query shape, explicit relationship loading, and dashboard metric caching.                                           |
 | API resource              | `app/Http/Resources`         | Stable client-safe output for core LMS records and report summaries.                                                         |
 
@@ -32,4 +32,4 @@ Larastan runs at level 5 through `composer analyse`, using `phpstan.neon` and th
 
 ## Extension rules
 
-New CRUD work should first add a narrowly scoped repository contract when it needs a persistence seam or specialized query policy. Use a form request for role-aware validation, a resource whenever persistence data crosses the API boundary, and explicit cache invalidation only for cached read models affected by the write. Worksheet and exam-template repositories provide the current reference implementations for relationship-aware reads and transactional child-record synchronization. Avoid creating a generic repository that exposes unused operations.
+New CRUD work should first add a narrowly scoped repository contract when it needs a persistence seam or specialized query policy. Use a form request for role-aware validation, a resource whenever persistence data crosses the API boundary, and explicit cache invalidation only for cached read models affected by the write. Worksheet and exam-template repositories provide the current reference implementations for relationship-aware reads and transactional child-record synchronization. The question-bank repository owns filtered, department-loaded authoring queries; the plugin-store repository owns active catalog, per-user purchase entitlement, and installation-state reads. Avoid creating a generic repository that exposes unused operations.
