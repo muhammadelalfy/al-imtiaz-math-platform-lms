@@ -3,54 +3,58 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Contracts\Repositories\DashboardMetricsCacheInterface;
+use App\Contracts\Repositories\StudentRepositoryInterface;
+use App\Http\Requests\StoreStudentRequest;
+use App\Http\Requests\UpdateStudentRequest;
+use App\Http\Resources\StudentResource;
 use App\Models\Student;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = Student::query()
-            ->when($request->string('grade')->isNotEmpty(), fn ($q) => $q->where('grade', $request->string('grade')))
-            ->when($request->string('group')->isNotEmpty(), fn ($q) => $q->where('group', $request->string('group')))
-            ->when($request->string('search')->isNotEmpty(), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'));
-
-        if ($request->user()->isAnyRole('student', 'parent')) {
-            $account = $request->user()->studentAccount;
-            abort_unless($account, 403);
-            $query->whereKey($account->student_id);
-        }
-
-        return $query->withCount(['assignments', 'attendanceRecords', 'examResults', 'payments'])->latest()->paginate(25);
+    public function __construct(
+        private readonly StudentRepositoryInterface $students,
+        private readonly DashboardMetricsCacheInterface $metricsCache,
+    ) {
     }
 
-    public function store(Request $request)
+    public function index(Request $request)
     {
-        abort_unless($request->user()->isAnyRole('admin', 'teacher'), 403);
-        $student = Student::create($this->validatedData($request));
+        return StudentResource::collection($this->students->paginateFor(
+            $request->user(),
+            $request->only(['grade', 'group', 'search']),
+        ));
+    }
 
-        return response()->json($student, 201);
+    public function store(StoreStudentRequest $request)
+    {
+        $student = $this->students->create($request->validated());
+        $this->metricsCache->forget();
+
+        return (new StudentResource($student))->response()->setStatusCode(201);
     }
 
     public function show(Request $request, Student $student)
     {
         $this->authorizeStudentAccess($request, $student);
 
-        return $student->load(['assignments.worksheet', 'attendanceRecords', 'examResults', 'payments']);
+        return new StudentResource($this->students->findDetailed($student));
     }
 
-    public function update(Request $request, Student $student)
+    public function update(UpdateStudentRequest $request, Student $student)
     {
-        abort_unless($request->user()->isAnyRole('admin', 'teacher'), 403);
-        $student->update($this->validatedData($request, true));
+        $student = $this->students->update($student, $request->validated());
+        $this->metricsCache->forget();
 
-        return $student->fresh();
+        return new StudentResource($student);
     }
 
     public function destroy(Request $request, Student $student)
     {
         abort_unless($request->user()->isAnyRole('admin'), 403);
-        $student->delete();
+        $this->students->delete($student);
+        $this->metricsCache->forget();
 
         return response()->noContent();
     }
@@ -66,22 +70,8 @@ class StudentController extends Controller
     private function authorizeStudentAccess(Request $request, Student $student): void
     {
         if ($request->user()->isAnyRole('student', 'parent')) {
-            $account = $request->user()->studentAccount;
+            $account = $request->user()->loadMissing('studentAccount')->studentAccount;
             abort_unless($account && $account->student_id === $student->id, 403);
         }
-    }
-
-    private function validatedData(Request $request, bool $partial = false): array
-    {
-        $required = $partial ? 'sometimes' : 'required';
-
-        return $request->validate([
-            'name' => [$required, 'string', 'max:160'],
-            'group' => [$required, 'string', 'max:32'],
-            'grade' => [$required, 'string', 'max:80'],
-            'phone' => [$required, 'string', 'max:32'],
-            'parent_phone' => ['nullable', 'string', 'max:32'],
-            'status' => ['nullable', 'in:excellent,average,weak'],
-        ]);
     }
 }

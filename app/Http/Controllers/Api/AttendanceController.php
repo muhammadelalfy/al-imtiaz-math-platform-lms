@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\Concerns\AuthorizesStaff;
+use App\Http\Requests\ScanAttendanceRequest;
+use App\Http\Requests\StoreAttendanceRequest;
+use App\Http\Requests\UpdateAttendanceRequest;
+use App\Http\Resources\AttendanceResource;
 use App\Models\AttendanceRecord;
 use Illuminate\Http\Request;
 use Modules\Attendance\Services\AttendanceDomainService;
@@ -21,41 +25,30 @@ class AttendanceController extends Controller
         $query = $this->attendance->query();
         $this->scope($query, $request);
 
-        return $query->paginate(50);
+        return AttendanceResource::collection($query->paginate(50));
     }
 
-    public function store(Request $request)
+    public function store(StoreAttendanceRequest $request)
     {
-        $this->authorizeStaff($request);
-        $data = $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'date_at' => 'required|date',
-            'status' => 'required|in:present,absent,late',
-            'note' => 'nullable|string',
-        ]);
-
-        return response()->json($this->attendance->create($data, $request->user()->id), 201);
+        return (new AttendanceResource($this->attendance->create($request->validated(), $request->user()->id)))
+            ->response()
+            ->setStatusCode(201);
     }
 
-    public function scan(Request $request)
+    public function scan(ScanAttendanceRequest $request)
     {
-        $this->authorizeStaff($request);
-        $payload = $request->validate(['payload' => 'required|string|min:32|max:96'])['payload'];
+        $payload = $request->validated('payload');
         $result = $this->attendance->scan($payload, $request->user()->id);
 
-        return response()->json($result, $result['already_recorded'] ? 200 : 201);
+        return response()->json([
+            'already_recorded' => $result['already_recorded'],
+            'attendance' => (new AttendanceResource($result['attendance']))->resolve($request),
+        ], $result['already_recorded'] ? 200 : 201);
     }
 
-    public function update(Request $request, AttendanceRecord $attendance)
+    public function update(UpdateAttendanceRequest $request, AttendanceRecord $attendance)
     {
-        $this->authorizeStaff($request);
-        $data = $request->validate([
-            'date_at' => 'sometimes|date',
-            'status' => 'sometimes|in:present,absent,late',
-            'note' => 'nullable|string',
-        ]);
-
-        return $this->attendance->update($attendance, $data);
+        return new AttendanceResource($this->attendance->update($attendance, $request->validated()));
     }
 
     public function destroy(Request $request, AttendanceRecord $attendance)
@@ -68,7 +61,7 @@ class AttendanceController extends Controller
 
     private function scope($query, Request $request): void
     {
-        $account = $request->user()->studentAccount;
+        $account = $request->user()->loadMissing('studentAccount')->studentAccount;
         if ($request->user()->isAnyRole('student', 'parent')) {
             abort_unless($account, 403);
             $query->where('student_id', $account->student_id);

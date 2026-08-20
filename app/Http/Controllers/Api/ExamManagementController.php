@@ -142,7 +142,7 @@ class ExamManagementController extends Controller
     {
         $user = $request->user();
         abort_unless($user->isAnyRole('student', 'parent'), 403);
-        $account = $user->studentAccount;
+        $account = $user->loadMissing('studentAccount')->studentAccount;
         abort_unless($account, 403);
         abort_unless($template->status === 'published', 422, 'الامتحان غير منشور.');
         $session = ExamSession::firstOrCreate(['template_id' => $template->id, 'student_id' => $account->student_id], ['camera_required' => true, 'fullscreen_required' => true]);
@@ -164,6 +164,7 @@ class ExamManagementController extends Controller
         $this->authorizeSessionOwner($request, $session);
         abort_if(in_array($session->status, ['submitted', 'expired']), 422, 'لا يمكن تعديل إجابة هذا الامتحان.');
         $data = $request->validate(['question_id' => 'required|exists:exam_questions,id', 'answer' => 'nullable|string']);
+        $session->loadMissing('template.questions');
         abort_unless($session->template->questions()->whereKey($data['question_id'])->exists(), 422);
         $answer = ExamSessionAnswer::updateOrCreate(['session_id' => $session->id, 'question_id' => $data['question_id']], ['answer' => $data['answer'] ?? null, 'answered_at' => now()]);
         $session->update(['status' => $session->status === 'ready' ? 'active' : $session->status, 'started_at' => $session->started_at ?: now()]);
@@ -181,7 +182,7 @@ class ExamManagementController extends Controller
 
     private function authorizeSessionOwner(Request $request, ExamSession $session): void
     {
-        $account = $request->user()->studentAccount;
+        $account = $request->user()->loadMissing('studentAccount')->studentAccount;
         abort_unless($account && $account->student_id === $session->student_id, 403);
     }
 }

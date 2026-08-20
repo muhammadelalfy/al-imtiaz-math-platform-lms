@@ -156,3 +156,9 @@
 - [x] Verify the Laravel-root application build, API tests, React tests, and hosted web shell.
 - [x] Confirm no tracked Laravel application content remains under the former laravel-backend directory and remove any residual tracked artifacts.
 - [x] Document manual built-in publishing as the selected post-merge release process, with no external deployment workflow or credentials required.
+- [x] Audit existing Laravel API controllers, models, relationship loading, validation, and response shapes for a SOLID refactor.
+- [x] Introduce narrow repository interfaces and Eloquent implementations for high-traffic LMS read models, bound through AppServiceProvider.
+- [x] Add cache-backed repository reads with deterministic invalidation on domain writes.
+- [x] Replace inline API validation with role-aware form requests and return stable API resources.
+- [x] Enable strict Eloquent lazy-loading prevention and update queries with explicit eager-loading requirements.
+- [x] Add architecture, cache-invalidation, API-resource, form-request, and strict-loading regression coverage.

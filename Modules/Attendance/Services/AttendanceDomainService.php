@@ -2,6 +2,7 @@
 
 namespace Modules\Attendance\Services;
 
+use App\Contracts\Repositories\DashboardMetricsCacheInterface;
 use App\Models\AttendanceRecord;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,6 +11,10 @@ use Illuminate\Validation\ValidationException;
 
 final class AttendanceDomainService
 {
+    public function __construct(private readonly DashboardMetricsCacheInterface $metricsCache)
+    {
+    }
+
     public function query(): Builder
     {
         return AttendanceRecord::query()->with('student')->latest('date_at');
@@ -22,11 +27,15 @@ final class AttendanceDomainService
 
     public function create(array $attributes, int $recordedBy): AttendanceRecord
     {
-        return AttendanceRecord::create([
+        $attendance = AttendanceRecord::create([
             ...$attributes,
             'attendance_date' => now()->toDateString(),
             'recorded_by' => $recordedBy,
         ]);
+
+        $this->metricsCache->forget();
+
+        return $attendance->load('student');
     }
 
     public function scan(string $payload, int $recordedBy): array
@@ -56,7 +65,10 @@ final class AttendanceDomainService
                 'recorded_by' => $recordedBy,
             ]);
 
-            return ['already_recorded' => false, 'attendance' => $attendance->load('student')];
+            $attendance->load('student');
+            $this->metricsCache->forget();
+
+            return ['already_recorded' => false, 'attendance' => $attendance];
         });
     }
 
@@ -67,11 +79,14 @@ final class AttendanceDomainService
             'attendance_date' => $attendance->attendance_date ?? now()->toDateString(),
         ]);
 
+        $this->metricsCache->forget();
+
         return $attendance->fresh('student');
     }
 
     public function delete(AttendanceRecord $attendance): void
     {
         $attendance->delete();
+        $this->metricsCache->forget();
     }
 }
