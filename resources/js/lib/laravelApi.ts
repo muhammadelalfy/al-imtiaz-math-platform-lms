@@ -86,6 +86,7 @@ export type PluginProduct = {
   installed: boolean;
   installed_module?: string | null;
   payment_status?: "pending" | "submitted" | null;
+  core_feature: boolean;
   metadata?: Record<string, unknown> | null;
 };
 export type PluginPaymentMethod = {

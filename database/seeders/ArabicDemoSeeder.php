@@ -263,6 +263,24 @@ class ArabicDemoSeeder extends Seeder
             ['user_id' => $admin->id, 'plugin_product_id' => $plugin->id],
             ['status' => 'completed', 'purchased_at' => now()],
         );
+
+        PluginProduct::updateOrCreate(
+            ['slug' => 'payment-center'],
+            [
+                'name' => 'مركز المدفوعات والاشتراكات',
+                'description' => 'إدارة اشتراكات الطلاب، التحصيل، والتحويلات اليدوية عبر فودافون كاش وإنستاباي وفوري.',
+                'version' => '1.0.0',
+                'module_name' => 'CorePayments',
+                'price' => 0,
+                'is_active' => true,
+                'metadata' => [
+                    'category' => 'payments',
+                    'language' => 'ar',
+                    'core_feature' => true,
+                    'available_roles' => ['admin', 'teacher'],
+                ],
+            ],
+        );
     }
 
     private function seedStudents(): array
