@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Contracts\Repositories\TeacherSlackLogDestinationRepositoryInterface;
 use App\Models\User;
+use App\Repositories\EloquentTeacherSlackLogDestinationRepository;
 use App\Services\TeacherSlackLogDestinationService;
 use App\Services\TeacherSlackRequestLogDispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,6 +17,14 @@ use Tests\TestCase;
 class TeacherSlackLoggingTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_slack_destination_repository_contract_is_bound_to_the_eloquent_persistence_implementation(): void
+    {
+        $this->assertInstanceOf(
+            EloquentTeacherSlackLogDestinationRepository::class,
+            $this->app->make(TeacherSlackLogDestinationRepositoryInterface::class)
+        );
+    }
 
     public function test_teacher_can_configure_an_encrypted_slack_destination_without_receiving_the_secret_back(): void
     {

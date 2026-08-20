@@ -9,6 +9,7 @@ use App\Contracts\Repositories\ExamTemplateRepositoryInterface;
 use App\Contracts\Repositories\PluginStoreRepositoryInterface;
 use App\Contracts\Repositories\QuestionBankRepositoryInterface;
 use App\Contracts\Repositories\StudentRepositoryInterface;
+use App\Contracts\Repositories\TeacherSlackLogDestinationRepositoryInterface;
 use App\Contracts\Repositories\WorksheetRepositoryInterface;
 use App\Contracts\Observability\CacheObservabilityInterface;
 use App\Contracts\Notifications\NotificationChannelDispatcherInterface;
@@ -19,6 +20,7 @@ use App\Repositories\EloquentExamTemplateRepository;
 use App\Repositories\EloquentPluginStoreRepository;
 use App\Repositories\EloquentQuestionBankRepository;
 use App\Repositories\EloquentStudentRepository;
+use App\Repositories\EloquentTeacherSlackLogDestinationRepository;
 use App\Repositories\EloquentWorksheetRepository;
 use App\Services\LogCacheObservability;
 use App\Services\OfflineSyncService;
@@ -44,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(QuestionBankRepositoryInterface::class, EloquentQuestionBankRepository::class);
         $this->app->bind(PluginStoreRepositoryInterface::class, EloquentPluginStoreRepository::class);
         $this->app->bind(WorksheetRepositoryInterface::class, EloquentWorksheetRepository::class);
+        $this->app->bind(TeacherSlackLogDestinationRepositoryInterface::class, EloquentTeacherSlackLogDestinationRepository::class);
         $this->app->bind(OfflineSyncServiceInterface::class, OfflineSyncService::class);
         $this->app->singleton(CacheObservabilityInterface::class, LogCacheObservability::class);
 

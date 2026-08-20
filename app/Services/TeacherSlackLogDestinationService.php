@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\Repositories\TeacherSlackLogDestinationRepositoryInterface;
 use App\Exceptions\TeacherSlackLogDestinationStorageException;
 use App\Models\TeacherSlackLogDestination;
 use App\Models\User;
@@ -12,11 +13,13 @@ use Throwable;
 
 class TeacherSlackLogDestinationService
 {
+    public function __construct(private readonly TeacherSlackLogDestinationRepositoryInterface $destinations)
+    {
+    }
+
     public function findFor(User $teacher): ?TeacherSlackLogDestination
     {
-        return TeacherSlackLogDestination::query()
-            ->where('user_id', $teacher->id)
-            ->first();
+        return $this->destinations->findFor($teacher);
     }
 
     /** @param array{channel_label?: string|null, webhook_url?: string|null, is_enabled: bool} $attributes */
@@ -24,10 +27,8 @@ class TeacherSlackLogDestinationService
     {
         try {
             return DB::transaction(function () use ($teacher, $attributes): TeacherSlackLogDestination {
-                $destination = TeacherSlackLogDestination::query()
-                    ->where('user_id', $teacher->id)
-                    ->lockForUpdate()
-                    ->firstOrNew(['user_id' => $teacher->id]);
+                $destination = $this->destinations->findForUpdate($teacher)
+                    ?? new TeacherSlackLogDestination(['user_id' => $teacher->id]);
                 $webhookUrl = Arr::get($attributes, 'webhook_url');
 
                 if (filled($webhookUrl)) {
@@ -44,9 +45,7 @@ class TeacherSlackLogDestinationService
                     ]);
                 }
 
-                $destination->save();
-
-                return $destination->fresh();
+                return $this->destinations->save($destination);
             }, 3);
         } catch (ValidationException $exception) {
             throw $exception;
@@ -59,10 +58,7 @@ class TeacherSlackLogDestinationService
     {
         try {
             DB::transaction(function () use ($teacher): void {
-                TeacherSlackLogDestination::query()
-                    ->where('user_id', $teacher->id)
-                    ->lockForUpdate()
-                    ->delete();
+                $this->destinations->deleteFor($teacher);
             }, 3);
         } catch (Throwable $exception) {
             throw new TeacherSlackLogDestinationStorageException('Unable to remove Slack destination.', previous: $exception);

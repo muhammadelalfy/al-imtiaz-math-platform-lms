@@ -2,7 +2,7 @@
 
 Each teacher may connect one personal Slack Incoming Webhook from the **Settings** page in the teacher portal. The LMS stores only the webhook configuration, encrypted at rest; it does **not** persist activity-log payloads, delivery history, request bodies, student names, credentials, or Slack responses. When enabled, successful mutating API operations and failed API responses are sent directly to that teacher’s configured Slack channel.
 
-The destination accepts only HTTPS Slack Incoming Webhook URLs hosted on `hooks.slack.com` or `hooks.slack-gov.com` with a `/services/` path. The saved URL is never returned by the API or displayed after saving. Saving, replacing, and removing a destination run within explicit database transactions; storage failures roll back and return a safe Arabic error response.
+The destination accepts only HTTPS Slack Incoming Webhook URLs hosted on `hooks.slack.com` or `hooks.slack-gov.com` with a `/services/` path. The saved URL is never returned by the API or displayed after saving. The Eloquent repository owns all database reads, locks, writes, and deletion; the application service owns transactions, validation orchestration, and exception normalization. Saving, replacing, and removing a destination run within explicit database transactions; storage failures roll back and return a safe Arabic error response.
 
 ## Teacher setup
 
