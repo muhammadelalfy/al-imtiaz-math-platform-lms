@@ -127,3 +127,7 @@ client/public/__manus__/version.json
 auth.json
 Homestead.json
 Homestead.yaml
+
+**/caddy
+frankenphp
+frankenphp-worker.php
