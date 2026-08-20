@@ -11,7 +11,37 @@ export type ApiUser = {
   name: string;
   email: string;
   role: Role;
+  can_manage_authorization?: boolean;
   student_account?: { student?: Student } | null;
+};
+export type AuthorizationPermission = {
+  id: number;
+  name: string;
+  label: string;
+  description?: string | null;
+  is_system: boolean;
+};
+export type AuthorizationRole = {
+  id: number;
+  name: string;
+  label: string;
+  description?: string | null;
+  is_system: boolean;
+  permissions: AuthorizationPermission[];
+  permission_ids: number[];
+};
+export type AuthorizationStaff = {
+  id: number;
+  name: string;
+  email: string;
+  base_role: "admin" | "teacher";
+  roles: AuthorizationRole[];
+  role_ids: number[];
+};
+export type AuthorizationCatalog = {
+  permissions: AuthorizationPermission[];
+  roles: AuthorizationRole[];
+  staff: AuthorizationStaff[];
 };
 export type Student = {
   id: number;
@@ -279,7 +309,7 @@ export const laravelApi = {
     return result.user;
   },
   async loginAsRole(
-    role: "admin" | "parent" | "student",
+    role: "admin" | "teacher" | "parent" | "student",
     payload: { email: string; password: string }
   ) {
     const result = await request<{
@@ -309,6 +339,72 @@ export const laravelApi = {
   },
   async me() {
     return request<ApiUser>("/auth/me");
+  },
+  async authorizationCatalog() {
+    return request<AuthorizationCatalog>("/staff/authorization/catalog");
+  },
+  async createAuthorizationPermission(
+    payload: Pick<AuthorizationPermission, "name" | "label" | "description">
+  ) {
+    return request<AuthorizationPermission>(
+      "/staff/authorization/permissions",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+  async updateAuthorizationPermission(
+    id: number,
+    payload: Partial<
+      Pick<AuthorizationPermission, "name" | "label" | "description">
+    >
+  ) {
+    return request<AuthorizationPermission>(
+      `/staff/authorization/permissions/${id}`,
+      { method: "PUT", body: JSON.stringify(payload) }
+    );
+  },
+  async deleteAuthorizationPermission(id: number) {
+    return request<void>(`/staff/authorization/permissions/${id}`, {
+      method: "DELETE",
+    });
+  },
+  async createAuthorizationRole(
+    payload: Pick<
+      AuthorizationRole,
+      "name" | "label" | "description" | "permission_ids"
+    >
+  ) {
+    return request<AuthorizationRole>("/staff/authorization/roles", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  async updateAuthorizationRole(
+    id: number,
+    payload: Partial<
+      Pick<
+        AuthorizationRole,
+        "name" | "label" | "description" | "permission_ids"
+      >
+    >
+  ) {
+    return request<AuthorizationRole>(`/staff/authorization/roles/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+  async deleteAuthorizationRole(id: number) {
+    return request<void>(`/staff/authorization/roles/${id}`, {
+      method: "DELETE",
+    });
+  },
+  async syncStaffAuthorizationRoles(userId: number, roleIds: number[]) {
+    return request<AuthorizationStaff>(
+      `/staff/authorization/staff/${userId}/roles`,
+      { method: "PUT", body: JSON.stringify({ role_ids: roleIds }) }
+    );
   },
   async logout() {
     await request("/auth/logout", { method: "POST" });

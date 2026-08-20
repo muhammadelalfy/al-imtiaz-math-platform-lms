@@ -160,6 +160,45 @@ describe("laravelApi", () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe("/api/auth/admin/login");
   });
 
+  it("maps teacher login and staff authorization CRUD to the guarded Laravel endpoints", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(
+        () =>
+          new Response(
+            JSON.stringify({ permissions: [], roles: [], staff: [], id: 4 }),
+            { status: 200 }
+          )
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await laravelApi.loginAsRole("teacher", {
+      email: "teacher@test.local",
+      password: "Secret123!",
+    });
+    await laravelApi.authorizationCatalog();
+    await laravelApi.createAuthorizationPermission({
+      name: "worksheets.review",
+      label: "مراجعة الشيتات",
+    });
+    await laravelApi.createAuthorizationRole({
+      name: "worksheet-reviewer",
+      label: "مراجع الشيتات",
+      permission_ids: [4],
+    });
+    await laravelApi.syncStaffAuthorizationRoles(9, [5]);
+
+    expect(
+      fetchMock.mock.calls.map(([url, init]) => [url, init?.method])
+    ).toEqual([
+      ["/api/auth/teacher/login", "POST"],
+      ["/api/staff/authorization/catalog", undefined],
+      ["/api/staff/authorization/permissions", "POST"],
+      ["/api/staff/authorization/roles", "POST"],
+      ["/api/staff/authorization/staff/9/roles", "PUT"],
+    ]);
+  });
+
   it("queues mutating requests when the browser is offline", async () => {
     vi.stubGlobal("navigator", { onLine: false });
     vi.stubGlobal("fetch", vi.fn());

@@ -14,6 +14,8 @@ use App\Models\Payment;
 use App\Models\QuestionBankQuestion;
 use App\Models\PluginProduct;
 use App\Models\PluginPurchase;
+use App\Models\AuthorizationPermission;
+use App\Models\AuthorizationRole;
 use App\Models\Student;
 use App\Models\StudentAccount;
 use App\Models\User;
@@ -40,6 +42,7 @@ class ArabicDemoSeeder extends Seeder
 
         $admin = $this->user(self::ADMIN_EMAIL, 'مدير الامتياز', 'admin', self::ADMIN_PASSWORD);
         $teacher = $this->user(self::TEACHER_EMAIL, 'أستاذ الرياضيات', 'teacher', self::TEACHER_PASSWORD);
+        $this->seedAuthorization($teacher);
         $students = $this->seedStudents();
         $this->seedExams($teacher, $students);
         $this->seedQuestionBank($teacher);
@@ -98,6 +101,32 @@ class ArabicDemoSeeder extends Seeder
         foreach ($questions as $question) {
             QuestionBankQuestion::updateOrCreate(['title' => $question['title']], [...$question, 'created_by' => $teacher->id, 'is_active' => true]);
         }
+    }
+
+    private function seedAuthorization(User $teacher): void
+    {
+        $systemPermissions = [
+            'authorization.manage' => ['إدارة الأدوار والصلاحيات', 'الوصول إلى لوحة إدارة الأدوار والصلاحيات للعاملين.'],
+            'students.read' => ['عرض الطلاب', 'عرض سجلات الطلاب ضمن صلاحيات العمل.'],
+            'attendance.manage' => ['إدارة الحضور', 'تسجيل الحضور وتحديثه.'],
+            'exams.manage' => ['إدارة الاختبارات', 'إعداد الاختبارات والأسئلة ومتابعتها.'],
+            'worksheets.manage' => ['إدارة الشيتات', 'إنشاء الشيتات وتعيينها للطلاب.'],
+            'reports.read' => ['عرض التقارير', 'عرض مؤشرات وتقارير المركز.'],
+        ];
+
+        foreach ($systemPermissions as $name => [$label, $description]) {
+            AuthorizationPermission::query()->updateOrCreate(
+                ['name' => $name, 'guard_name' => 'web'],
+                ['label' => $label, 'description' => $description, 'is_system' => true],
+            );
+        }
+
+        $manager = AuthorizationRole::query()->updateOrCreate(
+            ['name' => 'staff-permission-manager', 'guard_name' => 'web'],
+            ['label' => 'مسؤول صلاحيات العاملين', 'description' => 'دور نظامي يمنح للمعلم المصرح له إدارة الأدوار والصلاحيات غير النظامية.', 'is_system' => true],
+        );
+        $manager->syncPermissions(AuthorizationPermission::query()->where('name', 'authorization.manage')->firstOrFail());
+        $teacher->syncRoles([$manager]);
     }
 
     private function seedExams(User $teacher, array $students): void

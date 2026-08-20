@@ -186,3 +186,10 @@
 - [x] Produce an Arabic Software Requirements Specification that traces delivered LMS capabilities, current payment methods, security boundaries, and the roadmap for future modules.
 - [x] Document the owner-gated Stripe activation prerequisite in the SRS; live Checkout and webhook work remains blocked in checklist item 177.
 - [x] Add Arabic diagrams to the SRS for role access, core LMS workflows, payment fulfillment, and the Stripe integration boundary.
+- [x] Audit the current Laravel authentication guards, role checks, teacher-panel navigation, and all authorization-sensitive API routes before multi-guard migration.
+- [x] Design a least-privilege multi-guard model for administrators, teachers, parents, and students, including role/permission ownership and migration safety.
+- [x] Implement secure role and permission CRUD with server-side authorization, validation, resources, factories, seeders, and regression coverage.
+- [x] Add an Arabic teacher-panel interface for authorized role/permission administrators without allowing teachers to grant protected administrator capabilities.
+- [x] Validate multi-guard authentication and role/permission management with backend/frontend tests, static analysis, production build, documentation, and CI-equivalent checks.
+- [x] Audit connected GitHub branch and remote state, then synchronize completed payment and Arabic SRS checkpoints without publishing unfinished multi-guard work. Published branch `chore/payment-and-srs-checkpoints` and opened pull request #4.
+- [x] Repair the GitHub Actions frontend-test CI environment and Laravel-test asset preparation so protected-branch checks can pass on the synchronization pull request. The repaired CI run passed both required checks.
