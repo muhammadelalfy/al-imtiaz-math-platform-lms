@@ -13,6 +13,7 @@
     "dompdf/dompdf": "^3.1",
     "inertiajs/inertia-laravel": "^2.0",
     "laravel/framework": "^13.17",
+    "laravel/octane": "^2.19",
     "laravel/sanctum": "^4.0",
     "laravel/tinker": "^3.0",
     "nwidart/laravel-modules": "^6.0",
@@ -55,6 +56,7 @@
       "Composer\\Config::disableProcessTimeout",
       "npx concurrently -c \"#f59e0b,#14b8a6\" \"php artisan serve\" \"pnpm dev\""
     ],
+    "dev:octane": "@php artisan octane:start --server=frankenphp --host=127.0.0.1 --port=${OCTANE_PORT:-8000} --workers=${OCTANE_WORKERS:-1} --max-requests=${OCTANE_MAX_REQUESTS:-250}",
     "test": [
       "@php artisan config:clear --ansi @no_additional_args",
       "@php artisan test"

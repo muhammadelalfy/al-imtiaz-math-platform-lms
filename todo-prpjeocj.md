@@ -205,3 +205,7 @@
 - [x] Enforce that WhatsApp group automation is not enabled without a verified Official Business Account, invite-only group design, provider-limit validation, recipient consent, and an approved implementation; retain in-app and individual-recipient delivery in the current release.
 - [x] Audit and remove query-in-loop patterns from all touched grouping and notification code through eager loading, repository/service boundaries, bulk inserts, and strict lazy-loading tests.
 - [x] Provide dynamic teacher-managed non-secret WhatsApp/SMS channel settings while restricting access tokens, webhook secrets, and sender credentials to the project owner or administrator.
+- [x] Audit Laravel Octane compatibility and the free Autoscale deployment boundary.
+- [x] Add optional local/self-managed Octane tooling without changing the Autoscale production default.
+- [x] Document performance, state-reset, queue-drain, and hosting safeguards; validate the optional runtime.
+- [ ] Design the first offline synchronization release around authorized recorded operations, snapshots, idempotency, and conflict handling.
