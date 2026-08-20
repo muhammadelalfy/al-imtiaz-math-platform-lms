@@ -28,6 +28,8 @@ See [`docs/multi-guard-authorization.md`](docs/multi-guard-authorization.md) for
 
 See [`docs/groups-notifications.md`](docs/groups-notifications.md) for academic-group CRUD, bulk student membership, group-targeted queued notifications, in-app inbox delivery, channel configuration, provider credential boundaries, and free scheduled queue processing.
 
+See [`docs/offline-sync.md`](docs/offline-sync.md) for the first offline synchronization release: role-scoped IndexedDB snapshots, typed recorded-operation outbox, idempotent server reconciliation, conflict safeguards, retention limits, and reconnect behavior.
+
 See [`docs/srs-ar.md`](docs/srs-ar.md) for the Arabic Software Requirements Specification, delivery status, diagrams, payment-security boundary, and future roadmap.
 
 ## Publishing

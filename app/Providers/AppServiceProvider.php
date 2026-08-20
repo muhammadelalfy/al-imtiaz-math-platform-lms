@@ -12,6 +12,7 @@ use App\Contracts\Repositories\StudentRepositoryInterface;
 use App\Contracts\Repositories\WorksheetRepositoryInterface;
 use App\Contracts\Observability\CacheObservabilityInterface;
 use App\Contracts\Notifications\NotificationChannelDispatcherInterface;
+use App\Contracts\Services\OfflineSyncServiceInterface;
 use App\Repositories\CachedDashboardMetricsRepository;
 use App\Repositories\EloquentAcademicGroupRepository;
 use App\Repositories\EloquentExamTemplateRepository;
@@ -20,6 +21,7 @@ use App\Repositories\EloquentQuestionBankRepository;
 use App\Repositories\EloquentStudentRepository;
 use App\Repositories\EloquentWorksheetRepository;
 use App\Services\LogCacheObservability;
+use App\Services\OfflineSyncService;
 use App\Services\NotificationChannels\InAppNotificationChannel;
 use App\Services\NotificationChannels\TwilioSmsNotificationChannel;
 use App\Services\NotificationChannels\WhatsAppCloudNotificationChannel;
@@ -42,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(QuestionBankRepositoryInterface::class, EloquentQuestionBankRepository::class);
         $this->app->bind(PluginStoreRepositoryInterface::class, EloquentPluginStoreRepository::class);
         $this->app->bind(WorksheetRepositoryInterface::class, EloquentWorksheetRepository::class);
+        $this->app->bind(OfflineSyncServiceInterface::class, OfflineSyncService::class);
         $this->app->singleton(CacheObservabilityInterface::class, LogCacheObservability::class);
 
         $this->app->singleton(CachedDashboardMetricsRepository::class);

@@ -32,7 +32,9 @@ import * as QRCode from "qrcode";
 import QrScanner from "qr-scanner";
 import {
   ApiError,
+  isQueuedOfflineOperation,
   laravelApi,
+  offlineScopeForUser,
   syncOfflineQueue,
   type Attendance,
   type ExamResult,
@@ -41,10 +43,7 @@ import {
   type Student,
   type Worksheet,
 } from "@/lib/laravelApi";
-import {
-  cacheDashboardSnapshot,
-  readDashboardSnapshot,
-} from "@/lib/offlineStore";
+import { cacheOfflineSnapshot, readOfflineSnapshot } from "@/lib/offlineStore";
 import {
   formatExamTime,
   shouldAutoSubmit,
@@ -408,6 +407,7 @@ function AuthenticatedDashboard({
   const [payments, setPayments] = useState<Payment[]>([]);
   const [busy, setBusy] = useState(true);
   const [online, setOnline] = useState(() => navigator.onLine);
+  const [syncing, setSyncing] = useState(false);
   const restricted = user.role === "student" || user.role === "parent";
   const load = async () => {
     setBusy(true);
@@ -430,21 +430,22 @@ function AuthenticatedDashboard({
       setAttendance(nextAttendance);
       setExams(nextExams);
       setPayments(nextPayments);
-      cacheDashboardSnapshot({
-        students: nextStudents,
-        worksheets: nextWorksheets,
-        attendance: nextAttendance,
-        exams: nextExams,
-        payments: nextPayments,
-      });
+      const offlineSnapshot = await laravelApi.offlineSnapshot();
+      await cacheOfflineSnapshot(offlineScopeForUser(user), offlineSnapshot);
     } catch (caught) {
-      const snapshot = readDashboardSnapshot();
+      const snapshot = await readOfflineSnapshot<{
+        students: Student[];
+        worksheets: Worksheet[];
+        attendance: Attendance[];
+        exams: ExamResult[];
+        payments: Payment[];
+      }>(offlineScopeForUser(user));
       if (snapshot) {
-        setStudents(snapshot.students as Student[]);
-        setWorksheets(snapshot.worksheets as Worksheet[]);
-        setAttendance(snapshot.attendance as Attendance[]);
-        setExams(snapshot.exams as ExamResult[]);
-        setPayments(snapshot.payments as Payment[]);
+        setStudents(snapshot.students);
+        setWorksheets(snapshot.worksheets);
+        setAttendance(snapshot.attendance);
+        setExams(snapshot.exams);
+        setPayments(snapshot.payments);
         toast("يتم عرض آخر بيانات محفوظة محلياً");
       } else
         toast(
@@ -454,13 +455,28 @@ function AuthenticatedDashboard({
       setBusy(false);
     }
   };
+  const replayOfflineOperations = async () => {
+    if (!navigator.onLine) {
+      toast("اتصل بالإنترنت أولاً لمزامنة العمليات المحفوظة.");
+      return;
+    }
+    setSyncing(true);
+    try {
+      const summary = await syncOfflineQueue();
+      if (summary.applied) toast(`تمت مزامنة ${summary.applied} عملية`);
+      else if (!summary.pending && !summary.conflicts && !summary.rejected)
+        toast("لا توجد عمليات محلية بانتظار المزامنة.");
+      if (summary.conflicts || summary.rejected)
+        toast("توجد عمليات تحتاج مراجعة قبل إعادة المحاولة");
+      await load();
+    } finally {
+      setSyncing(false);
+    }
+  };
   useEffect(() => {
     const handleOnline = () => {
       setOnline(true);
-      void syncOfflineQueue().then(count => {
-        if (count) toast(`تمت مزامنة ${count} عملية`);
-        void load();
-      });
+      void replayOfflineOperations();
     };
     const handleOffline = () => setOnline(false);
     window.addEventListener("online", handleOnline);
@@ -565,6 +581,14 @@ function AuthenticatedDashboard({
               {online ? "متصل" : "غير متصل — بيانات محفوظة"}
             </div>
             <ThemeToggle />
+            <button
+              className="outline"
+              disabled={!online || syncing}
+              onClick={() => void replayOfflineOperations()}
+            >
+              <RefreshCw className={syncing ? "spin" : ""} size={15} />
+              {syncing ? "جارٍ المزامنة" : "مزامنة المحفوظات"}
+            </button>
             <button className="outline" onClick={load}>
               <RefreshCw size={15} /> تحديث البيانات
             </button>
@@ -1665,10 +1689,15 @@ function CrudPanel<T extends { id: number }>({
         max_score: form.max_score ? Number(form.max_score) : undefined,
         amount: form.amount ? Number(form.amount) : undefined,
       };
-      if (editing) await update(editing, payload);
-      else await create(payload);
+      const result = editing
+        ? await update(editing, payload)
+        : await create(payload);
       setForm({});
       setEditing(null);
+      if (isQueuedOfflineOperation(result)) {
+        toast("تم حفظ العملية محلياً وستتم مزامنتها عند عودة الاتصال");
+        return;
+      }
       await onRefresh();
       toast("تم حفظ السجل");
     } catch (caught) {

@@ -208,4 +208,7 @@
 - [x] Audit Laravel Octane compatibility and the free Autoscale deployment boundary.
 - [x] Add optional local/self-managed Octane tooling without changing the Autoscale production default.
 - [x] Document performance, state-reset, queue-drain, and hosting safeguards; validate the optional runtime.
-- [ ] Design the first offline synchronization release around authorized recorded operations, snapshots, idempotency, and conflict handling.
+- [x] Design the first offline synchronization release around authorized recorded operations, snapshots, idempotency, and conflict handling.
+- [x] Implement scoped server snapshots and idempotent reconciliation for attendance, exam results, payments, and worksheet submissions.
+- [x] Replace raw localStorage mutation replay with an IndexedDB-backed role-scoped snapshot and typed outbox, including status feedback and reconnect sync.
+- [ ] Add factories, seed coverage, backend/frontend regression tests, SRS and operations documentation, full validation, checkpoint, and a dedicated GitHub pull request for offline synchronization.
