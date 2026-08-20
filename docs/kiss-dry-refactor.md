@@ -6,7 +6,7 @@ This refactor follows two constraints: keep application behavior simple and visi
 
 ## Audit findings
 
-The largest application files were `client/src/pages/LiveDashboard.tsx`, `client/src/pages/Home.tsx`, and `client/src/lib/laravelApi.ts`. The API client repeated token persistence and collection-response unwrapping. Several Laravel API controllers repeated the same admin/teacher authorization check. These were selected because they are local, low-risk patterns with clear contracts.
+The largest application files were `resources/js/pages/LiveDashboard.tsx`, `resources/js/pages/Home.tsx`, and `resources/js/lib/laravelApi.ts`. The API client repeated token persistence and collection-response unwrapping. Several Laravel API controllers repeated the same admin/teacher authorization check. These were selected because they are local, low-risk patterns with clear contracts.
 
 The generated shadcn UI files and the large dashboard screens were intentionally not rewritten in this slice. They are either generated infrastructure or contain feature-specific orchestration where premature extraction would make the code harder to follow. The remaining student, worksheet, exam, payment, and report controllers also remain on their stable routes until each domain has a focused module migration and regression suite.
 

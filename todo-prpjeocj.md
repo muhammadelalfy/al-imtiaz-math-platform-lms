@@ -135,3 +135,54 @@
 - [x] Diagnose and fix failing GitHub CI checks on pull request #3, then verify the corrected run.
 - [x] Configure GitHub main branch protection to require passing Frontend checks and Laravel checks before merging.
 - [x] Apply and verify the required CI checks after the repository visibility change to public.
+- [x] Close the external GitHub Actions deployment-workflow option: manual built-in publishing was selected, so no deploy-hook or SSH secret contract is required.
+- [x] Redesign the Arabic RTL exam workspace for responsive mobile and desktop usability with modern action controls.
+- [x] Implement accessible, persistent light and dark themes with a modern shared color system across the website.
+- [x] Add regression coverage and browser verification for responsive exam layout and theme switching.
+- [x] Migrate the shared theme layer to Sass variables and mixins while retaining the light/dark token contract.
+- [x] Refactor the active dashboard and exam theme surfaces to Tailwind-first utility composition with Sass reserved for global tokens and complex responsive patterns.
+- [x] Install and validate the Sass build pipeline without regressing RTL behavior, responsive layout, or CI production builds.
+- [x] Simplify the Arabic RTL exam authoring page hierarchy and keep the primary form in a single natural document flow.
+- [x] Remove constrained internal scrolling from the exam authoring form and template library while retaining responsive usability.
+- [x] Add regression/browser verification for the simplified no-nested-scroll exam workspace.
+- [x] Audit the split frontend and Laravel backend architecture, dependencies, routes, and deployment assumptions for a Laravel-hosted React migration.
+- [x] Move the React application into Laravel’s supported Vite frontend structure while preserving Arabic RTL assets and existing application features.
+- [x] Reconcile Laravel API routing, session/authentication behavior, tests, CI, and production build scripts with the integrated React frontend.
+- [x] Validate the integrated Laravel React application locally and document its build, development, and deployment workflows.
+- [x] Audit root-level file collisions and preserve a rollback-safe migration boundary before promoting Laravel to the repository root.
+- [x] Move Laravel’s application core and canonical React resources from laravel-backend to the repository root.
+- [x] Remove or archive the obsolete split Node/Express and standalone client structure after the root Laravel application is validated.
+- [x] Update root scripts, GitHub Actions, documentation, tests, and developer commands for the Laravel-root architecture.
+- [x] Verify the Laravel-root application build, API tests, React tests, and hosted web shell.
+- [x] Confirm no tracked Laravel application content remains under the former laravel-backend directory and remove any residual tracked artifacts.
+- [x] Document manual built-in publishing as the selected post-merge release process, with no external deployment workflow or credentials required.
+- [x] Audit existing Laravel API controllers, models, relationship loading, validation, and response shapes for a SOLID refactor.
+- [x] Introduce narrow repository interfaces and Eloquent implementations for high-traffic LMS read models, bound through AppServiceProvider.
+- [x] Add cache-backed repository reads with deterministic invalidation on domain writes.
+- [x] Replace inline API validation with role-aware form requests and return stable API resources.
+- [x] Enable strict Eloquent lazy-loading prevention and update queries with explicit eager-loading requirements.
+- [x] Add architecture, cache-invalidation, API-resource, form-request, and strict-loading regression coverage.
+- [x] Audit current CI, cache implementation, worksheet API, and exam-template API contracts for the quality and observability extension.
+- [x] Add Larastan configuration and a required static-analysis CI check with an explicit baseline policy.
+- [x] Extend repository and API resource boundaries to worksheets and exam templates with explicit relationship loading.
+- [x] Add cache hit/miss observability for dashboard metrics without recording sensitive learner data.
+- [x] Add regression coverage and validate PHP tests, Larastan, CI configuration, and frontend checks.
+- [x] Audit question-bank and plugin-store API contracts, persistence models, client expectations, and authorization boundaries.
+- [x] Add narrow repository interfaces and Eloquent implementations for question-bank queries and plugin catalog/entitlement reads.
+- [x] Add stable API resources with explicit department, purchase, and installation relationship-loading rules.
+- [x] Refactor question-bank and plugin-store controllers to use repositories and resources without breaking role-safe responses.
+- [x] Add regression coverage and validate Larastan, Laravel API tests, and frontend checks for the repository-resource extension.
+- [x] Audit plugin purchase persistence, current store UI, and existing payment integration configuration.
+- [x] Define a payment lifecycle that creates pending purchases, verifies provider payment events, and grants immutable completed entitlements idempotently.
+- [ ] Configure secure Stripe project credentials, then add provider checkout and webhook fulfillment; this is blocked pending the owner’s Stripe Settings → Payment configuration.
+- [x] Update the plugin-store UI to initiate checkout and show pending, paid, failed, and entitlement states.
+- [x] Add payment lifecycle, webhook-boundary, authorization, idempotency, and UI regression coverage; validate all quality checks.
+- [x] Add privileged payment-method configuration for public Vodafone Cash, InstaPay, and Fawry instructions without exposing provider secrets to teachers or students.
+- [x] Implement manual-reference and administrator-verification workflows for Vodafone Cash and InstaPay payments pending verified merchant API contracts.
+- [x] Extend plugin checkout UI with selectable payment methods, Egyptian payment instructions, pending status, and payment-proof/reference submission.
+- [x] Add administrator payment-review controls that idempotently approve or reject manual payments before granting plugin entitlements.
+- [x] Add Fawry as an administrator-configured plugin payment method with the same pending-reference and verified-fulfillment safeguards.
+- [x] Run backend feature tests, frontend tests, static analysis, production build, and CI-workflow validation for every requested feature before checkpointing it.
+- [x] Produce an Arabic Software Requirements Specification that traces delivered LMS capabilities, current payment methods, security boundaries, and the roadmap for future modules.
+- [x] Document the owner-gated Stripe activation prerequisite in the SRS; live Checkout and webhook work remains blocked in checklist item 177.
+- [x] Add Arabic diagrams to the SRS for role access, core LMS workflows, payment fulfillment, and the Stripe integration boundary.
