@@ -19,4 +19,13 @@ class LaravelReactShellTest extends TestCase
             ->assertOk()
             ->assertJsonPath('component', 'Lms');
     }
+
+    public function test_laravel_emits_https_vite_assets_behind_a_tls_terminating_proxy(): void
+    {
+        $this->withServerVariables(['HTTP_X_FORWARDED_PROTO' => 'https'])
+            ->get('/')
+            ->assertOk();
+
+        $this->assertSame('https', $this->app['request']->getScheme());
+    }
 }

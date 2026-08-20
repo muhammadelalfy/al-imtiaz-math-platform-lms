@@ -10,6 +10,7 @@ use App\Models\ExamSession;
 use App\Models\ExamSessionAnswer;
 use App\Models\ExamSessionEvent;
 use App\Models\ExamTemplate;
+use App\Models\OfflineSyncOperation;
 use App\Models\Payment;
 use App\Models\QuestionBankQuestion;
 use App\Models\PluginProduct;
@@ -86,6 +87,18 @@ class ArabicDemoSeeder extends Seeder
                 ['amount' => 450, 'status' => $index % 4 === 0 ? 'pending' : 'paid', 'paid_at' => $index % 4 === 0 ? null : now()->subDays(4), 'note' => 'اشتراك شهر تجريبي', 'recorded_by' => $admin->id],
             );
         }
+
+        OfflineSyncOperation::query()->updateOrCreate(
+            ['user_id' => $teacher->id, 'client_operation_id' => 'f5115d94-31d5-4bc3-a14c-74e23c4ed0ad'],
+            [
+                'type' => 'attendance.create',
+                'status' => 'applied',
+                'payload' => ['student_id' => $students[0]->id, 'status' => 'present'],
+                'result' => ['domain' => 'attendance', 'record_id' => 1],
+                'occurred_at' => now()->subDay(),
+                'processed_at' => now()->subDay(),
+            ],
+        );
 
         $this->command?->info('Arabic LMS demo data is ready. QR codes were generated for all demo students.');
         $this->command?->info('Admin: '.self::ADMIN_EMAIL.' / '.self::ADMIN_PASSWORD);

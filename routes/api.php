@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ExamManagementController;
 use App\Http\Controllers\Api\NotificationCampaignController;
 use App\Http\Controllers\Api\NotificationChannelSettingController;
 use App\Http\Controllers\Api\NotificationInboxController;
+use App\Http\Controllers\Api\OfflineSyncController;
 use App\Http\Controllers\Api\ScheduledNotificationQueueController;
 use App\Http\Controllers\Api\QuestionBankController;
 use App\Http\Controllers\Api\PaymentController;
@@ -29,6 +30,8 @@ Route::post('/scheduled/notifications/drain', ScheduledNotificationQueueControll
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::get('/sync/snapshot', [OfflineSyncController::class, 'snapshot']);
+    Route::post('/sync/operations', [OfflineSyncController::class, 'reconcile']);
     Route::get('/notifications', [NotificationInboxController::class, 'index']);
     Route::post('/notifications/{notification}/read', [NotificationInboxController::class, 'markRead']);
 

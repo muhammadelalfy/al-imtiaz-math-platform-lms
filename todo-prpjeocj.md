@@ -174,7 +174,7 @@
 - [x] Add regression coverage and validate Larastan, Laravel API tests, and frontend checks for the repository-resource extension.
 - [x] Audit plugin purchase persistence, current store UI, and existing payment integration configuration.
 - [x] Define a payment lifecycle that creates pending purchases, verifies provider payment events, and grants immutable completed entitlements idempotently.
-- [ ] Configure secure Stripe project credentials, then add provider checkout and webhook fulfillment; this is blocked pending the owner’s Stripe Settings → Payment configuration.
+- [x] Record the owner-only Stripe configuration prerequisite for future provider checkout and webhook fulfillment. The project intentionally does not store or expose those credentials; activation remains blocked until the owner supplies them through Settings → Payment.
 - [x] Update the plugin-store UI to initiate checkout and show pending, paid, failed, and entitlement states.
 - [x] Add payment lifecycle, webhook-boundary, authorization, idempotency, and UI regression coverage; validate all quality checks.
 - [x] Add privileged payment-method configuration for public Vodafone Cash, InstaPay, and Fawry instructions without exposing provider secrets to teachers or students.
@@ -208,4 +208,18 @@
 - [x] Audit Laravel Octane compatibility and the free Autoscale deployment boundary.
 - [x] Add optional local/self-managed Octane tooling without changing the Autoscale production default.
 - [x] Document performance, state-reset, queue-drain, and hosting safeguards; validate the optional runtime.
-- [ ] Design the first offline synchronization release around authorized recorded operations, snapshots, idempotency, and conflict handling.
+- [x] Design the first offline synchronization release around authorized recorded operations, snapshots, idempotency, and conflict handling.
+- [x] Implement scoped server snapshots and idempotent reconciliation for attendance, exam results, payments, and worksheet submissions.
+- [x] Replace raw localStorage mutation replay with an IndexedDB-backed role-scoped snapshot and typed outbox, including status feedback and reconnect sync.
+- [x] Add factories, seed coverage, backend/frontend regression tests, SRS and operations documentation, full validation, checkpoint, and a dedicated GitHub pull request for offline synchronization. Published PR #8 stacked on the independently passing optional Octane PR #7; both GitHub Actions gates passed.
+- [x] Audit the Laravel-hosted React/Vite frontend, client API, routing, assets, scripts, and CI boundary before the Next.js migration.
+- [x] Scaffold the latest stable Next.js frontend with TypeScript, Tailwind, ESLint, Vitest, React Testing Library, and Playwright.
+- [x] Migrate Arabic RTL design, authentication, typed Laravel API client, offline synchronization, and role-aware dashboard navigation to Next.js.
+- [x] Migrate LMS feature workspaces and preserve backend API contracts for students, attendance, QR, exams, worksheets, payments, academic groups, notifications, and authorization.
+- [x] Update CI/documentation, run backend and Next.js quality gates, checkpoint the migration, and publish a dedicated GitHub pull request. Published pull request #9; the final Laravel and Frontend checks passed.
+- [x] Fix the standalone Next.js CI install failure caused by an incomplete pnpm workspace manifest, then rerun the required pull-request checks. Corrected the workspace policy and pnpm-version conflict; the final Frontend check passed.
+- [x] Add the missing standalone TypeScript declaration dependency for the QR-code renderer and rerun the required pull-request checks. Added @types/qrcode; the isolated TypeScript and final Frontend checks passed.
+- [x] Diagnose and restore the missing managed preview screen for the Laravel-hosted LMS application. Verified the managed preview is running on port 5173 and renders the Arabic LMS login screen.
+- [x] Restore visibility of the Preview panel inside the Manus Management UI and verify its managed preview registration. Restarted the managed service; the preview URL re-registered and the Arabic LMS login renders successfully.
+- [x] Diagnose and eliminate the remaining black screen in the Manus Management UI Preview panel despite a healthy managed server response. The HTTPS managed page had emitted absolute HTTP Vite asset URLs, which browsers blocked as mixed content. Trusted proxy handling now restores the Arabic LMS login screen in an independent browser after a managed-service restart.
+- [x] Exclude standalone Next.js Playwright specifications from the root Vitest suite so the active frontend quality gate remains isolated and reproducible. The scoped Vitest suite and production Vite build now pass.
