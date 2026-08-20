@@ -183,3 +183,6 @@
 - [x] Add administrator payment-review controls that idempotently approve or reject manual payments before granting plugin entitlements.
 - [x] Add Fawry as an administrator-configured plugin payment method with the same pending-reference and verified-fulfillment safeguards.
 - [x] Run backend feature tests, frontend tests, static analysis, production build, and CI-workflow validation for every requested feature before checkpointing it.
+- [x] Produce an Arabic Software Requirements Specification that traces delivered LMS capabilities, current payment methods, security boundaries, and the roadmap for future modules.
+- [x] Document the owner-gated Stripe activation prerequisite in the SRS; live Checkout and webhook work remains blocked in checklist item 177.
+- [x] Add Arabic diagrams to the SRS for role access, core LMS workflows, payment fulfillment, and the Stripe integration boundary.

@@ -24,6 +24,8 @@ See [`docs/laravel-api-architecture.md`](docs/laravel-api-architecture.md) for t
 
 See [`docs/plugin-payments.md`](docs/plugin-payments.md) for the plugin-store payment lifecycle, administrator approval controls, Egyptian payment-method configuration, and Stripe credential boundary.
 
+See [`docs/srs-ar.md`](docs/srs-ar.md) for the Arabic Software Requirements Specification, delivery status, diagrams, payment-security boundary, and future roadmap.
+
 ## Publishing
 
 The selected production release model is **manual built-in publishing**. After a pull request has been merged and the required CI checks have passed, create or select the latest project checkpoint and use the **Publish** control in the project management interface. This model intentionally does not add a GitHub Actions deployment workflow, deploy-hook secret, SSH credential, or external hosting contract. GitHub Actions continues to validate code changes; the release decision remains an explicit project-owner action in the built-in publishing interface.
