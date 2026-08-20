@@ -217,3 +217,4 @@
 - [x] Migrate Arabic RTL design, authentication, typed Laravel API client, offline synchronization, and role-aware dashboard navigation to Next.js.
 - [x] Migrate LMS feature workspaces and preserve backend API contracts for students, attendance, QR, exams, worksheets, payments, academic groups, notifications, and authorization.
 - [ ] Update CI/documentation, run backend and Next.js quality gates, checkpoint the migration, and publish a dedicated GitHub pull request.
+- [ ] Fix the standalone Next.js CI install failure caused by an incomplete pnpm workspace manifest, then rerun the required pull-request checks.
