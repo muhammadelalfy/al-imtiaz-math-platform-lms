@@ -209,6 +209,42 @@ describe("laravelApi", () => {
       JSON.parse(storage.get("al-imtiaz-offline-mutations") || "[]")
     ).toHaveLength(1);
   });
+
+  it("maps group membership, group-targeted campaigns, and dynamic channel settings to guarded endpoints", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(
+        () => new Response(JSON.stringify({ id: 7, data: [] }), { status: 200 })
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await laravelApi.academicGroups();
+    await laravelApi.academicGroup(7);
+    await laravelApi.syncAcademicGroupStudents(7, [2, 3]);
+    await laravelApi.createNotificationCampaign({
+      audience: "academic_group",
+      academic_group_id: 7,
+      title: "مراجعة",
+      body: "موعد المراجعة غداً.",
+      channels: ["in_app"],
+    });
+    await laravelApi.notificationChannels();
+    await laravelApi.updateNotificationChannel(3, {
+      is_enabled: true,
+      settings: { sender_label: "الامتياز" },
+    });
+
+    expect(
+      fetchMock.mock.calls.map(([url, init]) => [url, init?.method])
+    ).toEqual([
+      ["/api/staff/academic-groups", undefined],
+      ["/api/staff/academic-groups/7", undefined],
+      ["/api/staff/academic-groups/7/students", "PUT"],
+      ["/api/staff/notifications", "POST"],
+      ["/api/staff/notification-channels", undefined],
+      ["/api/staff/notification-channels/3", "PUT"],
+    ]);
+  });
 });
 
 it("maps exam template CRUD and monitored session actions to Laravel endpoints", async () => {

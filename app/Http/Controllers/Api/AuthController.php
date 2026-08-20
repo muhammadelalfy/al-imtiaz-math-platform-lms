@@ -42,6 +42,9 @@ class AuthController extends Controller
         $user = $request->user();
         $user->load(['studentAccount.student', 'roles.permissions', 'permissions']);
         $user->setAttribute('can_manage_authorization', $user->can('authorization.manage'));
+        $user->setAttribute('can_send_notifications', $user->can('notifications.send'));
+        $user->setAttribute('can_manage_groups', $user->can('groups.manage'));
+        $user->setAttribute('can_manage_notification_channels', $user->can('notifications.channels.manage'));
 
         return $user;
     }
@@ -71,7 +74,12 @@ class AuthController extends Controller
     private function tokenResponse(User $user, ?string $loginType = null): array
     {
         return [
-            'user' => $user->load(['studentAccount.student', 'roles.permissions', 'permissions']),
+            'user' => tap($user->load(['studentAccount.student', 'roles.permissions', 'permissions']), function (User $loadedUser): void {
+                $loadedUser->setAttribute('can_manage_authorization', $loadedUser->can('authorization.manage'));
+                $loadedUser->setAttribute('can_send_notifications', $loadedUser->can('notifications.send'));
+                $loadedUser->setAttribute('can_manage_groups', $loadedUser->can('groups.manage'));
+                $loadedUser->setAttribute('can_manage_notification_channels', $loadedUser->can('notifications.channels.manage'));
+            }),
             'token' => $user->createToken('lms-'.$loginType, ['guard:'.$loginType])->plainTextToken,
             'login_type' => $loginType ?? $user->role,
         ];

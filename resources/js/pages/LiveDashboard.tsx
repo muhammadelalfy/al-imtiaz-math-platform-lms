@@ -52,6 +52,8 @@ import {
 } from "@/lib/examSessionUi";
 import PluginStorePanel from "@/components/PluginStorePanel";
 import AuthorizationManagementPanel from "@/components/AuthorizationManagementPanel";
+import NotificationManagementPanel from "@/components/NotificationManagementPanel";
+import NotificationInbox from "@/components/NotificationInbox";
 import MathUniverseBackground from "@/components/MathUniverseBackground";
 import ExamWarningBanner from "@/components/ExamWarningBanner";
 import ExamTemplateActions from "@/components/ExamTemplateActions";
@@ -77,6 +79,7 @@ type Tab =
   | "worksheets"
   | "reports"
   | "plugins"
+  | "notifications"
   | "authorization"
   | "settings";
 type Portal = "admin" | "teacher" | "parent" | "student";
@@ -513,6 +516,11 @@ function AuthenticatedDashboard({
                 { id: "reports", label: "التقارير", icon: BarChart3 },
                 { id: "plugins", label: "متجر الإضافات", icon: Package },
                 {
+                  id: "notifications",
+                  label: "المجموعات والإشعارات",
+                  icon: Bell,
+                },
+                {
                   id: "authorization",
                   label: "الأدوار والصلاحيات",
                   icon: ShieldCheck,
@@ -585,6 +593,9 @@ function AuthenticatedDashboard({
             worksheets={worksheets}
             role={user.role}
             canManageAuthorization={Boolean(user.can_manage_authorization)}
+            canManageChannels={Boolean(user.can_manage_notification_channels)}
+            canManageGroups={Boolean(user.can_manage_groups)}
+            canSendNotifications={Boolean(user.can_send_notifications)}
             onRefresh={load}
           />
         )}
@@ -650,6 +661,7 @@ function LearnerDashboard({
         />
       </div>
       <div className="live-grid">
+        <NotificationInbox />
         <div className="card">
           <div className="card-head">
             <h3>آخر النتائج</h3>
@@ -744,6 +756,9 @@ function AdminView({
   worksheets,
   role,
   canManageAuthorization,
+  canManageChannels,
+  canManageGroups,
+  canSendNotifications,
   onRefresh,
 }: {
   tab: Tab;
@@ -754,6 +769,9 @@ function AdminView({
   worksheets: Worksheet[];
   role: Role;
   canManageAuthorization: boolean;
+  canManageChannels: boolean;
+  canManageGroups: boolean;
+  canSendNotifications: boolean;
   onRefresh: () => Promise<void>;
 }) {
   if (tab === "classes") return <ClassNavigator students={students} />;
@@ -779,6 +797,14 @@ function AdminView({
     );
   if (tab === "plugins")
     return <PluginStorePanel onRefresh={onRefresh} role={role} />;
+  if (tab === "notifications" && (canManageGroups || canSendNotifications))
+    return (
+      <NotificationManagementPanel
+        canManageChannels={canManageChannels}
+        canManageGroups={canManageGroups}
+        canSendNotifications={canSendNotifications}
+      />
+    );
   if (tab === "authorization" && canManageAuthorization)
     return (
       <AuthorizationManagementPanel canAssignStaffRoles={role === "admin"} />

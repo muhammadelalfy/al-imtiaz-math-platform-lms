@@ -4,19 +4,25 @@ namespace App\Providers;
 
 use App\Contracts\Repositories\DashboardMetricsCacheInterface;
 use App\Contracts\Repositories\DashboardMetricsRepositoryInterface;
+use App\Contracts\Repositories\AcademicGroupRepositoryInterface;
 use App\Contracts\Repositories\ExamTemplateRepositoryInterface;
 use App\Contracts\Repositories\PluginStoreRepositoryInterface;
 use App\Contracts\Repositories\QuestionBankRepositoryInterface;
 use App\Contracts\Repositories\StudentRepositoryInterface;
 use App\Contracts\Repositories\WorksheetRepositoryInterface;
 use App\Contracts\Observability\CacheObservabilityInterface;
+use App\Contracts\Notifications\NotificationChannelDispatcherInterface;
 use App\Repositories\CachedDashboardMetricsRepository;
+use App\Repositories\EloquentAcademicGroupRepository;
 use App\Repositories\EloquentExamTemplateRepository;
 use App\Repositories\EloquentPluginStoreRepository;
 use App\Repositories\EloquentQuestionBankRepository;
 use App\Repositories\EloquentStudentRepository;
 use App\Repositories\EloquentWorksheetRepository;
 use App\Services\LogCacheObservability;
+use App\Services\NotificationChannels\InAppNotificationChannel;
+use App\Services\NotificationChannels\TwilioSmsNotificationChannel;
+use App\Services\NotificationChannels\WhatsAppCloudNotificationChannel;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -30,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(AcademicGroupRepositoryInterface::class, EloquentAcademicGroupRepository::class);
         $this->app->bind(StudentRepositoryInterface::class, EloquentStudentRepository::class);
         $this->app->bind(ExamTemplateRepositoryInterface::class, EloquentExamTemplateRepository::class);
         $this->app->bind(QuestionBankRepositoryInterface::class, EloquentQuestionBankRepository::class);
@@ -40,6 +47,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CachedDashboardMetricsRepository::class);
         $this->app->bind(DashboardMetricsRepositoryInterface::class, fn ($app) => $app->make(CachedDashboardMetricsRepository::class));
         $this->app->bind(DashboardMetricsCacheInterface::class, fn ($app) => $app->make(CachedDashboardMetricsRepository::class));
+        $this->app->tag([InAppNotificationChannel::class, WhatsAppCloudNotificationChannel::class, TwilioSmsNotificationChannel::class], NotificationChannelDispatcherInterface::class);
+        $this->app->bind(\App\Services\NotificationChannelDeliveryService::class, fn ($app) => new \App\Services\NotificationChannelDeliveryService(
+            $app->tagged(NotificationChannelDispatcherInterface::class),
+            $app->make(\App\Services\NotificationChannelConfigurationService::class),
+        ));
     }
 
     /**

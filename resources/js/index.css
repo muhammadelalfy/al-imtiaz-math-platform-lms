@@ -6953,3 +6953,201 @@ body {
     display: block;
   }
 }
+
+/* Notification workspace: compact RTL operations surface for groups, campaigns, and channel status. */
+.notification-management-panel {
+  gap: 18px;
+}
+.notification-grid {
+  align-items: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.notification-management-panel .form-card {
+  display: grid;
+  gap: 13px;
+}
+.notification-management-panel label,
+.notification-management-panel fieldset {
+  color: var(--text-muted, #58716e);
+  font-size: 12px;
+  font-weight: 600;
+}
+.notification-management-panel input:not([type="checkbox"]),
+.notification-management-panel select,
+.notification-management-panel textarea,
+.channel-row > input {
+  width: 100%;
+  margin-top: 6px;
+  border: 1px solid var(--border-subtle, #dfe7e1);
+  border-radius: 10px;
+  background: var(--surface, #fffdf9);
+  color: var(--text-strong, #284b56);
+  padding: 10px 12px;
+}
+.notification-management-panel select[multiple] {
+  min-height: 116px;
+}
+.notification-management-panel textarea {
+  resize: vertical;
+}
+.notification-management-panel fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0;
+  padding: 11px;
+  border: 1px dashed var(--border-subtle, #dfe7e1);
+  border-radius: 11px;
+}
+.notification-management-panel fieldset label,
+.member-checks label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 500;
+}
+.soft-badge {
+  border-radius: 999px;
+  background: #e7f4ed;
+  color: #147d68;
+  padding: 5px 9px;
+  font-size: 10px;
+}
+.group-list {
+  display: grid;
+  gap: 7px;
+  max-height: 240px;
+  overflow: auto;
+  padding-inline-end: 3px;
+}
+.group-row,
+.notification-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: var(--surface-subtle, #f5f8f4);
+  color: var(--text-strong, #284b56);
+  text-align: right;
+  transition:
+    border-color 160ms var(--ease-out, ease-out),
+    transform 160ms var(--ease-out, ease-out),
+    background 160ms var(--ease-out, ease-out);
+}
+.group-row:hover,
+.group-row.active {
+  border-color: #9acdbb;
+  background: #eff8f3;
+  transform: translateY(-1px);
+}
+.group-row span,
+.channel-row small,
+.notification-item span,
+.notification-item small {
+  display: grid;
+  gap: 2px;
+}
+.group-row small,
+.channel-row small,
+.notification-item small {
+  color: var(--text-muted, #778c87);
+  font-size: 10px;
+  font-weight: 400;
+}
+.group-row b {
+  color: #147d68;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.member-editor {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle, #e8eee9);
+}
+.member-editor h4 {
+  margin: 0;
+  font-size: 13px;
+}
+.member-editor p {
+  margin: 0;
+  color: var(--text-muted, #778c87);
+  font-size: 10px;
+  line-height: 1.8;
+}
+.member-checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  max-height: 198px;
+  overflow: auto;
+  padding: 3px;
+}
+.member-checks label {
+  padding: 8px;
+  border-radius: 9px;
+  background: var(--surface-subtle, #f5f8f4);
+  font-size: 11px;
+}
+.channel-settings {
+  margin-top: 18px;
+}
+.channel-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto minmax(160px, 0.65fr);
+  align-items: center;
+  gap: 14px;
+  padding: 13px 0;
+  border-top: 1px solid var(--border-subtle, #e8eee9);
+}
+.channel-row:first-of-type {
+  border-top: 0;
+}
+.channel-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.channel-row > input {
+  margin: 0;
+}
+.notification-inbox {
+  min-height: 215px;
+}
+.notification-item {
+  margin-bottom: 8px;
+}
+.notification-item.read {
+  opacity: 0.68;
+}
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #b87945;
+  box-shadow: 0 0 0 4px #f9ecdf;
+}
+@media (max-width: 960px) {
+  .notification-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 620px) {
+  .channel-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .member-checks {
+    grid-template-columns: 1fr;
+  }
+  .notification-management-panel .card-head {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+}

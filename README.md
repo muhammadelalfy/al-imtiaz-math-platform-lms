@@ -26,6 +26,8 @@ See [`docs/plugin-payments.md`](docs/plugin-payments.md) for the plugin-store pa
 
 See [`docs/multi-guard-authorization.md`](docs/multi-guard-authorization.md) for the separate account-login guards, staff role/permission CRUD controls, least-privilege boundaries, and verification workflow.
 
+See [`docs/groups-notifications.md`](docs/groups-notifications.md) for academic-group CRUD, bulk student membership, group-targeted queued notifications, in-app inbox delivery, channel configuration, provider credential boundaries, and free scheduled queue processing.
+
 See [`docs/srs-ar.md`](docs/srs-ar.md) for the Arabic Software Requirements Specification, delivery status, diagrams, payment-security boundary, and future roadmap.
 
 ## Publishing
