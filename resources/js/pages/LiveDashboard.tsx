@@ -41,6 +41,7 @@ import {
   type Payment,
   type Role,
   type Student,
+  type TeacherSlackLogDestination,
   type Worksheet,
 } from "@/lib/laravelApi";
 import { cacheOfflineSnapshot, readOfflineSnapshot } from "@/lib/offlineStore";
@@ -833,7 +834,7 @@ function AdminView({
     return (
       <AuthorizationManagementPanel canAssignStaffRoles={role === "admin"} />
     );
-  if (tab === "settings") return <SettingsView />;
+  if (tab === "settings") return <SettingsView role={role} />;
   if (tab === "attendance")
     return (
       <CrudPanel
@@ -1399,7 +1400,7 @@ function ReportsView({
     </section>
   );
 }
-function SettingsView() {
+function SettingsView({ role }: { role: Role }) {
   return (
     <section className="live-page">
       <div className="page-head">
@@ -1421,7 +1422,116 @@ function SettingsView() {
           <b>تلقائية عند عودة الاتصال</b>
         </div>
       </div>
+      {role === "teacher" && <TeacherSlackLogSettings />}
     </section>
+  );
+}
+
+function TeacherSlackLogSettings() {
+  const [destination, setDestination] = useState<TeacherSlackLogDestination | null>(null);
+  const [channelLabel, setChannelLabel] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [enabled, setEnabled] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void laravelApi
+      .teacherSlackLogDestination()
+      .then(next => {
+        setDestination(next);
+        setChannelLabel(next.channel_label || "");
+        setEnabled(next.is_enabled);
+      })
+      .catch(caught =>
+        toast(caught instanceof ApiError ? caught.message : "تعذر تحميل إعدادات Slack")
+      );
+  }, []);
+
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const next = await laravelApi.updateTeacherSlackLogDestination({
+        channel_label: channelLabel.trim(),
+        ...(webhookUrl.trim() ? { webhook_url: webhookUrl.trim() } : {}),
+        is_enabled: enabled,
+      });
+      setDestination(next);
+      setWebhookUrl("");
+      toast("تم حفظ إعداد قناة Slack الخاصة بك");
+    } catch (caught) {
+      toast(caught instanceof ApiError ? caught.message : "تعذر حفظ إعدادات Slack");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const clear = async () => {
+    setSaving(true);
+    try {
+      await laravelApi.clearTeacherSlackLogDestination();
+      setDestination({ configured: false, is_enabled: false });
+      setWebhookUrl("");
+      setEnabled(false);
+      toast("تم حذف رابط Slack المشفر وإيقاف السجل الخارجي");
+    } catch (caught) {
+      toast(caught instanceof ApiError ? caught.message : "تعذر حذف إعدادات Slack");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form className="card settings-card slack-log-settings" onSubmit={save}>
+      <div className="settings-card__head">
+        <div>
+          <span className="eyebrow">سجل خارجي خاص بالمدرس</span>
+          <h3>سجل العمليات إلى Slack</h3>
+        </div>
+        <span className={destination?.configured ? "payment-paid" : "sync-badge offline"}>
+          {destination?.configured ? "تم الربط" : "غير مهيأ"}
+        </span>
+      </div>
+      <p>
+        تُرسل عمليات الحفظ والتعديلات والأخطاء إلى القناة التي تختارها فقط. لا يُحفظ سجل العمليات داخل المنصة، ولا يظهر رابط Slack بعد حفظه.
+      </p>
+      <label>
+        اسم القناة للعرض
+        <input
+          value={channelLabel}
+          onChange={event => setChannelLabel(event.target.value)}
+          placeholder="مثال: سجلات أستاذ أحمد"
+        />
+      </label>
+      <label>
+        رابط Slack Incoming Webhook
+        <input
+          type="password"
+          value={webhookUrl}
+          onChange={event => setWebhookUrl(event.target.value)}
+          placeholder={destination?.configured ? "اتركه فارغاً للاحتفاظ بالرابط الحالي" : "https://hooks.slack.com/services/..."}
+          autoComplete="off"
+        />
+      </label>
+      <label className="check slack-log-settings__toggle">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={event => setEnabled(event.target.checked)}
+        />
+        تفعيل إرسال سجل العمليات إلى قناتي
+      </label>
+      <div className="slack-log-settings__actions">
+        <button className="primary" disabled={saving}>
+          {saving ? "جارٍ الحفظ..." : "حفظ إعدادات Slack"}
+        </button>
+        {destination?.configured && (
+          <button className="outline" type="button" disabled={saving} onClick={() => void clear()}>
+            إلغاء الربط
+          </button>
+        )}
+      </div>
+    </form>
   );
 }
 

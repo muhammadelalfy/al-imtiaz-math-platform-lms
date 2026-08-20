@@ -7,6 +7,7 @@ import {
   type OfflineOperationType,
   type OfflineScope,
 } from "./offlineStore";
+import { trackRequestActivity } from "./requestActivity";
 
 export type Role = "admin" | "teacher" | "parent" | "student";
 
@@ -260,6 +261,12 @@ export type InAppNotification = {
   created_at?: string | null;
   read_at?: string | null;
 };
+export type TeacherSlackLogDestination = {
+  channel_label?: string | null;
+  is_enabled: boolean;
+  configured: boolean;
+  updated_at?: string | null;
+};
 export type NotificationAudienceCatalog = {
   grades: string[];
   recipients: Pick<ApiUser, "id" | "name" | "role">[];
@@ -343,17 +350,19 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     ...(init.headers || {}),
   };
   if (!navigator.onLine) throw new ApiError(0, "لا يوجد اتصال بالخادم حالياً.");
-  try {
-    const response = await fetch(`${API_URL}${path}`, { ...init, headers });
-    const body = await response.json().catch(() => null);
-    if (!response.ok)
-      throw new ApiError(response.status, body?.message || "تعذر إتمام الطلب");
-    return body as T;
-  } catch (error) {
-    if (!(error instanceof ApiError))
-      throw new ApiError(0, "تعذر الاتصال بالخادم.");
-    throw error;
-  }
+  return trackRequestActivity(async () => {
+    try {
+      const response = await fetch(`${API_URL}${path}`, { ...init, headers });
+      const body = await response.json().catch(() => null);
+      if (!response.ok)
+        throw new ApiError(response.status, body?.message || "تعذر إتمام الطلب");
+      return body as T;
+    } catch (error) {
+      if (!(error instanceof ApiError))
+        throw new ApiError(0, "تعذر الاتصال بالخادم.");
+      throw error;
+    }
+  });
 }
 
 async function queueSupportedOperation(
@@ -689,29 +698,31 @@ export const laravelApi = {
   },
   async downloadExamPdf(templateId: number) {
     const token = window.localStorage.getItem(TOKEN_KEY);
-    const response = await fetch(
-      `${API_URL}/exam-templates/${templateId}/pdf`,
-      {
-        headers: {
-          Accept: "application/pdf",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      }
-    );
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      throw new ApiError(
-        response.status,
-        body?.message || "تعذر تحميل ملف PDF"
+    return trackRequestActivity(async () => {
+      const response = await fetch(
+        `${API_URL}/exam-templates/${templateId}/pdf`,
+        {
+          headers: {
+            Accept: "application/pdf",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
       );
-    }
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `exam-${templateId}.pdf`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new ApiError(
+          response.status,
+          body?.message || "تعذر تحميل ملف PDF"
+        );
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `exam-${templateId}.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    });
   },
   async createExamTemplate(
     payload: Omit<ExamTemplate, "id" | "department" | "questions"> & {
@@ -906,7 +917,27 @@ export const laravelApi = {
       attendance: Record<string, number>;
       exams: { score: number; max_score: number };
       payments: Payment[];
-    }>("/reports/summary");
+    }>('/reports/summary');
+  },
+  async teacherSlackLogDestination() {
+    return request<TeacherSlackLogDestination>(
+      "/teacher/slack-log-destination"
+    );
+  },
+  async updateTeacherSlackLogDestination(payload: {
+    channel_label?: string;
+    webhook_url?: string;
+    is_enabled: boolean;
+  }) {
+    return request<TeacherSlackLogDestination>(
+      "/teacher/slack-log-destination",
+      { method: "PUT", body: JSON.stringify(payload) }
+    );
+  },
+  async clearTeacherSlackLogDestination() {
+    return request<void>("/teacher/slack-log-destination", {
+      method: "DELETE",
+    });
   },
   async plugins() {
     return requestCollection<PluginProduct>("/plugins");

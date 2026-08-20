@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\PluginStoreController;
 use App\Http\Controllers\Api\PluginPaymentController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\StudentController;
+use App\Http\Controllers\Api\TeacherSlackLogDestinationController;
 use App\Http\Controllers\Api\WorksheetController;
 use Illuminate\Support\Facades\Route;
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -27,13 +28,21 @@ Route::post('/auth/student/login', fn (\Illuminate\Http\Request $request, AuthCo
 Route::post('/scheduled/notifications/drain', ScheduledNotificationQueueController::class)
     ->middleware('signed')
     ->name('scheduled.notifications.drain');
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', \App\Http\Middleware\DispatchTeacherSlackRequestLog::class])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/sync/snapshot', [OfflineSyncController::class, 'snapshot']);
     Route::post('/sync/operations', [OfflineSyncController::class, 'reconcile']);
     Route::get('/notifications', [NotificationInboxController::class, 'index']);
     Route::post('/notifications/{notification}/read', [NotificationInboxController::class, 'markRead']);
+
+    Route::middleware('role.guard:teacher')
+        ->prefix('teacher/slack-log-destination')
+        ->group(function (): void {
+            Route::get('/', [TeacherSlackLogDestinationController::class, 'show']);
+            Route::put('/', [TeacherSlackLogDestinationController::class, 'update']);
+            Route::delete('/', [TeacherSlackLogDestinationController::class, 'destroy']);
+        });
 
     Route::middleware(['role.guard:admin,teacher', 'can:notifications.channels.manage'])
         ->prefix('staff/notification-channels')
