@@ -1,14 +1,50 @@
 <?php
+
 namespace App\Http\Controllers\Api;
+
+use App\Contracts\Repositories\WorksheetRepositoryInterface;
 use App\Http\Controllers\Controller;
-use App\Models\Student;
+use App\Http\Requests\AssignWorksheetRequest;
+use App\Http\Requests\StoreWorksheetRequest;
+use App\Http\Requests\SubmitWorksheetRequest;
+use App\Http\Resources\WorksheetAssignmentResource;
+use App\Http\Resources\WorksheetResource;
 use App\Models\Worksheet;
 use App\Models\WorksheetAssignment;
 use Illuminate\Http\Request;
-class WorksheetController extends Controller {
-    public function index(Request $request) { $user = $request->user(); $query = Worksheet::withCount(['assignments','assignments as submitted_count'=>fn($q)=>$q->where('status','submitted')]); if ($user->isAnyRole('student', 'parent')) { $account = $user->loadMissing('studentAccount')->studentAccount; abort_unless($account, 403); $query->where('status', 'published')->whereHas('assignments', fn($q) => $q->where('student_id', $account->student_id))->with(['assignments' => fn($q) => $q->where('student_id', $account->student_id)]); } return $query->latest()->paginate(25); }
-    public function store(Request $request) { abort_unless($request->user()->isAnyRole('admin','teacher'),403); $data=$request->validate(['title'=>'required|string|max:180','subject'=>'required|string|max:80','grade'=>'required|string|max:80','instructions'=>'nullable|string','due_at'=>'nullable|date','status'=>'nullable|in:draft,published']); return response()->json(Worksheet::create([...$data,'created_by'=>$request->user()->id]),201); }
-    public function show(Request $request, Worksheet $worksheet) { $user = $request->user(); if ($user->isAnyRole('student', 'parent')) { $account = $user->loadMissing('studentAccount')->studentAccount; abort_unless($account, 403); return $worksheet->whereHas('assignments', fn($q) => $q->where('student_id', $account->student_id))->with(['assignments' => fn($q) => $q->where('student_id', $account->student_id)])->firstOrFail(); } return $worksheet->load('assignments.student'); }
-    public function assign(Request $request, Worksheet $worksheet) { abort_unless($request->user()->isAnyRole('admin','teacher'),403); $data=$request->validate(['student_ids'=>'required|array|min:1','student_ids.*'=>'integer|exists:students,id']); $now=now(); $rows=collect($data['student_ids'])->map(fn($studentId)=>['worksheet_id'=>$worksheet->id,'student_id'=>$studentId,'assigned_at'=>$now,'created_at'=>$now,'updated_at'=>$now])->all(); WorksheetAssignment::upsert($rows,['worksheet_id','student_id'],['updated_at']); return $worksheet->load('assignments.student'); }
-    public function submit(Request $request, WorksheetAssignment $assignment) { $user=$request->user(); $account=$user->loadMissing('studentAccount')->studentAccount; abort_unless($user->isAnyRole('admin','teacher') || ($account && $account->student_id === $assignment->student_id),403); $data=$request->validate(['score'=>'nullable|integer|min:0','max_score'=>'nullable|integer|min:1','feedback'=>'nullable|string']); $assignment->update([...$data,'status'=>'submitted','submitted_at'=>now()]); return $assignment->fresh(); }
+
+class WorksheetController extends Controller
+{
+    public function __construct(private readonly WorksheetRepositoryInterface $worksheets)
+    {
+    }
+
+    public function index(Request $request)
+    {
+        return WorksheetResource::collection($this->worksheets->paginateFor($request->user()));
+    }
+
+    public function store(StoreWorksheetRequest $request)
+    {
+        $worksheet = $this->worksheets->create($request->validated(), $request->user());
+
+        return (new WorksheetResource($worksheet))->response()->setStatusCode(201);
+    }
+
+    public function show(Request $request, Worksheet $worksheet)
+    {
+        return new WorksheetResource($this->worksheets->findVisibleFor($request->user(), $worksheet));
+    }
+
+    public function assign(AssignWorksheetRequest $request, Worksheet $worksheet)
+    {
+        return new WorksheetResource($this->worksheets->assign($worksheet, $request->validated('student_ids')));
+    }
+
+    public function submit(SubmitWorksheetRequest $request, WorksheetAssignment $assignment)
+    {
+        return new WorksheetAssignmentResource(
+            $this->worksheets->submit($request->user(), $assignment, $request->validated()),
+        );
+    }
 }

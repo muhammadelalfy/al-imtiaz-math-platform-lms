@@ -18,7 +18,7 @@ final class EloquentStudentRepository implements StudentRepositoryInterface
 
         if ($user->isAnyRole('student', 'parent')) {
             $account = $user->loadMissing('studentAccount')->studentAccount;
-            abort_unless($account, 403);
+            abort_unless($account !== null, 403);
             $query->whereKey($account->student_id);
         }
 

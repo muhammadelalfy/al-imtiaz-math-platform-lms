@@ -108,8 +108,11 @@ final class PluginInstaller
             if (!$name || Str::startsWith($name, ['/']) || Str::contains($name, ['../', '..\\', "\0"])) {
                 throw new RuntimeException('يحتوي ملف الإضافة على مسار غير آمن.');
             }
-            $stats = $zip->statIndex($index);
-            if ($stats && (($stats['external_attributes'] ?? 0) & 0xF000) === 0xA000) {
+            $operatingSystem = 0;
+            $attributes = 0;
+            $hasExternalAttributes = $zip->getExternalAttributesIndex($index, $operatingSystem, $attributes);
+
+            if ($hasExternalAttributes && ((($attributes >> 16) & 0xF000) === 0xA000)) {
                 throw new RuntimeException('الروابط الرمزية غير مسموحة داخل الإضافة.');
             }
         }

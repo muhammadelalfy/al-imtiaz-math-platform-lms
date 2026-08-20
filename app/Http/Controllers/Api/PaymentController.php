@@ -15,5 +15,5 @@ class PaymentController extends Controller {
     public function store(StorePaymentRequest $request) { $payment=Payment::create([...$request->validated(),'recorded_by'=>$request->user()->id])->load('student'); $this->metricsCache->forget(); return (new PaymentResource($payment))->response()->setStatusCode(201); }
     public function update(UpdatePaymentRequest $request, Payment $payment) { $payment->update($request->validated()); $this->metricsCache->forget(); return new PaymentResource($payment->fresh('student')); }
     public function destroy(Request $request, Payment $payment) { $this->authorizeStaff($request); $payment->delete(); $this->metricsCache->forget(); return response()->noContent(); }
-    private function scope($query, Request $request): void { if ($request->user()->isAnyRole('student','parent')) { $account=$request->user()->loadMissing('studentAccount')->studentAccount; abort_unless($account,403); $query->where('student_id',$account->student_id); } }
+    private function scope($query, Request $request): void { if ($request->user()->isAnyRole('student','parent')) { $account=$request->user()->loadMissing('studentAccount')->studentAccount; abort_unless($account !== null,403); $query->where('student_id',$account->student_id); } }
 }

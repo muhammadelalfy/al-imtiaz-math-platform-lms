@@ -9,7 +9,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/** @property-read StudentAccount|null $studentAccount */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -32,7 +34,7 @@ class User extends Authenticatable
         ];
     }
 
-    public function studentAccount()
+    public function studentAccount(): HasOne
     {
         return $this->hasOne(StudentAccount::class);
     }

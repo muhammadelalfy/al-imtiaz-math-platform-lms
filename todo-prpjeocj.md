@@ -162,3 +162,8 @@
 - [x] Replace inline API validation with role-aware form requests and return stable API resources.
 - [x] Enable strict Eloquent lazy-loading prevention and update queries with explicit eager-loading requirements.
 - [x] Add architecture, cache-invalidation, API-resource, form-request, and strict-loading regression coverage.
+- [x] Audit current CI, cache implementation, worksheet API, and exam-template API contracts for the quality and observability extension.
+- [x] Add Larastan configuration and a required static-analysis CI check with an explicit baseline policy.
+- [x] Extend repository and API resource boundaries to worksheets and exam templates with explicit relationship loading.
+- [x] Add cache hit/miss observability for dashboard metrics without recording sensitive learner data.
+- [x] Add regression coverage and validate PHP tests, Larastan, CI configuration, and frontend checks.

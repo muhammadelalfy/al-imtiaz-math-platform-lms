@@ -63,7 +63,7 @@ class AttendanceController extends Controller
     {
         $account = $request->user()->loadMissing('studentAccount')->studentAccount;
         if ($request->user()->isAnyRole('student', 'parent')) {
-            abort_unless($account, 403);
+            abort_unless($account !== null, 403);
             $query->where('student_id', $account->student_id);
         }
     }

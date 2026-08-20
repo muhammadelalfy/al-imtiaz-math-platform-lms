@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Api\Concerns\AuthorizesStaff;
 use App\Http\Controllers\Controller;
+use App\Contracts\Repositories\ExamTemplateRepositoryInterface;
+use App\Http\Requests\StoreExamTemplateRequest;
+use App\Http\Requests\UpdateExamTemplateRequest;
+use App\Http\Resources\ExamDepartmentResource;
+use App\Http\Resources\ExamTemplateResource;
 use App\Models\ExamDepartment;
-use App\Models\ExamQuestion;
 use App\Models\ExamSession;
 use App\Models\ExamSessionAnswer;
 use App\Models\ExamSessionEvent;
@@ -18,17 +22,23 @@ class ExamManagementController extends Controller
 {
     use AuthorizesStaff;
 
+    public function __construct(private readonly ExamTemplateRepositoryInterface $templates)
+    {
+    }
+
     public function departments(Request $request)
     {
         $this->authorizeStaff($request);
-        return ExamDepartment::query()->where('is_active', true)->orderBy('name')->get();
+        return ExamDepartmentResource::collection(
+            ExamDepartment::query()->where('is_active', true)->orderBy('name')->get(),
+        );
     }
 
     public function storeDepartment(Request $request)
     {
         $this->authorizeStaff($request);
         $data = $request->validate(['name' => 'required|string|max:255', 'slug' => 'required|string|max:255|alpha_dash|unique:exam_departments,slug', 'description' => 'nullable|string']);
-        return response()->json(ExamDepartment::create($data), 201);
+        return (new ExamDepartmentResource(ExamDepartment::create($data)))->response()->setStatusCode(201);
     }
 
     public function updateDepartment(Request $request, ExamDepartment $department)
@@ -36,7 +46,7 @@ class ExamManagementController extends Controller
         $this->authorizeStaff($request);
         $data = $request->validate(['name' => 'sometimes|string|max:255', 'slug' => 'sometimes|string|max:255|alpha_dash|unique:exam_departments,slug,' . $department->id, 'description' => 'nullable|string', 'is_active' => 'sometimes|boolean']);
         $department->update($data);
-        return $department->fresh();
+        return new ExamDepartmentResource($department->fresh());
     }
 
     public function destroyDepartment(Request $request, ExamDepartment $department)
@@ -51,74 +61,25 @@ class ExamManagementController extends Controller
 
     public function templates(Request $request)
     {
-        if ($request->user()->isAnyRole('student', 'parent')) {
-            return ExamTemplate::with(['department', 'questions'])->where('status', 'published')->latest()->paginate(50);
-        }
-        $this->authorizeStaff($request);
-        return ExamTemplate::with(['department', 'questions'])->latest()->paginate(50);
+        return ExamTemplateResource::collection($this->templates->paginateFor($request->user()));
     }
 
-    public function storeTemplate(Request $request)
+    public function storeTemplate(StoreExamTemplateRequest $request)
     {
-        $this->authorizeStaff($request);
-        $data = $request->validate([
-            'department_id' => 'nullable|exists:exam_departments,id', 'title' => 'required|string|max:255', 'grade' => 'nullable|string|max:255',
-            'duration_minutes' => 'required|integer|min:1|max:600', 'instructions' => 'nullable|string', 'watermark_text' => 'nullable|string|max:255',
-            'watermark_opacity' => 'nullable|integer|min:0|max:50', 'print_header' => 'nullable|string|max:255', 'print_footer' => 'nullable|string|max:255', 'status' => 'nullable|in:draft,published,archived',
-            'questions' => 'array', 'questions.*.type' => 'required|in:mcq,true_false,essay,math,geometry', 'questions.*.prompt_html' => 'required|string',
-            'questions.*.options' => 'nullable|array', 'questions.*.correct_answer' => 'nullable|string', 'questions.*.points' => 'required|integer|min:1|max:100',
-        ]);
-        return DB::transaction(function () use ($data, $request) {
-            $questions = $data['questions'] ?? [];
-            unset($data['questions']);
-            $template = ExamTemplate::create([...$data, 'created_by' => $request->user()->id]);
-            foreach ($questions as $index => $question) $template->questions()->create([...$question, 'sort_order' => $index]);
-            return response()->json($template->load(['department', 'questions']), 201);
-        });
+        $template = $this->templates->create($request->validated(), $request->user());
+
+        return (new ExamTemplateResource($template))->response()->setStatusCode(201);
     }
 
-    public function updateTemplate(Request $request, ExamTemplate $template)
+    public function updateTemplate(UpdateExamTemplateRequest $request, ExamTemplate $template)
     {
-        $this->authorizeStaff($request);
-        $data = $request->validate([
-            'department_id' => 'nullable|exists:exam_departments,id', 'title' => 'sometimes|string|max:255', 'grade' => 'nullable|string|max:255',
-            'duration_minutes' => 'sometimes|integer|min:1|max:600', 'instructions' => 'nullable|string', 'watermark_text' => 'nullable|string|max:255',
-            'watermark_opacity' => 'nullable|integer|min:0|max:50', 'print_header' => 'nullable|string|max:255', 'print_footer' => 'nullable|string|max:255', 'status' => 'sometimes|in:draft,published,archived',
-            'questions' => 'sometimes|array', 'questions.*.id' => 'nullable|integer', 'questions.*.type' => 'required_with:questions|in:mcq,true_false,essay,math,geometry',
-            'questions.*.prompt_html' => 'required_with:questions|string', 'questions.*.options' => 'nullable|array', 'questions.*.correct_answer' => 'nullable|string',
-            'questions.*.points' => 'required_with:questions|integer|min:1|max:100', 'questions.*.sort_order' => 'nullable|integer|min:0',
-        ]);
-
-        return DB::transaction(function () use ($data, $template) {
-            $questions = $data['questions'] ?? null;
-            unset($data['questions']);
-            $template->update($data);
-
-            if ($questions !== null) {
-                $existingIds = $template->questions()->pluck('id')->all();
-                $incomingIds = [];
-                foreach ($questions as $index => $question) {
-                    $questionId = $question['id'] ?? null;
-                    if ($questionId !== null) {
-                        abort_unless(in_array($questionId, $existingIds, true), 422, 'السؤال لا ينتمي إلى هذا القالب.');
-                        $incomingIds[] = $questionId;
-                        $template->questions()->whereKey($questionId)->update([...$question, 'sort_order' => $index]);
-                    } else {
-                        $createdQuestion = $template->questions()->create([...$question, 'sort_order' => $index]);
-                        $incomingIds[] = $createdQuestion->id;
-                    }
-                }
-                $template->questions()->whereNotIn('id', $incomingIds)->delete();
-            }
-
-            return $template->fresh(['department', 'questions']);
-        });
+        return new ExamTemplateResource($this->templates->update($template, $request->validated()));
     }
 
     public function destroyTemplate(Request $request, ExamTemplate $template)
     {
         $this->authorizeStaff($request);
-        $template->delete();
+        $this->templates->delete($template);
         return response()->noContent();
     }
 
@@ -143,7 +104,7 @@ class ExamManagementController extends Controller
         $user = $request->user();
         abort_unless($user->isAnyRole('student', 'parent'), 403);
         $account = $user->loadMissing('studentAccount')->studentAccount;
-        abort_unless($account, 403);
+        abort_unless($account !== null, 403);
         abort_unless($template->status === 'published', 422, 'الامتحان غير منشور.');
         $session = ExamSession::firstOrCreate(['template_id' => $template->id, 'student_id' => $account->student_id], ['camera_required' => true, 'fullscreen_required' => true]);
         return $session->load(['template.questions', 'answers']);

@@ -2,8 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Contracts\Observability\CacheObservabilityInterface;
 use App\Contracts\Repositories\DashboardMetricsRepositoryInterface;
+use App\Contracts\Repositories\ExamTemplateRepositoryInterface;
 use App\Contracts\Repositories\StudentRepositoryInterface;
+use App\Contracts\Repositories\WorksheetRepositoryInterface;
+use App\Models\ExamDepartment;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +24,8 @@ class ApiArchitectureTest extends TestCase
     {
         $this->assertInstanceOf(StudentRepositoryInterface::class, app(StudentRepositoryInterface::class));
         $this->assertInstanceOf(DashboardMetricsRepositoryInterface::class, app(DashboardMetricsRepositoryInterface::class));
+        $this->assertInstanceOf(WorksheetRepositoryInterface::class, app(WorksheetRepositoryInterface::class));
+        $this->assertInstanceOf(ExamTemplateRepositoryInterface::class, app(ExamTemplateRepositoryInterface::class));
         $this->assertTrue(Model::preventsLazyLoading());
     }
 
@@ -123,5 +129,64 @@ class ApiArchitectureTest extends TestCase
             'due_at' => '2026-08-20',
         ])->assertCreated();
         $this->getJson('/api/reports/summary')->assertOk()->assertJsonPath('payments.0.amount', 500);
+    }
+
+    public function test_dashboard_metrics_records_cache_miss_then_hit_without_sensitive_dimensions(): void
+    {
+        Cache::flush();
+        $metrics = app(CacheObservabilityInterface::class);
+        Sanctum::actingAs(User::factory()->create(['role' => 'teacher']));
+
+        $this->getJson('/api/reports/summary')->assertOk();
+        $this->assertSame(['hits' => 0, 'misses' => 1], $metrics->snapshot('dashboard-metrics'));
+
+        $this->getJson('/api/reports/summary')->assertOk();
+        $this->assertSame(['hits' => 1, 'misses' => 1], $metrics->snapshot('dashboard-metrics'));
+    }
+
+    public function test_worksheet_repository_resource_and_exam_template_resource_preserve_nested_contracts(): void
+    {
+        $teacher = User::factory()->create(['role' => 'teacher']);
+        $student = Student::create([
+            'name' => 'طالب الواجب',
+            'group' => 'بنين',
+            'grade' => 'أولى إعدادى',
+            'phone' => '0100000005',
+        ]);
+        $department = ExamDepartment::create(['name' => 'الجبر', 'slug' => 'algebra', 'is_active' => true]);
+        Sanctum::actingAs($teacher);
+
+        $worksheetId = $this->postJson('/api/worksheets', [
+            'title' => 'واجب التناسب',
+            'subject' => 'الجبر',
+            'grade' => 'أولى إعدادى',
+            'status' => 'published',
+        ])->assertCreated()->assertJsonPath('title', 'واجب التناسب')->json('id');
+
+        $this->postJson("/api/worksheets/{$worksheetId}/assign", ['student_ids' => [$student->id]])
+            ->assertOk()
+            ->assertJsonPath('assignments.0.student.id', $student->id);
+        $this->getJson('/api/worksheets')->assertOk()->assertJsonPath('data.0.id', $worksheetId);
+
+        $this->postJson('/api/exam-templates', [
+            'department_id' => $department->id,
+            'title' => 'اختبار التناسب',
+            'duration_minutes' => 45,
+            'status' => 'published',
+            'questions' => [[
+                'type' => 'mcq',
+                'prompt_html' => '<p>اختر الإجابة</p>',
+                'options' => ['أ', 'ب'],
+                'correct_answer' => 'أ',
+                'points' => 1,
+            ]],
+        ])->assertCreated()
+            ->assertJsonPath('department.slug', 'algebra')
+            ->assertJsonPath('questions.0.prompt_html', '<p>اختر الإجابة</p>');
+
+        $this->getJson('/api/exam-templates')
+            ->assertOk()
+            ->assertJsonPath('data.0.department.id', $department->id)
+            ->assertJsonPath('data.0.questions.0.type', 'mcq');
     }
 }
