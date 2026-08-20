@@ -10,7 +10,7 @@
     "check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "pnpm build && mkdir -p .next/standalone/.next && cp -R .next/static .next/standalone/.next/static && PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium playwright test"
+    "test:e2e": "pnpm build && mkdir -p .next/standalone/.next && cp -R .next/static .next/standalone/.next/static && PLAYWRIGHT_EXECUTABLE_PATH=${PLAYWRIGHT_EXECUTABLE_PATH:-$(command -v chromium || true)} playwright test"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-basic-styles": "48.4.0",

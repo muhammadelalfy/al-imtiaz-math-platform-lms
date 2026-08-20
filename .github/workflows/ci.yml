@@ -48,7 +48,7 @@ jobs:
         run: pnpm --dir frontend exec playwright install --with-deps chromium
 
       - name: Run Next.js end-to-end tests
-        run: pnpm --dir frontend exec playwright test
+        run: pnpm --dir frontend test:e2e
 
   laravel:
     name: Laravel checks
