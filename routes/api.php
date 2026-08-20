@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AuthorizationManagementController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\ExamResultController;
 use App\Http\Controllers\Api\ExamManagementController;
@@ -14,11 +15,25 @@ use Illuminate\Support\Facades\Route;
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/admin/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'admin'));
+Route::post('/auth/teacher/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'teacher'));
 Route::post('/auth/parent/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'parent'));
 Route::post('/auth/student/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'student'));
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+    Route::middleware(['role.guard:admin,teacher', 'can:authorization.manage'])
+        ->prefix('staff/authorization')
+        ->group(function (): void {
+            Route::get('/catalog', [AuthorizationManagementController::class, 'index']);
+            Route::post('/permissions', [AuthorizationManagementController::class, 'storePermission']);
+            Route::put('/permissions/{permission}', [AuthorizationManagementController::class, 'updatePermission']);
+            Route::delete('/permissions/{permission}', [AuthorizationManagementController::class, 'destroyPermission']);
+            Route::post('/roles', [AuthorizationManagementController::class, 'storeRole']);
+            Route::put('/roles/{role}', [AuthorizationManagementController::class, 'updateRole']);
+            Route::delete('/roles/{role}', [AuthorizationManagementController::class, 'destroyRole']);
+            Route::put('/staff/{user}/roles', [AuthorizationManagementController::class, 'syncStaffRoles']);
+        });
     Route::apiResource('students', StudentController::class)->only(['index','store','show','update','destroy']);
     Route::get('/students/{student}/qr', [StudentController::class, 'qr']);
     Route::apiResource('worksheets', WorksheetController::class)->only(['index','store','show']);

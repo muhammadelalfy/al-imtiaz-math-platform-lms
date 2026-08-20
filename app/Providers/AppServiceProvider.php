@@ -17,9 +17,11 @@ use App\Repositories\EloquentQuestionBankRepository;
 use App\Repositories\EloquentStudentRepository;
 use App\Repositories\EloquentWorksheetRepository;
 use App\Services\LogCacheObservability;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -47,5 +49,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Model::preventLazyLoading();
         JsonResource::withoutWrapping();
+
+        Gate::before(static fn (User $user): ?bool => $user->isAnyRole('admin') ? true : null);
     }
 }

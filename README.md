@@ -24,6 +24,8 @@ See [`docs/laravel-api-architecture.md`](docs/laravel-api-architecture.md) for t
 
 See [`docs/plugin-payments.md`](docs/plugin-payments.md) for the plugin-store payment lifecycle, administrator approval controls, Egyptian payment-method configuration, and Stripe credential boundary.
 
+See [`docs/multi-guard-authorization.md`](docs/multi-guard-authorization.md) for the separate account-login guards, staff role/permission CRUD controls, least-privilege boundaries, and verification workflow.
+
 See [`docs/srs-ar.md`](docs/srs-ar.md) for the Arabic Software Requirements Specification, delivery status, diagrams, payment-security boundary, and future roadmap.
 
 ## Publishing

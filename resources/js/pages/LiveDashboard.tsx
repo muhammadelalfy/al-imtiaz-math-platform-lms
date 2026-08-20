@@ -51,6 +51,7 @@ import {
   warningForExamEvent,
 } from "@/lib/examSessionUi";
 import PluginStorePanel from "@/components/PluginStorePanel";
+import AuthorizationManagementPanel from "@/components/AuthorizationManagementPanel";
 import MathUniverseBackground from "@/components/MathUniverseBackground";
 import ExamWarningBanner from "@/components/ExamWarningBanner";
 import ExamTemplateActions from "@/components/ExamTemplateActions";
@@ -76,10 +77,12 @@ type Tab =
   | "worksheets"
   | "reports"
   | "plugins"
+  | "authorization"
   | "settings";
-type Portal = "admin" | "parent" | "student";
+type Portal = "admin" | "teacher" | "parent" | "student";
 const portalLabels: Record<Portal, string> = {
   admin: "إدارة المركز",
+  teacher: "بوابة المدرس",
   parent: "ولي الأمر",
   student: "الطالب",
 };
@@ -288,7 +291,7 @@ function LoginPanel({
             : "أنشئ حساب ولي أمر أو طالب للمتابعة التعليمية."}
         </p>
         <div className="login-portals">
-          {(["admin", "parent", "student"] as Portal[]).map(item => (
+          {(["admin", "teacher", "parent", "student"] as Portal[]).map(item => (
             <button
               type="button"
               key={item}
@@ -306,7 +309,7 @@ function LoginPanel({
           ))}
         </div>
         <form onSubmit={submit}>
-          {!mode && portal !== "admin" && (
+          {!mode && (portal === "parent" || portal === "student") && (
             <>
               <label>
                 الاسم
@@ -351,7 +354,7 @@ function LoginPanel({
             {busy ? "جارٍ التنفيذ..." : "دخول"}
           </button>
         </form>
-        {portal !== "admin" && (
+        {(portal === "parent" || portal === "student") && (
           <button
             className="text-button live-switch"
             onClick={() => setMode(!mode)}
@@ -509,21 +512,31 @@ function AuthenticatedDashboard({
                 { id: "worksheets", label: "الشيتات", icon: FileText },
                 { id: "reports", label: "التقارير", icon: BarChart3 },
                 { id: "plugins", label: "متجر الإضافات", icon: Package },
+                {
+                  id: "authorization",
+                  label: "الأدوار والصلاحيات",
+                  icon: ShieldCheck,
+                },
                 { id: "settings", label: "الإعدادات", icon: Settings },
               ]
-          ).map(item => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                className={tab === item.id ? "live-nav active" : "live-nav"}
-                onClick={() => setTab(item.id as Tab)}
-              >
-                <Icon size={18} />
-                {item.label}
-              </button>
-            );
-          })}
+          )
+            .filter(
+              item =>
+                item.id !== "authorization" || user.can_manage_authorization
+            )
+            .map(item => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  className={tab === item.id ? "live-nav active" : "live-nav"}
+                  onClick={() => setTab(item.id as Tab)}
+                >
+                  <Icon size={18} />
+                  {item.label}
+                </button>
+              );
+            })}
         </nav>
         <button className="live-logout" onClick={onLogout}>
           <LogOut size={17} /> تسجيل الخروج
@@ -571,6 +584,7 @@ function AuthenticatedDashboard({
             payments={payments}
             worksheets={worksheets}
             role={user.role}
+            canManageAuthorization={Boolean(user.can_manage_authorization)}
             onRefresh={load}
           />
         )}
@@ -729,6 +743,7 @@ function AdminView({
   payments,
   worksheets,
   role,
+  canManageAuthorization,
   onRefresh,
 }: {
   tab: Tab;
@@ -738,6 +753,7 @@ function AdminView({
   payments: Payment[];
   worksheets: Worksheet[];
   role: Role;
+  canManageAuthorization: boolean;
   onRefresh: () => Promise<void>;
 }) {
   if (tab === "classes") return <ClassNavigator students={students} />;
@@ -763,6 +779,10 @@ function AdminView({
     );
   if (tab === "plugins")
     return <PluginStorePanel onRefresh={onRefresh} role={role} />;
+  if (tab === "authorization" && canManageAuthorization)
+    return (
+      <AuthorizationManagementPanel canAssignStaffRoles={role === "admin"} />
+    );
   if (tab === "settings") return <SettingsView />;
   if (tab === "attendance")
     return (

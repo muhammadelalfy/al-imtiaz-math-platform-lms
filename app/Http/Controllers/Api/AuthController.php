@@ -31,14 +31,19 @@ class AuthController extends Controller
 
     public function loginAsRole(Request $request, string $role)
     {
-        abort_unless(in_array($role, ['admin', 'parent', 'student'], true), 404);
+        abort_unless(in_array($role, ['admin', 'teacher', 'parent', 'student'], true), 404);
 
         return $this->loginForRole($request, $role);
     }
 
     public function me(Request $request)
     {
-        return $request->user()->load('studentAccount.student');
+        /** @var User $user */
+        $user = $request->user();
+        $user->load(['studentAccount.student', 'roles.permissions', 'permissions']);
+        $user->setAttribute('can_manage_authorization', $user->can('authorization.manage'));
+
+        return $user;
     }
 
     public function logout(Request $request)
@@ -53,23 +58,21 @@ class AuthController extends Controller
         $data = $request->validate(['email' => 'required|email', 'password' => 'required|string']);
         $query = User::where('email', $data['email']);
 
-        if ($role === 'admin') {
-            $query->whereIn('role', ['admin', 'teacher']);
-        } elseif ($role !== 'general') {
+        if ($role !== 'general') {
             $query->where('role', $role);
         }
 
         $user = $query->first();
         abort_unless($user && Hash::check($data['password'], $user->password), 422, 'بيانات الدخول غير صحيحة لهذا النوع من الحسابات.');
 
-        return $this->tokenResponse($user, $role === 'admin' ? 'admin' : $role);
+        return $this->tokenResponse($user, $role === 'general' ? $user->role : $role);
     }
 
     private function tokenResponse(User $user, ?string $loginType = null): array
     {
         return [
-            'user' => $user->load('studentAccount.student'),
-            'token' => $user->createToken('lms-web')->plainTextToken,
+            'user' => $user->load(['studentAccount.student', 'roles.permissions', 'permissions']),
+            'token' => $user->createToken('lms-'.$loginType, ['guard:'.$loginType])->plainTextToken,
             'login_type' => $loginType ?? $user->role,
         ];
     }
