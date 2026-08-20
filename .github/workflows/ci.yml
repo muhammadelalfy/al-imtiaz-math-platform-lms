@@ -39,6 +39,8 @@ jobs:
         run: pnpm check
 
       - name: Run frontend tests
+        env:
+          LARAVEL_BYPASS_ENV_CHECK: "1"
         run: pnpm test -- --run
 
       - name: Build Laravel React frontend
