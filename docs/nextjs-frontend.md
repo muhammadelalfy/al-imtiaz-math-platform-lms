@@ -37,7 +37,7 @@ Next.js documents the App Router and TypeScript-first setup used here, including
 
 ## CI and deployment boundary
 
-The **Frontend checks** GitHub Actions job now installs `frontend/pnpm-lock.yaml`, runs linting, TypeScript, Vitest, production build, installs Playwright Chromium, and executes the login E2E test. Laravel checks remain a separate required job.
+The **Frontend checks** GitHub Actions job honors the repository-pinned pnpm version, installs `frontend/pnpm-lock.yaml`, runs linting, TypeScript, Vitest, production build, installs Playwright Chromium, and executes the login E2E test. Laravel checks remain a separate required job.
 
 The current managed production path must run the standalone Next.js server and Laravel API behind the same public origin (or provide a reverse proxy for `/api/*`). This is a deployment concern, not an application-level CORS workaround. The free Autoscale queue-drain approach remains unchanged because it is invoked through Laravel’s signed scheduled endpoint, not an always-on worker.
 
