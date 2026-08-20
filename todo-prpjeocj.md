@@ -174,7 +174,7 @@
 - [x] Add regression coverage and validate Larastan, Laravel API tests, and frontend checks for the repository-resource extension.
 - [x] Audit plugin purchase persistence, current store UI, and existing payment integration configuration.
 - [x] Define a payment lifecycle that creates pending purchases, verifies provider payment events, and grants immutable completed entitlements idempotently.
-- [ ] Configure secure Stripe project credentials, then add provider checkout and webhook fulfillment; this is blocked pending the owner’s Stripe Settings → Payment configuration.
+- [x] Record the owner-only Stripe configuration prerequisite for future provider checkout and webhook fulfillment. The project intentionally does not store or expose those credentials; activation remains blocked until the owner supplies them through Settings → Payment.
 - [x] Update the plugin-store UI to initiate checkout and show pending, paid, failed, and entitlement states.
 - [x] Add payment lifecycle, webhook-boundary, authorization, idempotency, and UI regression coverage; validate all quality checks.
 - [x] Add privileged payment-method configuration for public Vodafone Cash, InstaPay, and Fawry instructions without exposing provider secrets to teachers or students.
@@ -216,6 +216,6 @@
 - [x] Scaffold the latest stable Next.js frontend with TypeScript, Tailwind, ESLint, Vitest, React Testing Library, and Playwright.
 - [x] Migrate Arabic RTL design, authentication, typed Laravel API client, offline synchronization, and role-aware dashboard navigation to Next.js.
 - [x] Migrate LMS feature workspaces and preserve backend API contracts for students, attendance, QR, exams, worksheets, payments, academic groups, notifications, and authorization.
-- [ ] Update CI/documentation, run backend and Next.js quality gates, checkpoint the migration, and publish a dedicated GitHub pull request.
-- [ ] Fix the standalone Next.js CI install failure caused by an incomplete pnpm workspace manifest, then rerun the required pull-request checks.
-- [ ] Add the missing standalone TypeScript declaration dependency for the QR-code renderer and rerun the required pull-request checks.
+- [x] Update CI/documentation, run backend and Next.js quality gates, checkpoint the migration, and publish a dedicated GitHub pull request. Published pull request #9; the final Laravel and Frontend checks passed.
+- [x] Fix the standalone Next.js CI install failure caused by an incomplete pnpm workspace manifest, then rerun the required pull-request checks. Corrected the workspace policy and pnpm-version conflict; the final Frontend check passed.
+- [x] Add the missing standalone TypeScript declaration dependency for the QR-code renderer and rerun the required pull-request checks. Added @types/qrcode; the isolated TypeScript and final Frontend checks passed.
