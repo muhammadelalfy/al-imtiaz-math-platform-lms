@@ -444,3 +444,48 @@ describe("plugin payment API", () => {
     );
   });
 });
+
+describe("subscription platform API", () => {
+  it("maps public packages, teacher registration, teacher status, and super-admin operations", async () => {
+    const fetchMock = vi.fn().mockImplementation(
+      () =>
+        new Response(JSON.stringify({ data: [], id: 21, health: {} }), {
+          status: 200,
+        })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await laravelApi.publicSubscriptionPackages();
+    await laravelApi.registerTenantTeacher({
+      name: "منى",
+      email: "mona@example.test",
+      password: "TeacherSecure!2026",
+      password_confirmation: "TeacherSecure!2026",
+      organization_name: "مركز منى",
+      tenant_slug: "mona-math",
+      package_id: 3,
+    });
+    await laravelApi.teacherSubscription();
+    await laravelApi.superAdminOverview();
+    await laravelApi.superAdminPackages();
+    await laravelApi.superAdminSubscriptions();
+    await laravelApi.updateTenantSubscription(21, {
+      status: "active",
+      payment_status: "paid",
+    });
+    await laravelApi.updateTenantDomain(7, "academy.example.com");
+
+    expect(
+      fetchMock.mock.calls.map(([url, init]) => [url, init?.method])
+    ).toEqual([
+      ["/api/public/subscription-packages", undefined],
+      ["/api/public/teacher-register", "POST"],
+      ["/api/teacher/subscription", undefined],
+      ["/api/super-admin/overview", undefined],
+      ["/api/super-admin/packages", undefined],
+      ["/api/super-admin/subscriptions", undefined],
+      ["/api/super-admin/subscriptions/21", "PUT"],
+      ["/api/super-admin/tenants/7/domain", "PUT"],
+    ]);
+  });
+});

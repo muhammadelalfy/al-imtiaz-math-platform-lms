@@ -291,10 +291,10 @@ export default function PluginStorePanel({ onRefresh, role }: Props) {
                       {plugin.core_feature
                         ? "مضمنة"
                         : plugin.installed
-                        ? "مثبتة"
-                        : plugin.payment_status
-                          ? paymentStatusLabel[plugin.payment_status]
-                          : "متاحة"}
+                          ? "مثبتة"
+                          : plugin.payment_status
+                            ? paymentStatusLabel[plugin.payment_status]
+                            : "متاحة"}
                     </span>
                   </div>
                   <h3>{plugin.name}</h3>

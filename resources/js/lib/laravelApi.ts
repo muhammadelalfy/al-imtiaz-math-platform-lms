@@ -20,7 +20,65 @@ export type ApiUser = {
   can_send_notifications?: boolean;
   can_manage_groups?: boolean;
   can_manage_notification_channels?: boolean;
+  is_super_admin?: boolean;
   student_account?: { student?: Student } | null;
+};
+export type SubscriptionPackage = {
+  id: number;
+  code: string;
+  name: string;
+  tagline?: string | null;
+  description?: string | null;
+  price_cents: number;
+  currency: string;
+  duration_days: number;
+  teacher_limit: number;
+  student_limit: number;
+  features: string[];
+  is_active: boolean;
+  sort_order: number;
+  subscriptions_count?: number;
+};
+export type Tenant = {
+  id: number;
+  name: string;
+  slug: string;
+  login_domain?: string | null;
+  domain_status: "pending" | "active";
+};
+export type TenantSubscription = {
+  id: number;
+  status: "pending" | "active" | "past_due" | "cancelled" | "expired";
+  payment_status: "unpaid" | "pending" | "paid" | "refunded";
+  starts_at?: string | null;
+  ends_at?: string | null;
+  paid_at?: string | null;
+  payment_reference?: string | null;
+  admin_note?: string | null;
+  days_remaining?: number | null;
+  tenant?: Tenant;
+  package?: SubscriptionPackage;
+};
+export type TeacherSubscriptionStatus = {
+  subscription: TenantSubscription | null;
+  show_expiry_reminder: boolean;
+};
+export type PlatformOverview = {
+  health: {
+    database: string;
+    database_latency_ms: number;
+    storage: string;
+    php_version: string;
+  };
+  counts: {
+    tenants: number;
+    teachers: number;
+    students: number;
+    active_subscriptions: number;
+    paid_subscriptions: number;
+    unpaid_subscriptions: number;
+    expiring_within_week: number;
+  };
 };
 export type AuthorizationPermission = {
   id: number;
@@ -356,7 +414,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       const response = await fetch(`${API_URL}${path}`, { ...init, headers });
       const body = await response.json().catch(() => null);
       if (!response.ok)
-        throw new ApiError(response.status, body?.message || "تعذر إتمام الطلب");
+        throw new ApiError(
+          response.status,
+          body?.message || "تعذر إتمام الطلب"
+        );
       return body as T;
     } catch (error) {
       if (!(error instanceof ApiError))
@@ -918,7 +979,7 @@ export const laravelApi = {
       attendance: Record<string, number>;
       exams: { score: number; max_score: number };
       payments: Payment[];
-    }>('/reports/summary');
+    }>("/reports/summary");
   },
   async teacherSlackLogDestination() {
     return request<TeacherSlackLogDestination>(
@@ -1014,5 +1075,79 @@ export const laravelApi = {
   },
   async uninstallPlugin(id: number) {
     return request(`/plugins/${id}/install`, { method: "DELETE" });
+  },
+  async publicSubscriptionPackages() {
+    return requestCollection<SubscriptionPackage>(
+      "/public/subscription-packages"
+    );
+  },
+  async registerTenantTeacher(payload: {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+    organization_name: string;
+    tenant_slug: string;
+    package_id: number;
+  }) {
+    return request<{
+      user: Pick<ApiUser, "id" | "name" | "email" | "role">;
+      message: string;
+    }>("/public/teacher-register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  async teacherSubscription() {
+    return request<TeacherSubscriptionStatus>("/teacher/subscription");
+  },
+  async superAdminOverview() {
+    return request<PlatformOverview>("/super-admin/overview");
+  },
+  async superAdminPackages() {
+    return requestCollection<SubscriptionPackage>("/super-admin/packages");
+  },
+  async createSubscriptionPackage(
+    payload: Omit<SubscriptionPackage, "id" | "subscriptions_count">
+  ) {
+    return request<SubscriptionPackage>("/super-admin/packages", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  async updateSubscriptionPackage(
+    id: number,
+    payload: Partial<Omit<SubscriptionPackage, "id" | "subscriptions_count">>
+  ) {
+    return request<SubscriptionPackage>(`/super-admin/packages/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+  async superAdminSubscriptions() {
+    return requestCollection<TenantSubscription>("/super-admin/subscriptions");
+  },
+  async updateTenantSubscription(
+    id: number,
+    payload: {
+      subscription_package_id?: number;
+      status: TenantSubscription["status"];
+      payment_status: TenantSubscription["payment_status"];
+      starts_at?: string | null;
+      ends_at?: string | null;
+      payment_reference?: string | null;
+      admin_note?: string | null;
+    }
+  ) {
+    return request<TenantSubscription>(`/super-admin/subscriptions/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+  async updateTenantDomain(id: number, login_domain: string | null) {
+    return request<Tenant>(`/super-admin/tenants/${id}/domain`, {
+      method: "PUT",
+      body: JSON.stringify({ login_domain }),
+    });
   },
 };

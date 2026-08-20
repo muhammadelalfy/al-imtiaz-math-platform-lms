@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import LiveDashboard from "./pages/LiveDashboard";
 import NotFound from "./pages/NotFound";
+import PublicLandingPage from "./pages/PublicLandingPage";
 
 export default function App() {
   return (
@@ -14,12 +15,21 @@ export default function App() {
         <TooltipProvider>
           <Toaster />
           <Switch>
+            <Route path="/" component={PublicLandingPage} />
             <Route
-              path="/"
+              path="/login"
               component={() => <LiveDashboard initialPortal="admin" />}
             />
             <Route
               path="/admin/login"
+              component={() => <LiveDashboard initialPortal="admin" />}
+            />
+            <Route
+              path="/teacher/login"
+              component={() => <LiveDashboard initialPortal="teacher" />}
+            />
+            <Route
+              path="/super-admin/login"
               component={() => <LiveDashboard initialPortal="admin" />}
             />
             <Route

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use App\Services\TenantDomainService;
 
 class AuthController extends Controller
 {
@@ -22,6 +23,10 @@ class AuthController extends Controller
         $user = User::create($data);
 
         return response()->json($this->tokenResponse($user), 201);
+    }
+
+    public function __construct(private readonly TenantDomainService $tenantDomains)
+    {
     }
 
     public function login(Request $request)
@@ -68,6 +73,8 @@ class AuthController extends Controller
         $user = $query->first();
         abort_unless($user && Hash::check($data['password'], $user->password), 422, 'بيانات الدخول غير صحيحة لهذا النوع من الحسابات.');
 
+        $this->tenantDomains->assertLoginMatchesTenant($request, $user);
+
         return $this->tokenResponse($user, $role === 'general' ? $user->role : $role);
     }
 
@@ -79,6 +86,7 @@ class AuthController extends Controller
                 $loadedUser->setAttribute('can_send_notifications', $loadedUser->can('notifications.send'));
                 $loadedUser->setAttribute('can_manage_groups', $loadedUser->can('groups.manage'));
                 $loadedUser->setAttribute('can_manage_notification_channels', $loadedUser->can('notifications.channels.manage'));
+                $loadedUser->setAttribute('is_super_admin', $loadedUser->is_super_admin);
             }),
             'token' => $user->createToken('lms-'.$loginType, ['guard:'.$loginType])->plainTextToken,
             'login_type' => $loginType ?? $user->role,

@@ -18,7 +18,8 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "pnpm dev --port 3001",
+    command:
+      "HOSTNAME=127.0.0.1 PORT=3001 NODE_ENV=production node .next/standalone/server.js",
     url: "http://127.0.0.1:3001",
     reuseExistingServer: !process.env.CI,
   },

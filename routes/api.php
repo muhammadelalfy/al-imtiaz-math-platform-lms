@@ -18,6 +18,9 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\TeacherSlackLogDestinationController;
 use App\Http\Controllers\Api\WorksheetController;
+use App\Http\Controllers\Api\PublicSubscriptionController;
+use App\Http\Controllers\Api\TeacherSubscriptionController;
+use App\Http\Controllers\Api\SuperAdminSubscriptionController;
 use Illuminate\Support\Facades\Route;
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -25,11 +28,23 @@ Route::post('/auth/admin/login', fn (\Illuminate\Http\Request $request, AuthCont
 Route::post('/auth/teacher/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'teacher'));
 Route::post('/auth/parent/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'parent'));
 Route::post('/auth/student/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'student'));
+Route::get('/public/subscription-packages', [PublicSubscriptionController::class, 'packages']);
+Route::post('/public/teacher-register', [PublicSubscriptionController::class, 'registerTeacher']);
 Route::post('/scheduled/notifications/drain', ScheduledNotificationQueueController::class)
     ->middleware('signed')
     ->name('scheduled.notifications.drain');
 Route::middleware(['auth:sanctum', \App\Http\Middleware\DispatchTeacherSlackRequestLog::class])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::middleware('role.guard:teacher')->get('/teacher/subscription', [TeacherSubscriptionController::class, 'show']);
+    Route::prefix('super-admin')->group(function (): void {
+        Route::get('/overview', [SuperAdminSubscriptionController::class, 'overview']);
+        Route::get('/packages', [SuperAdminSubscriptionController::class, 'packages']);
+        Route::post('/packages', [SuperAdminSubscriptionController::class, 'storePackage']);
+        Route::put('/packages/{subscriptionPackage}', [SuperAdminSubscriptionController::class, 'updatePackage']);
+        Route::get('/subscriptions', [SuperAdminSubscriptionController::class, 'subscriptions']);
+        Route::put('/subscriptions/{tenantSubscription}', [SuperAdminSubscriptionController::class, 'updateSubscription']);
+        Route::put('/tenants/{tenant}/domain', [SuperAdminSubscriptionController::class, 'updateTenantDomain']);
+    });
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/sync/snapshot', [OfflineSyncController::class, 'snapshot']);
     Route::post('/sync/operations', [OfflineSyncController::class, 'reconcile']);

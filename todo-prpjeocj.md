@@ -231,3 +231,14 @@
 - [x] Refactor teacher Slack destination database reads and writes behind a narrow repository interface, keeping transactions, validation, and failure handling in the application service.
 - [x] Add repository binding and behavior tests, then rerun the full Laravel and frontend quality gate for the Slack architecture refactor. Focused Slack tests, the full Laravel suite, Larastan, Composer validation, React tests/typecheck/build, and whitespace validation passed.
 - [x] Diagnose and restore teacher visibility of the payment add-on in the plugin store without exposing administrator-only payment configuration. Added the active built-in Payment Center catalog entry, migrated the live database, and verified teacher catalog visibility without provider recipient or instruction leakage.
+- [ ] Verify the remote pull request and CI workflow state for the latest feature branch, then create or repair the GitHub visibility and trigger path if missing.
+- [x] Define subscription packages, tenant ownership, subscriber status, paid/unpaid state, billing periods, start/end dates, and one-week expiry reminder invariants.
+- [x] Build a super-admin panel for platform performance statistics, tenant health, package management, and subscriber payment/expiry oversight.
+- [x] Build a teacher subscription workspace showing the active package, payment state, start/end dates, and renewal reminder.
+- [x] Build an Arabic landing page with polished animated system storytelling, package cards, package translations, and a system visual.
+- [x] Add tenant-specific login domains and registration flow with secure host-based tenant resolution.
+- [x] Implement an idempotent one-week-before-expiry reminder on teacher login and dashboard load (Option B selected instead of scheduled background delivery).
+- [x] Add migration, authorization, API, frontend, schedule, and full quality coverage for the subscription platform.
+- [x] Update the Arabic SRS for every delivered subscription-platform feature and maintain traceability to its tests and CI-equivalent validation.
+- [x] Make the standalone Next.js production-build command explicit about `NODE_ENV=production` so local validation matches CI and static prerendering remains stable.
+- [x] Run the standalone Playwright smoke test against the built production server instead of Turbopack development mode to make browser validation reproducible.

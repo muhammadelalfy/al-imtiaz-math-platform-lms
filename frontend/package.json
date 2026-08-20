@@ -4,13 +4,13 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --webpack",
+    "build": "NODE_ENV=production next build --webpack",
     "start": "next start",
     "lint": "eslint src/app tests",
     "check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium playwright test"
+    "test:e2e": "pnpm build && mkdir -p .next/standalone/.next && cp -R .next/static .next/standalone/.next/static && PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium playwright test"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-basic-styles": "48.4.0",

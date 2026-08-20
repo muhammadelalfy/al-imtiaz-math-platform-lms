@@ -12,12 +12,12 @@ The delivered message contains only the HTTP method, an identifier-redacted API 
 
 ## Operational boundary
 
-| Concern | Design boundary |
-| --- | --- |
-| Channel ownership | One encrypted destination per teacher account. |
-| Secret exposure | Webhook URL is hidden from API resources and password-masked in the UI. |
-| Log retention | No operation log payloads or delivery records are written to LMS storage. |
-| Failure handling | Database writes are transactional; outbound Slack delivery is non-blocking. |
+| Concern              | Design boundary                                                              |
+| -------------------- | ---------------------------------------------------------------------------- |
+| Channel ownership    | One encrypted destination per teacher account.                               |
+| Secret exposure      | Webhook URL is hidden from API resources and password-masked in the UI.      |
+| Log retention        | No operation log payloads or delivery records are written to LMS storage.    |
+| Failure handling     | Database writes are transactional; outbound Slack delivery is non-blocking.  |
 | Content minimization | Request bodies, learner data, credentials, and webhook secrets are excluded. |
 
 ## References

@@ -20,6 +20,9 @@ use App\Models\AuthorizationPermission;
 use App\Models\AuthorizationRole;
 use App\Models\Student;
 use App\Models\StudentAccount;
+use App\Models\SubscriptionPackage;
+use App\Models\Tenant;
+use App\Models\TenantSubscription;
 use App\Models\User;
 use App\Models\Worksheet;
 use App\Models\WorksheetAssignment;
@@ -43,7 +46,9 @@ class ArabicDemoSeeder extends Seeder
         }
 
         $admin = $this->user(self::ADMIN_EMAIL, 'مدير الامتياز', 'admin', self::ADMIN_PASSWORD);
+        $admin->forceFill(['is_super_admin' => true])->save();
         $teacher = $this->user(self::TEACHER_EMAIL, 'أستاذ الرياضيات', 'teacher', self::TEACHER_PASSWORD);
+        $tenant = $this->seedSubscriptionPlatform($teacher);
         $this->seedAuthorization($teacher);
         $students = $this->seedStudents();
         $this->seedAcademicGroups($students);
@@ -60,6 +65,8 @@ class ArabicDemoSeeder extends Seeder
         foreach ($students as $index => $student) {
             $parent = $this->user("parent{$index}@local.test", "ولي أمر {$student->name}", 'parent', self::PARENT_PASSWORD);
             $learner = $this->user("student{$index}@local.test", $student->name, 'student', self::STUDENT_PASSWORD);
+            $parent->forceFill(['tenant_id' => $tenant->id])->save();
+            $learner->forceFill(['tenant_id' => $tenant->id])->save();
             StudentAccount::updateOrCreate(['user_id' => $parent->id], ['student_id' => $student->id, 'relationship' => 'parent']);
             StudentAccount::updateOrCreate(['user_id' => $learner->id], ['student_id' => $student->id, 'relationship' => 'student']);
 
@@ -319,6 +326,42 @@ class ArabicDemoSeeder extends Seeder
             ['email' => $email],
             ['name' => $name, 'role' => $role, 'password' => Hash::make($password)],
         );
+    }
+
+    private function seedSubscriptionPlatform(User $teacher): Tenant
+    {
+        SubscriptionPackage::updateOrCreate(['code' => 'starter'], [
+            'name' => 'البداية', 'tagline' => 'للمعلم الذي يبدأ مركزه الرقمي',
+            'description' => 'إدارة مركز واحد، حضور ذكي، شيتات، اختبارات، وتقارير أساسية.',
+            'price_cents' => 49000, 'currency' => 'EGP', 'duration_days' => 30,
+            'teacher_limit' => 1, 'student_limit' => 100,
+            'features' => ['الحضور QR', 'الشيتات والاختبارات', 'تقارير أساسية'], 'is_active' => true, 'sort_order' => 10,
+        ]);
+        $growth = SubscriptionPackage::updateOrCreate(['code' => 'growth'], [
+            'name' => 'النمو', 'tagline' => 'للأكاديميات التي تتوسع بثقة',
+            'description' => 'يشمل المجموعات والإشعارات والتقارير المتقدمة وطلاباً أكثر.',
+            'price_cents' => 99000, 'currency' => 'EGP', 'duration_days' => 30,
+            'teacher_limit' => 5, 'student_limit' => 500,
+            'features' => ['كل مزايا البداية', 'المجموعات والإشعارات', 'تقارير متقدمة'], 'is_active' => true, 'sort_order' => 20,
+        ]);
+        SubscriptionPackage::updateOrCreate(['code' => 'scale'], [
+            'name' => 'التميز', 'tagline' => 'للمراكز متعددة المعلمين والطلاب',
+            'description' => 'سعة أكبر، إعدادات تشغيل متقدمة، وإدارة مركز موسعة.',
+            'price_cents' => 179000, 'currency' => 'EGP', 'duration_days' => 30,
+            'teacher_limit' => 20, 'student_limit' => 2000,
+            'features' => ['كل مزايا النمو', 'سعة موسعة', 'إدارة تشغيل متقدمة'], 'is_active' => true, 'sort_order' => 30,
+        ]);
+
+        $tenant = Tenant::updateOrCreate(['slug' => 'al-imtiaz-demo'], [
+            'name' => 'مركز الامتياز التجريبي', 'domain_status' => 'pending',
+        ]);
+        $teacher->forceFill(['tenant_id' => $tenant->id])->save();
+        TenantSubscription::updateOrCreate(['tenant_id' => $tenant->id], [
+            'subscription_package_id' => $growth->id, 'status' => 'active', 'payment_status' => 'paid',
+            'starts_at' => now()->subDays(25), 'ends_at' => now()->addDays(5), 'paid_at' => now()->subDays(25),
+        ]);
+
+        return $tenant;
     }
 
     private function worksheet(array $attributes, User $teacher): Worksheet

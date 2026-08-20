@@ -7,7 +7,9 @@ const publish = (): void => {
   listeners.forEach(listener => listener());
 };
 
-export const subscribeToRequestActivity = (listener: Listener): (() => void) => {
+export const subscribeToRequestActivity = (
+  listener: Listener
+): (() => void) => {
   listeners.add(listener);
   return () => listeners.delete(listener);
 };

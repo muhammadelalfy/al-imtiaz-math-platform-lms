@@ -53,6 +53,8 @@ import {
 import PluginStorePanel from "@/components/PluginStorePanel";
 import AuthorizationManagementPanel from "@/components/AuthorizationManagementPanel";
 import NotificationManagementPanel from "@/components/NotificationManagementPanel";
+import SuperAdminPlatformPanel from "@/components/SuperAdminPlatformPanel";
+import TeacherSubscriptionPanel from "@/components/TeacherSubscriptionPanel";
 import NotificationInbox from "@/components/NotificationInbox";
 import MathUniverseBackground from "@/components/MathUniverseBackground";
 import ExamWarningBanner from "@/components/ExamWarningBanner";
@@ -81,6 +83,8 @@ type Tab =
   | "plugins"
   | "notifications"
   | "authorization"
+  | "subscription"
+  | "platform"
   | "settings";
 type Portal = "admin" | "teacher" | "parent" | "student";
 const portalLabels: Record<Portal, string> = {
@@ -483,6 +487,15 @@ function AuthenticatedDashboard({
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
     void load();
+    if (user.role === "teacher") {
+      void laravelApi.teacherSubscription().then(subscription => {
+        if (subscription.show_expiry_reminder && subscription.subscription) {
+          toast(
+            `تذكير: ينتهي اشتراك مركزك خلال ${subscription.subscription.days_remaining} أيام. راجع الإدارة لتجديد الباقة.`
+          );
+        }
+      });
+    }
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
@@ -533,6 +546,12 @@ function AuthenticatedDashboard({
                 { id: "reports", label: "التقارير", icon: BarChart3 },
                 { id: "plugins", label: "متجر الإضافات", icon: Package },
                 {
+                  id: "subscription",
+                  label: "اشتراك المركز",
+                  icon: CreditCard,
+                },
+                { id: "platform", label: "إدارة المنصة", icon: Activity },
+                {
                   id: "notifications",
                   label: "المجموعات والإشعارات",
                   icon: Bell,
@@ -549,6 +568,10 @@ function AuthenticatedDashboard({
               item =>
                 item.id !== "authorization" || user.can_manage_authorization
             )
+            .filter(
+              item => item.id !== "subscription" || user.role === "teacher"
+            )
+            .filter(item => item.id !== "platform" || user.is_super_admin)
             .map(item => {
               const Icon = item.icon;
               return (
@@ -621,6 +644,7 @@ function AuthenticatedDashboard({
             canManageChannels={Boolean(user.can_manage_notification_channels)}
             canManageGroups={Boolean(user.can_manage_groups)}
             canSendNotifications={Boolean(user.can_send_notifications)}
+            isSuperAdmin={Boolean(user.is_super_admin)}
             onRefresh={load}
           />
         )}
@@ -784,6 +808,7 @@ function AdminView({
   canManageChannels,
   canManageGroups,
   canSendNotifications,
+  isSuperAdmin,
   onRefresh,
 }: {
   tab: Tab;
@@ -797,6 +822,7 @@ function AdminView({
   canManageChannels: boolean;
   canManageGroups: boolean;
   canSendNotifications: boolean;
+  isSuperAdmin: boolean;
   onRefresh: () => Promise<void>;
 }) {
   if (tab === "classes") return <ClassNavigator students={students} />;
@@ -822,6 +848,9 @@ function AdminView({
     );
   if (tab === "plugins")
     return <PluginStorePanel onRefresh={onRefresh} role={role} />;
+  if (tab === "subscription" && role === "teacher")
+    return <TeacherSubscriptionPanel />;
+  if (tab === "platform" && isSuperAdmin) return <SuperAdminPlatformPanel />;
   if (tab === "notifications" && (canManageGroups || canSendNotifications))
     return (
       <NotificationManagementPanel
@@ -1428,7 +1457,8 @@ function SettingsView({ role }: { role: Role }) {
 }
 
 function TeacherSlackLogSettings() {
-  const [destination, setDestination] = useState<TeacherSlackLogDestination | null>(null);
+  const [destination, setDestination] =
+    useState<TeacherSlackLogDestination | null>(null);
   const [channelLabel, setChannelLabel] = useState("");
   const [webhookUrl, setWebhookUrl] = useState("");
   const [enabled, setEnabled] = useState(false);
@@ -1443,7 +1473,11 @@ function TeacherSlackLogSettings() {
         setEnabled(next.is_enabled);
       })
       .catch(caught =>
-        toast(caught instanceof ApiError ? caught.message : "تعذر تحميل إعدادات Slack")
+        toast(
+          caught instanceof ApiError
+            ? caught.message
+            : "تعذر تحميل إعدادات Slack"
+        )
       );
   }, []);
 
@@ -1460,7 +1494,9 @@ function TeacherSlackLogSettings() {
       setWebhookUrl("");
       toast("تم حفظ إعداد قناة Slack الخاصة بك");
     } catch (caught) {
-      toast(caught instanceof ApiError ? caught.message : "تعذر حفظ إعدادات Slack");
+      toast(
+        caught instanceof ApiError ? caught.message : "تعذر حفظ إعدادات Slack"
+      );
     } finally {
       setSaving(false);
     }
@@ -1475,7 +1511,9 @@ function TeacherSlackLogSettings() {
       setEnabled(false);
       toast("تم حذف رابط Slack المشفر وإيقاف السجل الخارجي");
     } catch (caught) {
-      toast(caught instanceof ApiError ? caught.message : "تعذر حذف إعدادات Slack");
+      toast(
+        caught instanceof ApiError ? caught.message : "تعذر حذف إعدادات Slack"
+      );
     } finally {
       setSaving(false);
     }
@@ -1488,12 +1526,17 @@ function TeacherSlackLogSettings() {
           <span className="eyebrow">سجل خارجي خاص بالمدرس</span>
           <h3>سجل العمليات إلى Slack</h3>
         </div>
-        <span className={destination?.configured ? "payment-paid" : "sync-badge offline"}>
+        <span
+          className={
+            destination?.configured ? "payment-paid" : "sync-badge offline"
+          }
+        >
           {destination?.configured ? "تم الربط" : "غير مهيأ"}
         </span>
       </div>
       <p>
-        تُرسل عمليات الحفظ والتعديلات والأخطاء إلى القناة التي تختارها فقط. لا يُحفظ سجل العمليات داخل المنصة، ولا يظهر رابط Slack بعد حفظه.
+        تُرسل عمليات الحفظ والتعديلات والأخطاء إلى القناة التي تختارها فقط. لا
+        يُحفظ سجل العمليات داخل المنصة، ولا يظهر رابط Slack بعد حفظه.
       </p>
       <label>
         اسم القناة للعرض
@@ -1509,7 +1552,11 @@ function TeacherSlackLogSettings() {
           type="password"
           value={webhookUrl}
           onChange={event => setWebhookUrl(event.target.value)}
-          placeholder={destination?.configured ? "اتركه فارغاً للاحتفاظ بالرابط الحالي" : "https://hooks.slack.com/services/..."}
+          placeholder={
+            destination?.configured
+              ? "اتركه فارغاً للاحتفاظ بالرابط الحالي"
+              : "https://hooks.slack.com/services/..."
+          }
           autoComplete="off"
         />
       </label>
@@ -1526,7 +1573,12 @@ function TeacherSlackLogSettings() {
           {saving ? "جارٍ الحفظ..." : "حفظ إعدادات Slack"}
         </button>
         {destination?.configured && (
-          <button className="outline" type="button" disabled={saving} onClick={() => void clear()}>
+          <button
+            className="outline"
+            type="button"
+            disabled={saving}
+            onClick={() => void clear()}
+          >
             إلغاء الربط
           </button>
         )}
