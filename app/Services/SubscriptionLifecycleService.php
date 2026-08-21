@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Contracts\Repositories\SubscriptionPackageRepositoryInterface;
 use App\Contracts\Repositories\TenantSubscriptionRepositoryInterface;
+use App\Contracts\Services\TenantSchemaProvisionerInterface;
 use App\Exceptions\SubscriptionStorageException;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
@@ -19,6 +20,8 @@ class SubscriptionLifecycleService
     public function __construct(
         private readonly SubscriptionPackageRepositoryInterface $packages,
         private readonly TenantSubscriptionRepositoryInterface $subscriptions,
+        private readonly TenantSchemaProvisionerInterface $schemas,
+        private readonly TenantDomainService $domains,
     ) {
     }
 
@@ -59,7 +62,7 @@ class SubscriptionLifecycleService
     public function updateSubscription(int $subscriptionId, array $attributes, User $superAdmin): TenantSubscription
     {
         try {
-            return DB::transaction(function () use ($subscriptionId, $attributes, $superAdmin): TenantSubscription {
+            $subscription = DB::transaction(function () use ($subscriptionId, $attributes, $superAdmin): TenantSubscription {
                 $subscription = $this->subscriptions->findForUpdate($subscriptionId);
                 $package = isset($attributes['subscription_package_id'])
                     ? $this->packages->findActiveOrFail($attributes['subscription_package_id'])
@@ -91,6 +94,15 @@ class SubscriptionLifecycleService
 
                 return $subscription->refresh()->load(['tenant', 'package', 'activatedBy']);
             }, 3);
+
+            if ($subscription->status === 'active' && $subscription->payment_status === 'paid') {
+                $tenant = $subscription->getRelation('tenant');
+                if ($tenant instanceof Tenant) {
+                    $this->domains->assignSubscriptionDomain($this->schemas->provision($tenant));
+                }
+            }
+
+            return $subscription->refresh()->load(['tenant', 'package', 'activatedBy']);
         } catch (Throwable $exception) {
             throw new SubscriptionStorageException('تعذر حفظ حالة الاشتراك. لم يتم تطبيق أي تغيير.', previous: $exception);
         }

@@ -18,7 +18,7 @@ import {
   laravelApi,
   type SubscriptionPackage,
 } from "@/lib/laravelApi";
-import "./subscription-platform.css";
+import "./subscription-platform.scss";
 
 const heroImage = "/manus-storage/al-imtiaz-subscription-hero_79200590.png";
 

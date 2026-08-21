@@ -10,7 +10,24 @@ class Tenant extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'login_domain', 'domain_status'];
+    protected $fillable = [
+        'name',
+        'slug',
+        'login_domain',
+        'domain_status',
+        'database_schema',
+        'schema_status',
+        'schema_version',
+        'schema_provisioned_at',
+        'provisioning_error',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'schema_provisioned_at' => 'immutable_datetime',
+        ];
+    }
 
     public function users(): HasMany
     {
