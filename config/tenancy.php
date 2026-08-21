@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'mode' => env('TENANCY_MODE', env('DB_CONNECTION') === 'pgsql' ? 'postgres_schema' : 'shared_development'),
     'enabled' => env('TENANCY_POSTGRES_ENABLED', env('DB_CONNECTION') === 'pgsql'),
     'database_url' => env('TENANCY_DATABASE_URL', env('DB_URL')),
     'provisioning_database_url' => env('TENANCY_PROVISIONING_DATABASE_URL'),

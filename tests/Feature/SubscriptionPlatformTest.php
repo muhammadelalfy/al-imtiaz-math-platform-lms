@@ -8,6 +8,7 @@ use App\Models\TenantSubscription;
 use App\Models\User;
 use App\Contracts\Services\TenantSchemaProvisionerInterface;
 use App\Services\TenantDomainService;
+use App\Services\PostgresTenantSchemaProvisioner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -175,6 +176,22 @@ class SubscriptionPlatformTest extends TestCase
 
         $this->assertSame('automatic-domain.centres.example.test', $resolved->login_domain);
         $this->assertSame('pending_dns', $resolved->domain_status);
+    }
+
+    public function test_manus_development_mode_marks_the_tenant_ready_without_external_postgres_credentials(): void
+    {
+        config([
+            'tenancy.enabled' => false,
+            'tenancy.database_url' => null,
+            'tenancy.provisioning_database_url' => null,
+        ]);
+        $tenant = Tenant::query()->create(['name' => 'مركز Manus', 'slug' => 'manus-development']);
+
+        $ready = app(PostgresTenantSchemaProvisioner::class)->provision($tenant);
+
+        $this->assertSame("tenant_{$tenant->id}", $ready->database_schema);
+        $this->assertSame('ready', $ready->schema_status);
+        $this->assertSame('manus-shared-development', $ready->schema_version);
     }
 
     private function package(): SubscriptionPackage

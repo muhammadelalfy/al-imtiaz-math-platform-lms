@@ -26,6 +26,7 @@ use App\Models\TenantSubscription;
 use App\Models\User;
 use App\Models\Worksheet;
 use App\Models\WorksheetAssignment;
+use App\Services\PostgresTenantSchemaProvisioner;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
@@ -361,7 +362,7 @@ class ArabicDemoSeeder extends Seeder
             'starts_at' => now()->subDays(25), 'ends_at' => now()->addDays(5), 'paid_at' => now()->subDays(25),
         ]);
 
-        return $tenant;
+        return app(PostgresTenantSchemaProvisioner::class)->provision($tenant);
     }
 
     private function worksheet(array $attributes, User $teacher): Worksheet

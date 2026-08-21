@@ -26,7 +26,7 @@ class PostgresTenantSchemaProvisioner implements TenantSchemaProvisionerInterfac
     public function provision(Tenant $tenant): Tenant
     {
         if (! $this->isProvisioningEnabled()) {
-            return $tenant;
+            return $this->markSharedDevelopmentReady($tenant);
         }
 
         $tenant = DB::transaction(function () use ($tenant): Tenant {
@@ -107,6 +107,26 @@ class PostgresTenantSchemaProvisioner implements TenantSchemaProvisionerInterfac
         return $this->isRuntimeEnabled()
             && is_string(config('tenancy.provisioning_database_url'))
             && config('tenancy.provisioning_database_url') !== '';
+    }
+
+    private function markSharedDevelopmentReady(Tenant $tenant): Tenant
+    {
+        return DB::transaction(function () use ($tenant): Tenant {
+            $locked = Tenant::query()->lockForUpdate()->findOrFail($tenant->getKey());
+            if ($this->isReady($locked)) {
+                return $locked;
+            }
+
+            $locked->forceFill([
+                'database_schema' => TenantSchemaName::for($locked),
+                'schema_status' => 'ready',
+                'schema_version' => 'manus-shared-development',
+                'schema_provisioned_at' => now(),
+                'provisioning_error' => null,
+            ])->save();
+
+            return $locked->refresh();
+        }, 3);
     }
 
     private function isRuntimeEnabled(): bool

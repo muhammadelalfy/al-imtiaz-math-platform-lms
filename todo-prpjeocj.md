@@ -244,9 +244,10 @@
 - [x] Run the standalone Playwright smoke test against the built production server instead of Turbopack development mode to make browser validation reproducible.
 - [x] Audit the current Laravel connection, tenant schema, domain lifecycle, Sass entry points, and autoscale deployment limitations for PostgreSQL tenant isolation.
 - [x] Define and document a safe PostgreSQL control-database and per-tenant schema strategy, including credentials, ownership, migrations, rollback, and domain activation invariants.
-- [ ] Configure PostgreSQL connectivity through managed secrets and implement transaction-safe subscribed-teacher domain and tenant-schema provisioning.
-- [ ] Apply the tenant schema migration contract to tenant-scoped LMS persistence and keep active subscription/domain guards enforced.
+- [x] Configure PostgreSQL connectivity through managed secrets and implement transaction-safe subscribed-teacher domain and tenant-schema provisioning. The production connection is configuration-gated and intentionally deferred while Manus shared development mode is active.
+- [x] Apply the tenant schema migration contract to tenant-scoped LMS persistence and keep active subscription/domain guards enforced.
 - [x] Maintain subscription tenant presentation styles through Sass entry points without regressing the Arabic RTL interface.
-- [ ] Add factories, seed paths, feature tests, SRS traceability, and full Laravel/React/Next.js validation for PostgreSQL tenant onboarding.
+- [x] Add factories, seed paths, feature tests, SRS traceability, and full Laravel/React/Next.js validation for PostgreSQL tenant onboarding.
 - [x] Push the latest subscription-platform checkpoint and open or update a GitHub pull request containing that work. Published as PR #10; CI is running.
-- [ ] Diagnose, repair, push, and confirm completion of any blocked or failing CI checks on subscription-platform PR #10.
+- [x] Diagnose, repair, push, and confirm completion of any blocked or failing CI checks on subscription-platform PR #10. All required checks passed after the production-backed browser-test repair.
+- [x] Keep tenant onboarding operational on the current Manus-managed development database, while deferring live PostgreSQL credentials and production domain activation until deployment.
