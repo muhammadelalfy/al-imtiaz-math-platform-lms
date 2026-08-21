@@ -3723,13 +3723,36 @@ nav {
   box-shadow: 0 28px 90px rgba(10, 43, 46, 0.28);
   color: #153e42;
 }
-.global-request-loader__logo {
+.global-request-loader__brand {
   position: relative;
   z-index: 1;
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+}
+.global-request-loader__logo {
   width: 68px;
   height: 68px;
   object-fit: contain;
   animation: request-logo-pulse 1.5s ease-in-out infinite;
+}
+.global-request-loader__logo-fallback {
+  position: absolute;
+  display: grid;
+  width: 62px;
+  height: 62px;
+  place-items: center;
+  border: 2px solid #d2eee4;
+  border-radius: 22px;
+  color: #fff;
+  background: linear-gradient(145deg, #147d68, #0b4f50);
+  box-shadow: 0 10px 22px rgba(18, 102, 90, 0.24);
+  font: 800 41px/1 Cairo, sans-serif;
+  opacity: 0;
+}
+.global-request-loader__brand.is-fallback .global-request-loader__logo-fallback {
+  opacity: 1;
 }
 .global-request-loader__card strong {
   position: relative;

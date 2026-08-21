@@ -264,3 +264,10 @@
 - [x] Add regression coverage, desktop/mobile visual validation, and full frontend quality checks for the ScrollTrigger and WhatsApp landing update.
 - [x] Remove all movement from mock dashboard visuals, demonstration counters, and illustrative platform artwork while retaining only restrained non-mock section reveals.
 - [x] Update landing regression coverage and verify the static mock presentation at desktop and mobile sizes.
+- [x] Add a visible Al-Imtiaz managed logo to the global request loading overlay with a non-image fallback treatment.
+- [x] Add regression coverage and desktop/mobile validation for the branded loading overlay.
+- [x] Audit the existing academic-level CRUD model and its level, grade, group, and student relationships.
+- [x] Extend the academic-level CRUD factories and development seeder with 500 realistic Arabic records and safe repeatable counts.
+- [x] Add CRUD, authorization, validation, relationship, and repeatable-seeding regression coverage for the expanded level data.
+- [x] Update the Arabic SRS and validate the full quality gate for the academic-level data expansion.
+- [x] Scale the academic-level development seeder from 500 to 5,000 deterministic Arabic learner records and verify repeatable bulk performance.
