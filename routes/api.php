@@ -20,6 +20,8 @@ use App\Http\Controllers\Api\TeacherSlackLogDestinationController;
 use App\Http\Controllers\Api\WorksheetController;
 use App\Http\Controllers\Api\PublicSubscriptionController;
 use App\Http\Controllers\Api\TeacherSubscriptionController;
+use App\Http\Controllers\Api\TeacherAcademyIdentityController;
+use App\Http\Controllers\Api\TeacherDashboardLayoutController;
 use App\Http\Controllers\Api\SuperAdminSubscriptionController;
 use Illuminate\Support\Facades\Route;
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -30,12 +32,27 @@ Route::post('/auth/parent/login', fn (\Illuminate\Http\Request $request, AuthCon
 Route::post('/auth/student/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'student'));
 Route::get('/public/subscription-packages', [PublicSubscriptionController::class, 'packages']);
 Route::post('/public/teacher-register', [PublicSubscriptionController::class, 'registerTeacher']);
+Route::post('/public/mock-tenant-registration', [PublicSubscriptionController::class, 'mockRegistration'])
+    ->middleware('throttle:3,60');
 Route::post('/scheduled/notifications/drain', ScheduledNotificationQueueController::class)
     ->middleware('signed')
     ->name('scheduled.notifications.drain');
 Route::middleware(['auth:sanctum', \App\Http\Middleware\DispatchTeacherSlackRequestLog::class])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::middleware('role.guard:teacher')->get('/teacher/subscription', [TeacherSubscriptionController::class, 'show']);
+    Route::middleware('role.guard:teacher')
+        ->prefix('teacher/academy-identity')
+        ->group(function (): void {
+            Route::get('/', [TeacherAcademyIdentityController::class, 'show']);
+            Route::put('/', [TeacherAcademyIdentityController::class, 'update']);
+        });
+    Route::middleware('role.guard:teacher')
+        ->prefix('teacher/dashboard-layout')
+        ->group(function (): void {
+            Route::get('/', [TeacherDashboardLayoutController::class, 'show']);
+            Route::put('/', [TeacherDashboardLayoutController::class, 'update']);
+            Route::delete('/', [TeacherDashboardLayoutController::class, 'destroy']);
+        });
     Route::prefix('super-admin')->group(function (): void {
         Route::get('/overview', [SuperAdminSubscriptionController::class, 'overview']);
         Route::get('/packages', [SuperAdminSubscriptionController::class, 'packages']);

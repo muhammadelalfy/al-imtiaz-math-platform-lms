@@ -16,6 +16,7 @@ use App\Contracts\Repositories\WorksheetRepositoryInterface;
 use App\Contracts\Observability\CacheObservabilityInterface;
 use App\Contracts\Notifications\NotificationChannelDispatcherInterface;
 use App\Contracts\Services\OfflineSyncServiceInterface;
+use App\Contracts\Services\TenantSchemaProvisionerInterface;
 use App\Repositories\CachedDashboardMetricsRepository;
 use App\Repositories\EloquentAcademicGroupRepository;
 use App\Repositories\EloquentExamTemplateRepository;
@@ -28,6 +29,7 @@ use App\Repositories\EloquentTenantSubscriptionRepository;
 use App\Repositories\EloquentWorksheetRepository;
 use App\Services\LogCacheObservability;
 use App\Services\OfflineSyncService;
+use App\Services\PostgresTenantSchemaProvisioner;
 use App\Services\NotificationChannels\InAppNotificationChannel;
 use App\Services\NotificationChannels\TwilioSmsNotificationChannel;
 use App\Services\NotificationChannels\WhatsAppCloudNotificationChannel;
@@ -53,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TeacherSlackLogDestinationRepositoryInterface::class, EloquentTeacherSlackLogDestinationRepository::class);
         $this->app->bind(SubscriptionPackageRepositoryInterface::class, EloquentSubscriptionPackageRepository::class);
         $this->app->bind(TenantSubscriptionRepositoryInterface::class, EloquentTenantSubscriptionRepository::class);
+        $this->app->bind(TenantSchemaProvisionerInterface::class, PostgresTenantSchemaProvisioner::class);
         $this->app->bind(OfflineSyncServiceInterface::class, OfflineSyncService::class);
         $this->app->singleton(CacheObservabilityInterface::class, LogCacheObservability::class);
 

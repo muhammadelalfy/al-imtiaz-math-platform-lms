@@ -43,7 +43,7 @@
             <table class="header-table">
                 <tr>
                     <td>
-                        <div class="brand">الامتياز في الرياضيات</div>
+                        <div class="brand">زويل التعليمية</div>
                         <h1>{{ $template->title }}</h1>
                         <div class="muted">{{ $template->department?->name ?: 'اختبار رياضيات' }}</div>
                     </td>

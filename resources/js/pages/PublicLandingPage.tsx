@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   ArrowLeft,
   BarChart3,
+  FlaskConical,
   CheckCircle2,
   CreditCard,
   LoaderCircle,
+  MessageCircle,
   ShieldCheck,
   Sparkles,
   Users,
@@ -17,10 +20,17 @@ import {
   ApiError,
   laravelApi,
   type SubscriptionPackage,
+  type DevelopmentMockRegistration,
 } from "@/lib/laravelApi";
-import "./subscription-platform.css";
+import "./subscription-platform.scss";
 
-const heroImage = "/manus-storage/al-imtiaz-subscription-hero_79200590.png";
+const heroImage = "/manus-storage/al-imtiaz-landing-system-visual_a887ee83.png";
+const ecosystemImage = "/manus-storage/al-imtiaz-platform-ecosystem-visual_8bfff868.png";
+const whatsAppConnectUrl = `https://wa.me/?text=${encodeURIComponent(
+  "مرحباً، أرغب في التعرف على منصة زويل التعليمية."
+)}`;
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function PublicLandingPage() {
   const [, navigate] = useLocation();
@@ -29,6 +39,8 @@ export default function PublicLandingPage() {
   const [selected, setSelected] = useState<SubscriptionPackage | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [mocking, setMocking] = useState(false);
+  const [mockResult, setMockResult] = useState<DevelopmentMockRegistration | null>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -40,6 +52,10 @@ export default function PublicLandingPage() {
 
   useEffect(() => {
     const context = gsap.context(() => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
+
       gsap.from(".landing-reveal", {
         opacity: 0,
         y: 26,
@@ -53,6 +69,26 @@ export default function PublicLandingPage() {
         repeat: -1,
         ease: "none",
       });
+      gsap.to(".landing-copper-orbit", {
+        rotate: -360,
+        duration: 32,
+        repeat: -1,
+        ease: "none",
+      });
+      gsap.utils.toArray<HTMLElement>(".landing-scroll-section").forEach(section => {
+        gsap.from(section, {
+          opacity: 0,
+          y: 34,
+          duration: 0.8,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: section,
+            start: "top 82%",
+            once: true,
+          },
+        });
+      });
+
     }, root);
     return () => context.revert();
   }, []);
@@ -94,9 +130,23 @@ export default function PublicLandingPage() {
     }
   };
 
+  const registerMockTenant = async () => {
+    setMocking(true);
+    try {
+      const result = await laravelApi.createDevelopmentMockTenant();
+      setMockResult(result);
+      toast("تم تجهيز المركز التجريبي بنجاح");
+    } catch (error) {
+      toast(error instanceof ApiError ? error.message : "تعذر تجهيز المركز التجريبي");
+    } finally {
+      setMocking(false);
+    }
+  };
+
   return (
     <main className="subscription-landing" ref={root} dir="rtl">
       <div className="landing-mesh landing-orbit" aria-hidden="true" />
+      <div className="landing-copper-orbit" aria-hidden="true" />
       <nav className="landing-nav landing-reveal" aria-label="التنقل الرئيسي">
         <button
           className="landing-brand"
@@ -106,8 +156,8 @@ export default function PublicLandingPage() {
             <Sparkles size={19} />
           </span>
           <span>
-            <b>الامتياز</b>
-            <small>في الرياضيات</small>
+            <b>زويل</b>
+            <small>منصة تعليمية</small>
           </span>
         </button>
         <div className="landing-nav-actions">
@@ -157,7 +207,18 @@ export default function PublicLandingPage() {
             >
               لدي حساب بالفعل
             </button>
+            <button
+              className="landing-dev-action"
+              disabled={mocking}
+              onClick={() => void registerMockTenant()}
+            >
+              {mocking ? <LoaderCircle className="spin" size={17} /> : <FlaskConical size={17} />}
+              جرّب تهيئة مركز تجريبي
+            </button>
           </div>
+          <p className="landing-dev-note landing-reveal">
+            تجربة Manus للتطوير فقط: لا تنشئ دفعاً حقيقياً ولا نطاقاً منشوراً.
+          </p>
           <div className="landing-trust landing-reveal">
             <span>
               <CheckCircle2 size={16} /> واجهة عربية RTL
@@ -170,7 +231,7 @@ export default function PublicLandingPage() {
             </span>
           </div>
         </div>
-        <div className="landing-visual landing-reveal">
+        <div className="landing-visual">
           <div className="landing-visual-glow" />
           <div
             className="landing-dashboard-visual"
@@ -228,7 +289,7 @@ export default function PublicLandingPage() {
       </section>
 
       <section
-        className="landing-value-strip landing-reveal"
+        className="landing-value-strip landing-scroll-section"
         aria-label="قيم النظام"
       >
         <div>
@@ -254,7 +315,69 @@ export default function PublicLandingPage() {
         </div>
       </section>
 
-      <section className="landing-packages" id="packages">
+      <section className="landing-demo-metrics" aria-labelledby="demo-metrics-title">
+        <div className="landing-demo-heading">
+          <span className="landing-kicker"><FlaskConical size={15} /> عرض توضيحي للحركة داخل المنصة</span>
+          <h2 id="demo-metrics-title">صورة حية لنمو المركز، وليست بيانات عملاء حقيقية.</h2>
+          <p>تُعرض العدادات التالية لتوضيح طريقة قراءة مؤشرات مركزك بعد التفعيل.</p>
+        </div>
+        <div className="landing-demo-counter-grid">
+          <article>
+            <span className="landing-counter-icon"><Users size={21} /></span>
+            <strong data-demo-count="3">٣</strong>
+            <b>مراكز تجريبية</b>
+            <small>مثال لعرض تعدد المساحات</small>
+          </article>
+          <article>
+            <span className="landing-counter-icon"><BarChart3 size={21} /></span>
+            <strong data-demo-count="240">٢٤٠</strong>
+            <b>ملف طالب نموذجي</b>
+            <small>مثال لمتابعة السعة التعليمية</small>
+          </article>
+          <article>
+            <span className="landing-counter-icon"><CheckCircle2 size={21} /></span>
+            <strong data-demo-count="18">١٨</strong>
+            <b>جلسة حضور نموذجية</b>
+            <small>مثال لتدفق الحضور اليومي</small>
+          </article>
+        </div>
+      </section>
+
+      <section className="landing-ecosystem" aria-labelledby="ecosystem-title">
+        <div className="landing-ecosystem-copy">
+          <span className="landing-kicker"><Sparkles size={15} /> لقطة من النظام بالكامل</span>
+          <h2 id="ecosystem-title">من الحصة إلى القرار، كل نقطة مترابطة.</h2>
+          <p>تصوّر بصري يشرح كيف تتجاور إدارة الطلاب، الحضور، الواجبات، الاختبارات، ومتابعة الاشتراك داخل تجربة واحدة.</p>
+          <div className="landing-ecosystem-points">
+            <span><CheckCircle2 size={16} /> رحلة الطالب واضحة</span>
+            <span><CheckCircle2 size={16} /> لوحة واحدة للمعلم</span>
+            <span><CheckCircle2 size={16} /> قرار أسرع للإدارة</span>
+          </div>
+        </div>
+        <figure className="landing-ecosystem-art">
+          <div className="landing-ecosystem-grid" aria-hidden="true" />
+          <div className="landing-ecosystem-fallback" aria-hidden="true">
+            <div className="landing-fallback-core">
+              <span>مركزك اليوم</span>
+              <div className="landing-fallback-bars"><i /><i /><i /><i /><i /></div>
+              <div className="landing-fallback-pills"><b>الحضور</b><b>الاختبارات</b><b>الاشتراك</b></div>
+            </div>
+            <div className="landing-fallback-node landing-node-students"><Users size={17} /><span>الطلاب</span></div>
+            <div className="landing-fallback-node landing-node-exams"><BarChart3 size={17} /><span>الاختبارات</span></div>
+            <div className="landing-fallback-node landing-node-status"><CheckCircle2 size={17} /><span>جاهز للقرار</span></div>
+          </div>
+          <img
+            src={ecosystemImage}
+            alt="تصور بصري لمنصة مركز رياضيات تجمع الحضور والاختبارات والمجموعات والمدفوعات"
+            onError={event => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+          <figcaption>تصور واجهة توضيحي للمنصة، وليس لقطة بيانات حقيقية.</figcaption>
+        </figure>
+      </section>
+
+      <section className="landing-packages landing-scroll-section" id="packages">
         <div className="landing-section-heading">
           <span className="landing-kicker">اختر ما يناسب مرحلتك</span>
           <h2>باقات بسيطة. قيمة حقيقية.</h2>
@@ -309,9 +432,21 @@ export default function PublicLandingPage() {
       </section>
 
       <footer className="landing-footer">
-        <b>الامتياز في الرياضيات</b>
+        <b>زويل التعليمية</b>
         <span>نظام مركزك التعليمي، بوضوح وهدوء.</span>
       </footer>
+
+      <a
+        className="landing-whatsapp"
+        href={whatsAppConnectUrl}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="افتح واتساب لبدء محادثة عن منصة زويل التعليمية"
+        title="تواصل عبر واتساب"
+      >
+        <MessageCircle size={22} />
+        <span>واتساب</span>
+      </a>
 
       {selected && (
         <div
@@ -404,6 +539,26 @@ export default function PublicLandingPage() {
               <ArrowLeft size={17} />
             </button>
           </form>
+        </div>
+      )}
+
+      {mockResult && (
+        <div className="landing-dialog-backdrop" role="presentation" onMouseDown={() => setMockResult(null)}>
+          <section className="landing-dialog landing-mock-result" onMouseDown={event => event.stopPropagation()} aria-labelledby="mock-onboarding-title">
+            <button className="landing-close" type="button" onClick={() => setMockResult(null)}>
+              <X size={18} />
+            </button>
+            <span className="landing-kicker"><FlaskConical size={15} /> تجربة Manus مكتملة</span>
+            <h2 id="mock-onboarding-title">تم تجهيز مركزك التجريبي</h2>
+            <p>{mockResult.message}</p>
+            <dl className="landing-mock-status">
+              <div><dt>المركز</dt><dd>{mockResult.subscription.tenant?.name}</dd></div>
+              <div><dt>معرّف المساحة</dt><dd>{mockResult.subscription.tenant?.database_schema}</dd></div>
+              <div><dt>حالة التجهيز</dt><dd>{mockResult.subscription.tenant?.schema_status === "ready" ? "جاهز للتجربة" : "قيد التجهيز"}</dd></div>
+              <div><dt>النطاق</dt><dd>{mockResult.subscription.tenant?.login_domain ?? "ينتظر إعداد DNS للإنتاج"}</dd></div>
+            </dl>
+            <button className="landing-primary" type="button" onClick={() => setMockResult(null)}>فهمت، أغلِق التجربة <CheckCircle2 size={17} /></button>
+          </section>
         </div>
       )}
     </main>

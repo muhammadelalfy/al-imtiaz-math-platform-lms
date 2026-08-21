@@ -242,11 +242,56 @@
 - [x] Update the Arabic SRS for every delivered subscription-platform feature and maintain traceability to its tests and CI-equivalent validation.
 - [x] Make the standalone Next.js production-build command explicit about `NODE_ENV=production` so local validation matches CI and static prerendering remains stable.
 - [x] Run the standalone Playwright smoke test against the built production server instead of Turbopack development mode to make browser validation reproducible.
-- [ ] Audit the current Laravel connection, tenant schema, domain lifecycle, Sass entry points, and autoscale deployment limitations for PostgreSQL tenant isolation.
-- [ ] Define and document a safe PostgreSQL control-database and per-tenant schema strategy, including credentials, ownership, migrations, rollback, and domain activation invariants.
-- [ ] Configure PostgreSQL connectivity through managed secrets and implement transaction-safe subscribed-teacher domain and tenant-schema provisioning.
-- [ ] Apply the tenant schema migration contract to tenant-scoped LMS persistence and keep active subscription/domain guards enforced.
-- [ ] Maintain subscription tenant presentation styles through Sass entry points without regressing the Arabic RTL interface.
-- [ ] Add factories, seed paths, feature tests, SRS traceability, and full Laravel/React/Next.js validation for PostgreSQL tenant onboarding.
+- [x] Audit the current Laravel connection, tenant schema, domain lifecycle, Sass entry points, and autoscale deployment limitations for PostgreSQL tenant isolation.
+- [x] Define and document a safe PostgreSQL control-database and per-tenant schema strategy, including credentials, ownership, migrations, rollback, and domain activation invariants.
+- [x] Configure PostgreSQL connectivity through managed secrets and implement transaction-safe subscribed-teacher domain and tenant-schema provisioning. The production connection is configuration-gated and intentionally deferred while Manus shared development mode is active.
+- [x] Apply the tenant schema migration contract to tenant-scoped LMS persistence and keep active subscription/domain guards enforced.
+- [x] Maintain subscription tenant presentation styles through Sass entry points without regressing the Arabic RTL interface.
+- [x] Add factories, seed paths, feature tests, SRS traceability, and full Laravel/React/Next.js validation for PostgreSQL tenant onboarding.
 - [x] Push the latest subscription-platform checkpoint and open or update a GitHub pull request containing that work. Published as PR #10; CI is running.
-- [ ] Diagnose, repair, push, and confirm completion of any blocked or failing CI checks on subscription-platform PR #10.
+- [x] Diagnose, repair, push, and confirm completion of any blocked or failing CI checks on subscription-platform PR #10. All required checks passed after the production-backed browser-test repair.
+- [x] Keep tenant onboarding operational on the current Manus-managed development database, while deferring live PostgreSQL credentials and production domain activation until deployment.
+- [x] Add a clearly marked development-only mock tenant registration flow on the Arabic landing page that exercises tenant onboarding, shared-development provisioning, and pending-domain feedback.
+- [x] Add mock onboarding API/UI tests, Arabic SRS traceability, visual verification, and full quality validation without exposing this workflow as a production activation path.
+- [x] Generate a bespoke Arabic RTL mathematics-centre system visual for the subscription landing hero and upload it to managed project storage.
+- [x] Integrate and visually verify the responsive landing hero asset without regressing the existing fallback dashboard visual or Sass build.
+- [x] Redesign the Arabic subscription landing with a more distinctive editorial visual system, richer GSAP motion, and reduced-motion-safe interactions.
+- [x] Add clearly labelled demonstration client-growth counters that do not imply real customer, review, rating, or testimonial data.
+- [x] Generate and integrate complementary managed visuals across the landing sections without weakening image fallbacks or Sass responsiveness.
+- [x] Add frontend tests, visual verification, and full quality validation for the creative landing refresh.
+- [x] Add reduced-motion-safe GSAP ScrollTrigger entrance and parallax choreography to the Arabic subscription landing sections.
+- [x] Add an accessible, clearly labelled WhatsApp connection action that uses a configuration-gated destination and never exposes provider credentials.
+- [x] Add regression coverage, desktop/mobile visual validation, and full frontend quality checks for the ScrollTrigger and WhatsApp landing update.
+- [x] Remove all movement from mock dashboard visuals, demonstration counters, and illustrative platform artwork while retaining only restrained non-mock section reveals.
+- [x] Update landing regression coverage and verify the static mock presentation at desktop and mobile sizes.
+- [x] Add a visible Al-Imtiaz managed logo to the global request loading overlay with a non-image fallback treatment.
+- [x] Add regression coverage and desktop/mobile validation for the branded loading overlay.
+- [x] Audit the existing academic-level CRUD model and its level, grade, group, and student relationships.
+- [x] Extend the academic-level CRUD factories and development seeder with 500 realistic Arabic records and safe repeatable counts.
+- [x] Add CRUD, authorization, validation, relationship, and repeatable-seeding regression coverage for the expanded level data.
+- [x] Update the Arabic SRS and validate the full quality gate for the academic-level data expansion.
+- [x] Scale the academic-level development seeder from 500 to 5,000 deterministic Arabic learner records and verify repeatable bulk performance.
+- [x] Create an original scalable brand logo for the mathematics platform and retain it as a managed visual asset.
+- [x] Recommend a concise Arabic-first system name that fits the platform’s learning and SaaS positioning.
+- [x] Define an Arabic-first cross-subject brand name for the school and teacher platform.
+- [x] Create a scalable managed logo asset that represents multiple academic subjects rather than mathematics alone.
+- [x] Repair the inaccessible generated Madar logo link and provide a verified working managed asset URL.
+- [x] Replace the global loading overlay logo with the verified Madar managed asset and retain its fallback behavior.
+- [x] Rename the visible product identity, application title, and brand copy from Al-Imtiaz to Madar without changing internal tenant records or historical data.
+- [x] Add regression coverage and verify desktop/mobile presentation for the Madar-branded loading overlay and title.
+- [x] Replace the in-progress Madar product identity with the confirmed Zewal / زويل name across visible platform surfaces and title configuration.
+- [x] Keep the loading mark operational with a Zewal-compatible branded fallback while the managed-logo delivery route is repaired.
+- [x] Add a teacher-owned academy display-name setting with validation, authorization, stable API output, seed support, and default value الامتياز for the current teacher.
+- [x] Render the teacher academy name in the settings surface and global loading overlay while retaining زويل as the shared platform brand.
+- [x] Add backend/frontend regression coverage, Arabic SRS traceability, and full quality validation for teacher academy identity.
+- [x] Audit dashboard card layouts against the attached isolated dark-card analytics reference and identify reusable style boundaries.
+- [x] Introduce a reusable isolated-card visual system with clear spacing, hierarchy, borders, shadows, and interaction states across dashboard surfaces.
+- [x] Validate the updated dashboard cards on desktop and mobile, add regression coverage, and complete the release quality gate.
+- [x] Audit dashboard card loading flow, current card inventory, and teacher-owned settings/persistence conventions.
+- [x] Add a teacher-owned persisted dashboard card-order preference with validation, authorization, seed support, and API coverage.
+- [x] Add accessible teacher drag-and-drop dashboard-card reordering with save feedback and a reset-to-default action.
+- [x] Add polished skeleton loading states inside isolated dashboard cards and verify the loading-to-content transition.
+- [x] Add backend/frontend regression coverage, Arabic SRS traceability, responsive validation, and full quality checks for dashboard personalization.
+- [x] Verify the dashboard personalization working tree and release checklist before pull-request creation.
+- [x] Save a release checkpoint and prepare the dashboard personalization feature branch for review.
+- [x] Open a GitHub pull request with a concise implementation and validation summary.

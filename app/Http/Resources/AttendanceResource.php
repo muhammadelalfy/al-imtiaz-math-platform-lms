@@ -13,7 +13,7 @@ class AttendanceResource extends JsonResource
         return [
             'id' => $this->id,
             'student_id' => $this->student_id,
-            'attendance_date' => $this->attendance_date,
+            'attendance_date' => $this->resource->getAttribute('attendance_date'),
             'date_at' => $this->date_at,
             'status' => $this->status,
             'note' => $this->note,

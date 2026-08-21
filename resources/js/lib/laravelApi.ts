@@ -8,6 +8,10 @@ import {
   type OfflineScope,
 } from "./offlineStore";
 import { trackRequestActivity } from "./requestActivity";
+import {
+  clearTeacherAcademyName,
+  rememberTeacherAcademyName,
+} from "./appBrand";
 
 export type Role = "admin" | "teacher" | "parent" | "student";
 
@@ -21,7 +25,14 @@ export type ApiUser = {
   can_manage_groups?: boolean;
   can_manage_notification_channels?: boolean;
   is_super_admin?: boolean;
+  academy_name?: string | null;
   student_account?: { student?: Student } | null;
+};
+export type TeacherAcademyIdentity = {
+  academy_name: string;
+};
+export type TeacherDashboardLayout = {
+  card_order: string[];
 };
 export type SubscriptionPackage = {
   id: number;
@@ -44,7 +55,11 @@ export type Tenant = {
   name: string;
   slug: string;
   login_domain?: string | null;
-  domain_status: "pending" | "active";
+  domain_status: "pending" | "pending_dns" | "active";
+  database_schema?: string | null;
+  schema_status?: "pending" | "provisioning" | "ready" | "failed";
+  schema_version?: string | null;
+  schema_provisioned_at?: string | null;
 };
 export type TenantSubscription = {
   id: number;
@@ -58,6 +73,11 @@ export type TenantSubscription = {
   days_remaining?: number | null;
   tenant?: Tenant;
   package?: SubscriptionPackage;
+};
+export type DevelopmentMockRegistration = {
+  message: string;
+  development_only: true;
+  subscription: TenantSubscription;
 };
 export type TeacherSubscriptionStatus = {
   subscription: TenantSubscription | null;
@@ -369,6 +389,7 @@ function saveToken(token: string): void {
 
 function rememberOfflineScope(user: ApiUser): void {
   activeOfflineScope = { userId: user.id, role: user.role };
+  rememberTeacherAcademyName(user);
 }
 
 export function offlineScopeForUser(user: ApiUser): OfflineScope {
@@ -573,6 +594,29 @@ export const laravelApi = {
     rememberOfflineScope(user);
     return user;
   },
+  async teacherAcademyIdentity() {
+    return request<TeacherAcademyIdentity>("/teacher/academy-identity");
+  },
+  async updateTeacherAcademyIdentity(academy_name: string) {
+    const response = await request<TeacherAcademyIdentity>(
+      "/teacher/academy-identity",
+      { method: "PUT", body: JSON.stringify({ academy_name }) }
+    );
+    rememberTeacherAcademyName({ role: "teacher", ...response });
+    return response;
+  },
+  async teacherDashboardLayout() {
+    return request<TeacherDashboardLayout>("/teacher/dashboard-layout");
+  },
+  async updateTeacherDashboardLayout(card_order: string[]) {
+    return request<TeacherDashboardLayout>("/teacher/dashboard-layout", {
+      method: "PUT",
+      body: JSON.stringify({ card_order }),
+    });
+  },
+  async resetTeacherDashboardLayout() {
+    return request<void>("/teacher/dashboard-layout", { method: "DELETE" });
+  },
   async authorizationCatalog() {
     return request<AuthorizationCatalog>("/staff/authorization/catalog");
   },
@@ -643,6 +687,7 @@ export const laravelApi = {
     await request("/auth/logout", { method: "POST" });
     if (activeOfflineScope) await clearOfflineScope(activeOfflineScope);
     activeOfflineScope = null;
+    clearTeacherAcademyName();
     window.localStorage.removeItem(TOKEN_KEY);
   },
   async students(
@@ -1096,6 +1141,11 @@ export const laravelApi = {
     }>("/public/teacher-register", {
       method: "POST",
       body: JSON.stringify(payload),
+    });
+  },
+  async createDevelopmentMockTenant() {
+    return request<DevelopmentMockRegistration>("/public/mock-tenant-registration", {
+      method: "POST",
     });
   },
   async teacherSubscription() {

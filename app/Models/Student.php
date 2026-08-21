@@ -19,11 +19,12 @@ class Student extends Model
 
     public function ensureQrToken(): string
     {
-        if (! $this->qr_token) {
+        $token = $this->getAttribute('qr_token');
+        if (! is_string($token) || $token === '') {
             $this->forceFill(['qr_token' => Str::random(64)])->save();
         }
 
-        return $this->qr_token;
+        return (string) $this->getAttribute('qr_token');
     }
 
     public function account(): HasOne

@@ -94,7 +94,7 @@ export default function ExamManagementPanel({ onRefresh }: Props) {
   const [departmentId, setDepartmentId] = useState("");
   const [grade, setGrade] = useState("");
   const [duration, setDuration] = useState("60");
-  const [watermark, setWatermark] = useState("الامتياز في الرياضيات");
+  const [watermark, setWatermark] = useState("زويل التعليمية");
   const [instructions, setInstructions] = useState("");
   const [printHeader, setPrintHeader] = useState("");
   const [printFooter, setPrintFooter] = useState("");
@@ -144,7 +144,7 @@ export default function ExamManagementPanel({ onRefresh }: Props) {
     setDepartmentId("");
     setGrade("");
     setDuration("60");
-    setWatermark("الامتياز في الرياضيات");
+    setWatermark("زويل التعليمية");
     setInstructions("");
     setPrintHeader("");
     setPrintFooter("");

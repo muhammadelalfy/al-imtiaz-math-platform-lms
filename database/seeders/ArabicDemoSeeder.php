@@ -22,12 +22,16 @@ use App\Models\Student;
 use App\Models\StudentAccount;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
+use App\Models\TeacherDashboardLayout;
 use App\Models\TenantSubscription;
 use App\Models\User;
 use App\Models\Worksheet;
 use App\Models\WorksheetAssignment;
+use App\Services\PostgresTenantSchemaProvisioner;
+use Database\Factories\StudentFactory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class ArabicDemoSeeder extends Seeder
@@ -38,6 +42,8 @@ class ArabicDemoSeeder extends Seeder
     private const TEACHER_PASSWORD = 'TeacherLocal!2026';
     private const PARENT_PASSWORD = 'ParentLocal!2026';
     private const STUDENT_PASSWORD = 'StudentLocal!2026';
+    private const LEVEL_STUDENT_COUNT = 5000;
+    private const LEVEL_STUDENT_UPSERT_CHUNK_SIZE = 500;
 
     public function run(): void
     {
@@ -62,7 +68,7 @@ class ArabicDemoSeeder extends Seeder
             ['title' => 'ورقة الهندسة والمثلثات', 'grade' => 'الثالث الإعدادي'],
         ])->map(fn (array $attributes) => $this->worksheet($attributes, $teacher))->all();
 
-        foreach ($students as $index => $student) {
+        foreach (array_slice($students, 0, 6) as $index => $student) {
             $parent = $this->user("parent{$index}@local.test", "ولي أمر {$student->name}", 'parent', self::PARENT_PASSWORD);
             $learner = $this->user("student{$index}@local.test", $student->name, 'student', self::STUDENT_PASSWORD);
             $parent->forceFill(['tenant_id' => $tenant->id])->save();
@@ -108,6 +114,7 @@ class ArabicDemoSeeder extends Seeder
         );
 
         $this->command?->info('Arabic LMS demo data is ready. QR codes were generated for all demo students.');
+        $this->command?->info('Level CRUD demo set: '.self::LEVEL_STUDENT_COUNT.' Arabic students across seven grades and three groups per grade.');
         $this->command?->info('Admin: '.self::ADMIN_EMAIL.' / '.self::ADMIN_PASSWORD);
         $this->command?->info('Teacher: '.self::TEACHER_EMAIL.' / '.self::TEACHER_PASSWORD);
         $this->command?->info('Parent password: '.self::PARENT_PASSWORD.' · Student password: '.self::STUDENT_PASSWORD);
@@ -292,7 +299,7 @@ class ArabicDemoSeeder extends Seeder
 
     private function seedStudents(): array
     {
-        $students = [
+        $coreStudents = [
             ['name' => 'أحمد محمد علي', 'phone' => '01010000001', 'parent_phone' => '01110000001', 'grade' => 'الأول الإعدادي', 'group' => 'المجموعة الأولى'],
             ['name' => 'سارة محمود حسن', 'phone' => '01010000002', 'parent_phone' => '01110000002', 'grade' => 'الأول الإعدادي', 'group' => 'المجموعة الأولى'],
             ['name' => 'يوسف خالد إبراهيم', 'phone' => '01010000003', 'parent_phone' => '01110000003', 'grade' => 'الثاني الإعدادي', 'group' => 'المجموعة الثانية'],
@@ -301,22 +308,80 @@ class ArabicDemoSeeder extends Seeder
             ['name' => 'نورهان محمد سالم', 'phone' => '01010000006', 'parent_phone' => '01110000006', 'grade' => 'الثالث الإعدادي', 'group' => 'المجموعة الثالثة'],
         ];
 
-        return collect($students)->map(function (array $attributes): Student {
+        $baseStudents = collect($coreStudents)->map(function (array $attributes): Student {
             $student = Student::where('phone', $attributes['phone'])->first() ?? Student::factory()->create($attributes);
             $student->ensureQrToken();
             return $student;
-        })->all();
+        });
+
+        $levelStudents = $this->seedLevelStudents(self::LEVEL_STUDENT_COUNT - $baseStudents->count());
+
+        return [...$baseStudents->all(), ...$levelStudents->all()];
+    }
+
+    /** @return \Illuminate\Support\Collection<int, Student> */
+    private function seedLevelStudents(int $count): \Illuminate\Support\Collection
+    {
+        $now = now();
+
+        collect(range(0, $count - 1))
+            ->chunk(self::LEVEL_STUDENT_UPSERT_CHUNK_SIZE)
+            ->each(function (\Illuminate\Support\Collection $sequences) use ($now): void {
+                $phones = $sequences
+                    ->map(fn (int $sequence): string => StudentFactory::levelSeedPhone($sequence))
+                    ->all();
+                $existingQrTokens = Student::query()
+                    ->whereIn('phone', $phones)
+                    ->pluck('qr_token', 'phone');
+
+                $records = $sequences->map(function (int $sequence) use ($existingQrTokens, $now): array {
+                    $attributes = Student::factory()->levelSeed($sequence)->raw();
+                    $phone = StudentFactory::levelSeedPhone($sequence);
+
+                    return [
+                        ...$attributes,
+                        'phone' => $phone,
+                        'qr_token' => $existingQrTokens->get($phone) ?: Str::random(64),
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                })->all();
+
+                Student::query()->upsert(
+                    $records,
+                    ['phone'],
+                    ['name', 'group', 'grade', 'parent_phone', 'status', 'updated_at'],
+                );
+            });
+
+        return Student::query()
+            ->where('phone', 'like', '01098%')
+            ->orderBy('phone')
+            ->get();
     }
 
     /** @param array<int, Student> $students */
     private function seedAcademicGroups(array $students): void
     {
-        foreach (collect($students)->groupBy('grade') as $grade => $gradeStudents) {
+        foreach (collect($students)->groupBy(fn (Student $student): string => $student->grade.'|'.$student->group) as $gradeGroup => $groupStudents) {
+            [$grade, $name] = explode('|', $gradeGroup, 2);
             $group = AcademicGroup::query()->updateOrCreate(
-                ['grade' => $grade, 'name' => 'مجموعة '.$grade],
+                ['grade' => $grade, 'name' => $name],
                 ['is_active' => true],
             );
-            $group->students()->sync($gradeStudents->pluck('id')->all());
+            $group->students()->sync($groupStudents->pluck('id')->all());
+        }
+
+        foreach (['الأول الإعدادي', 'الثاني الإعدادي', 'الثالث الإعدادي'] as $grade) {
+            $legacyGroup = AcademicGroup::query()
+                ->where('grade', $grade)
+                ->where('name', 'مجموعة '.$grade)
+                ->first();
+
+            if ($legacyGroup !== null) {
+                $legacyGroup->students()->detach();
+                $legacyGroup->delete();
+            }
         }
     }
 
@@ -353,15 +418,18 @@ class ArabicDemoSeeder extends Seeder
         ]);
 
         $tenant = Tenant::updateOrCreate(['slug' => 'al-imtiaz-demo'], [
-            'name' => 'مركز الامتياز التجريبي', 'domain_status' => 'pending',
+            'name' => 'الامتياز', 'domain_status' => 'pending',
         ]);
         $teacher->forceFill(['tenant_id' => $tenant->id])->save();
+        TeacherDashboardLayout::updateOrCreate(['user_id' => $teacher->id], [
+            'card_order' => ['attendance', 'exam_performance', 'payments', 'learning_flow'],
+        ]);
         TenantSubscription::updateOrCreate(['tenant_id' => $tenant->id], [
             'subscription_package_id' => $growth->id, 'status' => 'active', 'payment_status' => 'paid',
             'starts_at' => now()->subDays(25), 'ends_at' => now()->addDays(5), 'paid_at' => now()->subDays(25),
         ]);
 
-        return $tenant;
+        return app(PostgresTenantSchemaProvisioner::class)->provision($tenant);
     }
 
     private function worksheet(array $attributes, User $teacher): Worksheet

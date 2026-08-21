@@ -12,7 +12,7 @@ import {
   laravelApi,
   type TeacherSubscriptionStatus,
 } from "@/lib/laravelApi";
-import "@/pages/subscription-platform.css";
+import "@/pages/subscription-platform.scss";
 
 export default function TeacherSubscriptionPanel() {
   const [state, setState] = useState<TeacherSubscriptionStatus | null>(null);

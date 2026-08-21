@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // The managed preview terminates TLS before forwarding requests to PHP.
         // Trust the proxy header so generated Vite asset links keep the browser-facing HTTPS scheme.
         $middleware->trustProxies(at: '*');
+        $middleware->append(\App\Http\Middleware\UseTenantPostgresSchema::class);
 
         $middleware->alias([
             'role.guard' => \App\Http\Middleware\EnsureAccessTokenMatchesRole::class,

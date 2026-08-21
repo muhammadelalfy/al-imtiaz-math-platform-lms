@@ -6,11 +6,11 @@ Each subscribed teaching centre is represented by a **central tenant record**, a
 
 The control plane remains in the `public` schema. It owns platform users, tenants, packages, subscriptions, provisioning state, and domain state. The tenant plane is created only after a subscription is both **active** and **paid**. It contains the centre-owned educational records such as students, groups, attendance, worksheets, exams, payments, and notifications.
 
-| Boundary | Storage location | Responsibility |
-| --- | --- | --- |
-| Platform control plane | `public` schema | Super administrators, tenant identity, packages, billing, domains, and provisioning audit state. |
-| Tenant data plane | `tenant_<tenant_id>` schema | Centre-owned LMS data and tenant-local migration history. |
-| Domain routing | Central tenant record | Resolves only a verified active domain to its tenant and rejects accounts from another tenant. |
+| Boundary               | Storage location            | Responsibility                                                                                   |
+| ---------------------- | --------------------------- | ------------------------------------------------------------------------------------------------ |
+| Platform control plane | `public` schema             | Super administrators, tenant identity, packages, billing, domains, and provisioning audit state. |
+| Tenant data plane      | `tenant_<tenant_id>` schema | Centre-owned LMS data and tenant-local migration history.                                        |
+| Domain routing         | Central tenant record       | Resolves only a verified active domain to its tenant and rejects accounts from another tenant.   |
 
 ## Invariants
 
@@ -22,13 +22,13 @@ The provisioning database role requires `CREATE` on the control database in orde
 
 ## Provisioning Lifecycle
 
-| Step | Trigger | Result | Failure response |
-| --- | --- | --- | --- |
-| 1. Register | Teacher selects a package | Creates central tenant, teacher, and pending subscription. | Roll back central transaction. No schema or domain is active. |
-| 2. Activate | Super administrator records an active, paid subscription | Acquires a tenant row lock, derives schema and domain, and creates a provisioning audit record. | Leaves subscription unchanged and records a safe failure reason. |
-| 3. Provision | Provisioning service uses the direct PostgreSQL connection | Creates the schema, locks down privileges, and applies tenant migrations idempotently. | Drops a newly created empty schema only when safe; otherwise marks provisioning failed for retry. |
-| 4. Verify | Domain verifier confirms the requested wildcard/domain configuration | Marks schema and domain active, then allows tenant login. | Keeps the domain pending and blocks tenant-host access. |
-| 5. Request handling | Any tenant-host request | Resolves host, validates active subscription and schema readiness, then applies the tenant `search_path` for the request only. | Rejects tenant data access with a safe unavailable response. |
+| Step                | Trigger                                                              | Result                                                                                                                         | Failure response                                                                                  |
+| ------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| 1. Register         | Teacher selects a package                                            | Creates central tenant, teacher, and pending subscription.                                                                     | Roll back central transaction. No schema or domain is active.                                     |
+| 2. Activate         | Super administrator records an active, paid subscription             | Acquires a tenant row lock, derives schema and domain, and creates a provisioning audit record.                                | Leaves subscription unchanged and records a safe failure reason.                                  |
+| 3. Provision        | Provisioning service uses the direct PostgreSQL connection           | Creates the schema, locks down privileges, and applies tenant migrations idempotently.                                         | Drops a newly created empty schema only when safe; otherwise marks provisioning failed for retry. |
+| 4. Verify           | Domain verifier confirms the requested wildcard/domain configuration | Marks schema and domain active, then allows tenant login.                                                                      | Keeps the domain pending and blocks tenant-host access.                                           |
+| 5. Request handling | Any tenant-host request                                              | Resolves host, validates active subscription and schema readiness, then applies the tenant `search_path` for the request only. | Rejects tenant data access with a safe unavailable response.                                      |
 
 Laravel’s direct PostgreSQL connection support is used for schema operations because managed transaction poolers may not support migrations or maintenance tasks; Laravel documents a separate direct connection for this purpose. [2](https://laravel.com/docs/13.x/database)
 
@@ -44,11 +44,11 @@ The existing `resources/js/styles/theme.scss` is the canonical hosted-LMS token 
 
 ## Required Runtime Configuration
 
-| Environment variable | Purpose | Required |
-| --- | --- | --- |
-| `TENANCY_DATABASE_URL` | Runtime PostgreSQL connection for control-plane and tenant reads/writes. | Yes |
-| `TENANCY_PROVISIONING_DATABASE_URL` | Direct privileged PostgreSQL connection for schema creation and migrations. | Yes |
-| `TENANT_DOMAIN_BASE` | Owned wildcard base domain used to derive tenant login domains. | Yes |
-| `TENANCY_DATABASE_SSLMODE` | PostgreSQL SSL mode, normally `require` or `verify-full` for a managed provider. | Yes |
+| Environment variable                | Purpose                                                                          | Required |
+| ----------------------------------- | -------------------------------------------------------------------------------- | -------- |
+| `TENANCY_DATABASE_URL`              | Runtime PostgreSQL connection for control-plane and tenant reads/writes.         | Yes      |
+| `TENANCY_PROVISIONING_DATABASE_URL` | Direct privileged PostgreSQL connection for schema creation and migrations.      | Yes      |
+| `TENANT_DOMAIN_BASE`                | Owned wildcard base domain used to derive tenant login domains.                  | Yes      |
+| `TENANCY_DATABASE_SSLMODE`          | PostgreSQL SSL mode, normally `require` or `verify-full` for a managed provider. | Yes      |
 
 The current environment is SQLite-only and has no PostgreSQL PDO driver, so the connection cannot be switched safely until the production image includes `pdo_pgsql` and the above values are supplied through managed secrets.

@@ -70,6 +70,38 @@ describe("laravelApi", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/students", expect.anything());
   });
 
+  it("maps teacher dashboard layout preferences to read, save, and reset endpoints", async () => {
+    const order = [
+      "payments",
+      "learning_flow",
+      "attendance",
+      "exam_performance",
+    ];
+    const fetchMock = vi.fn().mockImplementation(
+      () => new Response(JSON.stringify({ card_order: order }), { status: 200 })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(laravelApi.teacherDashboardLayout()).resolves.toEqual({
+      card_order: order,
+    });
+    await expect(laravelApi.updateTeacherDashboardLayout(order)).resolves.toEqual({
+      card_order: order,
+    });
+    await laravelApi.resetTeacherDashboardLayout();
+
+    expect(
+      fetchMock.mock.calls.map(([url, init]) => [url, init?.method])
+    ).toEqual([
+      ["/api/teacher/dashboard-layout", undefined],
+      ["/api/teacher/dashboard-layout", "PUT"],
+      ["/api/teacher/dashboard-layout", "DELETE"],
+    ]);
+    expect(fetchMock.mock.calls[1]?.[1]?.body).toBe(
+      JSON.stringify({ card_order: order })
+    );
+  });
+
   it("maps attendance and exam CRUD operations to the Laravel resources", async () => {
     const fetchMock = vi
       .fn()
@@ -465,6 +497,7 @@ describe("subscription platform API", () => {
       tenant_slug: "mona-math",
       package_id: 3,
     });
+    await laravelApi.createDevelopmentMockTenant();
     await laravelApi.teacherSubscription();
     await laravelApi.superAdminOverview();
     await laravelApi.superAdminPackages();
@@ -480,6 +513,7 @@ describe("subscription platform API", () => {
     ).toEqual([
       ["/api/public/subscription-packages", undefined],
       ["/api/public/teacher-register", "POST"],
+      ["/api/public/mock-tenant-registration", "POST"],
       ["/api/teacher/subscription", undefined],
       ["/api/super-admin/overview", undefined],
       ["/api/super-admin/packages", undefined],
