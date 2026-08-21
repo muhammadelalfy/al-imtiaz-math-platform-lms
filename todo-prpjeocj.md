@@ -293,5 +293,5 @@
 - [x] Add polished skeleton loading states inside isolated dashboard cards and verify the loading-to-content transition.
 - [x] Add backend/frontend regression coverage, Arabic SRS traceability, responsive validation, and full quality checks for dashboard personalization.
 - [x] Verify the dashboard personalization working tree and release checklist before pull-request creation.
-- [ ] Save a release checkpoint and prepare the dashboard personalization feature branch for review.
+- [x] Save a release checkpoint and prepare the dashboard personalization feature branch for review.
 - [ ] Open a GitHub pull request with a concise implementation and validation summary.
