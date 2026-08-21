@@ -262,3 +262,5 @@
 - [x] Add reduced-motion-safe GSAP ScrollTrigger entrance and parallax choreography to the Arabic subscription landing sections.
 - [x] Add an accessible, clearly labelled WhatsApp connection action that uses a configuration-gated destination and never exposes provider credentials.
 - [x] Add regression coverage, desktop/mobile visual validation, and full frontend quality checks for the ScrollTrigger and WhatsApp landing update.
+- [x] Remove all movement from mock dashboard visuals, demonstration counters, and illustrative platform artwork while retaining only restrained non-mock section reveals.
+- [x] Update landing regression coverage and verify the static mock presentation at desktop and mobile sizes.

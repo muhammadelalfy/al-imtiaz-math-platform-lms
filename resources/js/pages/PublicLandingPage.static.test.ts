@@ -33,4 +33,15 @@ describe("creative subscription landing", () => {
     expect(landingSource).toContain("افتح واتساب لبدء محادثة");
     expect(landingStyles).toContain(".landing-whatsapp");
   });
+
+  it("keeps mock counters and illustrative artwork static", () => {
+    expect(landingSource).toContain('<strong data-demo-count="3">٣</strong>');
+    expect(landingSource).toContain('<strong data-demo-count="240">٢٤٠</strong>');
+    expect(landingSource).toContain('<strong data-demo-count="18">١٨</strong>');
+    expect(landingSource).not.toContain('gsap.to(".landing-visual"');
+    expect(landingSource).not.toContain('gsap.to(".landing-ecosystem-art"');
+    expect(landingSource).not.toContain('gsap.to(".landing-demo-counter-grid"');
+    expect(landingSource).toContain('className="landing-demo-metrics"');
+    expect(landingSource).toContain('className="landing-ecosystem"');
+  });
 });

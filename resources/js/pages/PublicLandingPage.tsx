@@ -75,44 +75,6 @@ export default function PublicLandingPage() {
         repeat: -1,
         ease: "none",
       });
-      gsap.to(".landing-visual", {
-        y: -9,
-        duration: 3.8,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-      });
-      gsap.to(".landing-float-card", {
-        y: -7,
-        duration: 2.6,
-        repeat: -1,
-        yoyo: true,
-        stagger: 0.3,
-        ease: "sine.inOut",
-      });
-      gsap.to(".landing-ecosystem-art", {
-        y: -8,
-        rotate: -1.4,
-        duration: 4.5,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-      });
-
-      gsap.utils.toArray<HTMLElement>("[data-demo-count]").forEach(node => {
-        const target = Number(node.dataset.demoCount ?? 0);
-        const count = { value: 0 };
-        gsap.to(count, {
-          value: target,
-          duration: 1.7,
-          delay: 0.35,
-          ease: "power2.out",
-          onUpdate: () => {
-            node.textContent = Math.round(count.value).toLocaleString("ar-EG");
-          },
-        });
-      });
-
       gsap.utils.toArray<HTMLElement>(".landing-scroll-section").forEach(section => {
         gsap.from(section, {
           opacity: 0,
@@ -127,27 +89,6 @@ export default function PublicLandingPage() {
         });
       });
 
-      gsap.to(".landing-demo-counter-grid", {
-        y: -12,
-        ease: "none",
-        scrollTrigger: {
-          trigger: ".landing-demo-metrics",
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 0.55,
-        },
-      });
-
-      gsap.to(".landing-ecosystem-grid", {
-        backgroundPosition: "56px 56px",
-        ease: "none",
-        scrollTrigger: {
-          trigger: ".landing-ecosystem",
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 0.7,
-        },
-      });
     }, root);
     return () => context.revert();
   }, []);
@@ -290,7 +231,7 @@ export default function PublicLandingPage() {
             </span>
           </div>
         </div>
-        <div className="landing-visual landing-reveal">
+        <div className="landing-visual">
           <div className="landing-visual-glow" />
           <div
             className="landing-dashboard-visual"
@@ -374,7 +315,7 @@ export default function PublicLandingPage() {
         </div>
       </section>
 
-      <section className="landing-demo-metrics landing-scroll-section" aria-labelledby="demo-metrics-title">
+      <section className="landing-demo-metrics" aria-labelledby="demo-metrics-title">
         <div className="landing-demo-heading">
           <span className="landing-kicker"><FlaskConical size={15} /> عرض توضيحي للحركة داخل المنصة</span>
           <h2 id="demo-metrics-title">صورة حية لنمو المركز، وليست بيانات عملاء حقيقية.</h2>
@@ -383,26 +324,26 @@ export default function PublicLandingPage() {
         <div className="landing-demo-counter-grid">
           <article>
             <span className="landing-counter-icon"><Users size={21} /></span>
-            <strong data-demo-count="3">٠</strong>
+            <strong data-demo-count="3">٣</strong>
             <b>مراكز تجريبية</b>
             <small>مثال لعرض تعدد المساحات</small>
           </article>
           <article>
             <span className="landing-counter-icon"><BarChart3 size={21} /></span>
-            <strong data-demo-count="240">٠</strong>
+            <strong data-demo-count="240">٢٤٠</strong>
             <b>ملف طالب نموذجي</b>
             <small>مثال لمتابعة السعة التعليمية</small>
           </article>
           <article>
             <span className="landing-counter-icon"><CheckCircle2 size={21} /></span>
-            <strong data-demo-count="18">٠</strong>
+            <strong data-demo-count="18">١٨</strong>
             <b>جلسة حضور نموذجية</b>
             <small>مثال لتدفق الحضور اليومي</small>
           </article>
         </div>
       </section>
 
-      <section className="landing-ecosystem landing-scroll-section" aria-labelledby="ecosystem-title">
+      <section className="landing-ecosystem" aria-labelledby="ecosystem-title">
         <div className="landing-ecosystem-copy">
           <span className="landing-kicker"><Sparkles size={15} /> لقطة من النظام بالكامل</span>
           <h2 id="ecosystem-title">من الحصة إلى القرار، كل نقطة مترابطة.</h2>
