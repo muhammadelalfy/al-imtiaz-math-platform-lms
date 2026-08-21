@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\WorksheetController;
 use App\Http\Controllers\Api\PublicSubscriptionController;
 use App\Http\Controllers\Api\TeacherSubscriptionController;
 use App\Http\Controllers\Api\TeacherAcademyIdentityController;
+use App\Http\Controllers\Api\TeacherDashboardLayoutController;
 use App\Http\Controllers\Api\SuperAdminSubscriptionController;
 use Illuminate\Support\Facades\Route;
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -44,6 +45,13 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\DispatchTeacherSlackRequ
         ->group(function (): void {
             Route::get('/', [TeacherAcademyIdentityController::class, 'show']);
             Route::put('/', [TeacherAcademyIdentityController::class, 'update']);
+        });
+    Route::middleware('role.guard:teacher')
+        ->prefix('teacher/dashboard-layout')
+        ->group(function (): void {
+            Route::get('/', [TeacherDashboardLayoutController::class, 'show']);
+            Route::put('/', [TeacherDashboardLayoutController::class, 'update']);
+            Route::delete('/', [TeacherDashboardLayoutController::class, 'destroy']);
         });
     Route::prefix('super-admin')->group(function (): void {
         Route::get('/overview', [SuperAdminSubscriptionController::class, 'overview']);

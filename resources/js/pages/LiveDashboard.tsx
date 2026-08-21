@@ -2,6 +2,22 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS as DndCss } from "@dnd-kit/utilities";
+import {
   Activity,
   BarChart3,
   Bell,
@@ -12,6 +28,7 @@ import {
   CreditCard,
   FileText,
   GraduationCap,
+  GripVertical,
   LogOut,
   Moon,
   Package,
@@ -86,6 +103,35 @@ type Tab =
   | "subscription"
   | "platform"
   | "settings";
+const OVERVIEW_CARD_IDS = [
+  "attendance",
+  "exam_performance",
+  "payments",
+  "learning_flow",
+] as const;
+type OverviewCardId = (typeof OVERVIEW_CARD_IDS)[number];
+const OVERVIEW_CARD_LABELS: Record<OverviewCardId, string> = {
+  attendance: "اتجاه الحضور",
+  exam_performance: "أداء الامتحانات",
+  payments: "حالة المدفوعات",
+  learning_flow: "من الحضور إلى الإتقان",
+};
+
+function isOverviewCardId(value: string): value is OverviewCardId {
+  return OVERVIEW_CARD_IDS.includes(value as OverviewCardId);
+}
+
+function normalizeOverviewCardOrder(order?: string[]): OverviewCardId[] {
+  if (
+    !order ||
+    order.length !== OVERVIEW_CARD_IDS.length ||
+    new Set(order).size !== OVERVIEW_CARD_IDS.length ||
+    !order.every(isOverviewCardId)
+  ) {
+    return [...OVERVIEW_CARD_IDS];
+  }
+  return order;
+}
 type Portal = "admin" | "teacher" | "parent" | "student";
 const portalLabels: Record<Portal, string> = {
   admin: "إدارة المركز",
@@ -618,19 +664,19 @@ function AuthenticatedDashboard({
             </button>
           </div>
         </header>
-        {busy ? (
-          <div className="live-loading">
-            <RefreshCw className="spin" /> جارٍ تحميل البيانات...
-          </div>
-        ) : restricted ? (
-          <LearnerDashboard
-            user={user}
-            student={currentStudent}
-            assignments={ownAssignments}
-            attendance={attendance}
-            exams={exams}
-            payments={payments}
-          />
+        {restricted ? (
+          busy ? (
+            <DashboardCardSkeletonGrid />
+          ) : (
+            <LearnerDashboard
+              user={user}
+              student={currentStudent}
+              assignments={ownAssignments}
+              attendance={attendance}
+              exams={exams}
+              payments={payments}
+            />
+          )
         ) : (
           <AdminView
             tab={tab}
@@ -645,6 +691,8 @@ function AuthenticatedDashboard({
             canManageGroups={Boolean(user.can_manage_groups)}
             canSendNotifications={Boolean(user.can_send_notifications)}
             isSuperAdmin={Boolean(user.is_super_admin)}
+            isTeacher={user.role === "teacher"}
+            loading={busy}
             onRefresh={load}
           />
         )}
@@ -809,6 +857,8 @@ function AdminView({
   canManageGroups,
   canSendNotifications,
   isSuperAdmin,
+  isTeacher,
+  loading,
   onRefresh,
 }: {
   tab: Tab;
@@ -823,8 +873,11 @@ function AdminView({
   canManageGroups: boolean;
   canSendNotifications: boolean;
   isSuperAdmin: boolean;
+  isTeacher: boolean;
+  loading: boolean;
   onRefresh: () => Promise<void>;
 }) {
+  if (loading && tab !== "overview") return <DashboardCardSkeletonGrid />;
   if (tab === "classes") return <ClassNavigator students={students} />;
   if (tab === "students")
     return (
@@ -904,6 +957,8 @@ function AdminView({
       exams={exams}
       payments={payments}
       worksheets={worksheets}
+      loading={loading}
+      canReorder={isTeacher}
     />
   );
 }
@@ -2042,12 +2097,16 @@ function OverviewDashboard({
   exams,
   payments,
   worksheets,
+  loading,
+  canReorder,
 }: {
   students: Student[];
   attendance: Attendance[];
   exams: ExamResult[];
   payments: Payment[];
   worksheets: Worksheet[];
+  loading: boolean;
+  canReorder: boolean;
 }) {
   const present = attendance.filter(item => item.status === "present").length;
   const paid = payments.filter(item => item.status === "paid").length;
@@ -2091,6 +2150,208 @@ function OverviewDashboard({
       (Number(item.score) / Math.max(Number(item.max_score), 1)) * 100
     ),
   }));
+  const [cardOrder, setCardOrder] = useState<OverviewCardId[]>([
+    ...OVERVIEW_CARD_IDS,
+  ]);
+  const [layoutReady, setLayoutReady] = useState(!canReorder);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  useEffect(() => {
+    if (!canReorder) return;
+    let cancelled = false;
+    setLayoutReady(false);
+    void laravelApi
+      .teacherDashboardLayout()
+      .then(layout => {
+        if (!cancelled) setCardOrder(normalizeOverviewCardOrder(layout.card_order));
+      })
+      .catch(caught => {
+        if (!cancelled)
+          toast(
+            caught instanceof ApiError
+              ? caught.message
+              : "تعذر تحميل ترتيب البطاقات المحفوظ"
+          );
+      })
+      .finally(() => {
+        if (!cancelled) setLayoutReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [canReorder]);
+
+  const saveOrder = async (nextOrder: OverviewCardId[]) => {
+    const previousOrder = cardOrder;
+    setCardOrder(nextOrder);
+    setSavingOrder(true);
+    try {
+      const saved = await laravelApi.updateTeacherDashboardLayout(nextOrder);
+      setCardOrder(normalizeOverviewCardOrder(saved.card_order));
+    } catch (caught) {
+      setCardOrder(previousOrder);
+      toast(
+        caught instanceof ApiError
+          ? caught.message
+          : "تعذر حفظ ترتيب البطاقات، تمت استعادة الترتيب السابق"
+      );
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    if (!canReorder || savingOrder || !event.over || event.active.id === event.over.id)
+      return;
+    const oldIndex = cardOrder.indexOf(event.active.id as OverviewCardId);
+    const newIndex = cardOrder.indexOf(event.over.id as OverviewCardId);
+    if (oldIndex < 0 || newIndex < 0) return;
+    void saveOrder(arrayMove(cardOrder, oldIndex, newIndex));
+  };
+
+  const resetOrder = async () => {
+    if (savingOrder) return;
+    setSavingOrder(true);
+    try {
+      await laravelApi.resetTeacherDashboardLayout();
+      setCardOrder([...OVERVIEW_CARD_IDS]);
+      toast("تمت استعادة ترتيب البطاقات الافتراضي.");
+    } catch (caught) {
+      toast(
+        caught instanceof ApiError
+          ? caught.message
+          : "تعذر استعادة الترتيب الافتراضي"
+      );
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  const overviewCards: Record<OverviewCardId, React.ReactNode> = {
+    attendance: (
+      <div className="card overview-card chart-card">
+        <div className="card-head">
+          <div>
+            <span className="eyebrow">آخر السجلات</span>
+            <h3>اتجاه الحضور</h3>
+          </div>
+          <BarChart3 size={20} />
+        </div>
+        <div className="bar-chart" aria-label="رسم بياني للحضور">
+          <div className="bar-chart__axis">
+            <span>الطلاب الحاضرون</span>
+            <span>{Math.max(...attendanceDays.map(item => item.value), 0)}</span>
+          </div>
+          <div className="bar-chart__bars">
+            {attendanceDays.length ? (
+              attendanceDays.map(item => (
+                <div className="bar-chart__item" key={item.label}>
+                  <div className="bar-chart__track">
+                    <span
+                      style={{
+                        height: `${Math.max((item.value / maxAttendance) * 100, 8)}%`,
+                      }}
+                      title={`${item.value} حاضر`}
+                    />
+                  </div>
+                  <small>{item.label}</small>
+                </div>
+              ))
+            ) : (
+              <p className="muted">لا توجد سجلات حضور بعد.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    ),
+    exam_performance: (
+      <div className="card overview-card">
+        <div className="card-head">
+          <div>
+            <span className="eyebrow">التحصيل</span>
+            <h3>أداء الامتحانات</h3>
+          </div>
+          <Target size={20} />
+        </div>
+        <div className="exam-bars">
+          {topExams.length ? (
+            topExams.map(item => (
+              <div className="exam-bar" key={`${item.title}-${item.score}`}>
+                <div>
+                  <span>{item.title}</span>
+                  <b>{item.score}%</b>
+                </div>
+                <div className="exam-bar__track">
+                  <span style={{ width: `${item.score}%` }} />
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="muted">لا توجد نتائج امتحانات بعد.</p>
+          )}
+        </div>
+      </div>
+    ),
+    payments: (
+      <div className="card overview-card payment-overview">
+        <div className="card-head">
+          <div>
+            <span className="eyebrow">الاشتراكات</span>
+            <h3>حالة المدفوعات</h3>
+          </div>
+          <PieChart size={20} />
+        </div>
+        <div
+          className="payment-ring"
+          style={{
+            background: `conic-gradient(#16846d 0 ${paidRatio}%, #b87945 ${paidRatio}% 100%)`,
+          }}
+        >
+          <div>
+            <strong>{paidRatio}%</strong>
+            <small>مكتمل</small>
+          </div>
+        </div>
+        <div className="payment-legend">
+          <span>
+            <i className="legend-dot legend-dot--green" />
+            مدفوع {paid}
+          </span>
+          <span>
+            <i className="legend-dot legend-dot--copper" />
+            معلّق {payments.length - paid}
+          </span>
+        </div>
+      </div>
+    ),
+    learning_flow: (
+      <div className="card overview-card learning-flow">
+        <div className="card-head">
+          <div>
+            <span className="eyebrow">مسار المتعلم</span>
+            <h3>من الحضور إلى الإتقان</h3>
+          </div>
+          <GraduationCap size={20} />
+        </div>
+        <div className="flow-steps">
+          <FlowStep number="١" label="حضور" icon={<CalendarCheck />} />
+          <ChevronLeft size={16} />
+          <FlowStep number="٢" label="شيتات" icon={<FileText />} />
+          <ChevronLeft size={16} />
+          <FlowStep number="٣" label="امتحان" icon={<ClipboardList />} />
+          <ChevronLeft size={16} />
+          <FlowStep number="٤" label="إتقان" icon={<Target />} />
+        </div>
+        <p className="muted">تم تحميل {worksheets.length} شيتاً تعليمياً للمتابعة.</p>
+      </div>
+    ),
+  };
+
+  if (loading || !layoutReady) return <DashboardCardSkeletonGrid />;
   return (
     <section className="live-page overview-dashboard">
       <div className="overview-hero">
@@ -2133,123 +2394,42 @@ function OverviewDashboard({
           tone="rose"
         />
       </div>
-      <div className="overview-grid overview-grid--charts">
-        <div className="card overview-card chart-card">
-          <div className="card-head">
-            <div>
-              <span className="eyebrow">آخر السجلات</span>
-              <h3>اتجاه الحضور</h3>
-            </div>
-            <BarChart3 size={20} />
-          </div>
-          <div className="bar-chart" aria-label="رسم بياني للحضور">
-            <div className="bar-chart__axis">
-              <span>الطلاب الحاضرون</span>
-              <span>
-                {Math.max(...attendanceDays.map(item => item.value), 0)}
-              </span>
-            </div>
-            <div className="bar-chart__bars">
-              {attendanceDays.length ? (
-                attendanceDays.map(item => (
-                  <div className="bar-chart__item" key={item.label}>
-                    <div className="bar-chart__track">
-                      <span
-                        style={{
-                          height: `${Math.max((item.value / maxAttendance) * 100, 8)}%`,
-                        }}
-                        title={`${item.value} حاضر`}
-                      />
-                    </div>
-                    <small>{item.label}</small>
-                  </div>
-                ))
-              ) : (
-                <p className="muted">لا توجد سجلات حضور بعد.</p>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="card overview-card">
-          <div className="card-head">
-            <div>
-              <span className="eyebrow">التحصيل</span>
-              <h3>أداء الامتحانات</h3>
-            </div>
-            <Target size={20} />
-          </div>
-          <div className="exam-bars">
-            {topExams.length ? (
-              topExams.map(item => (
-                <div className="exam-bar" key={`${item.title}-${item.score}`}>
-                  <div>
-                    <span>{item.title}</span>
-                    <b>{item.score}%</b>
-                  </div>
-                  <div className="exam-bar__track">
-                    <span style={{ width: `${item.score}%` }} />
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="muted">لا توجد نتائج امتحانات بعد.</p>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="overview-grid overview-grid--lower">
-        <div className="card overview-card payment-overview">
-          <div className="card-head">
-            <div>
-              <span className="eyebrow">الاشتراكات</span>
-              <h3>حالة المدفوعات</h3>
-            </div>
-            <PieChart size={20} />
-          </div>
-          <div
-            className="payment-ring"
-            style={{
-              background: `conic-gradient(#16846d 0 ${paidRatio}%, #b87945 ${paidRatio}% 100%)`,
-            }}
+      {canReorder && (
+        <div className="dashboard-layout-toolbar" role="status">
+          <span>
+            <GripVertical size={16} aria-hidden="true" />
+            اسحب البطاقات من المقبض لترتيب لوحتك بالطريقة التي تناسبك.
+          </span>
+          <button
+            className="outline dashboard-layout-reset"
+            onClick={() => void resetOrder()}
+            disabled={savingOrder}
           >
-            <div>
-              <strong>{paidRatio}%</strong>
-              <small>مكتمل</small>
-            </div>
-          </div>
-          <div className="payment-legend">
-            <span>
-              <i className="legend-dot legend-dot--green" />
-              مدفوع {paid}
-            </span>
-            <span>
-              <i className="legend-dot legend-dot--copper" />
-              معلّق {payments.length - paid}
-            </span>
-          </div>
+            <RefreshCw className={savingOrder ? "spin" : ""} size={15} />
+            استعادة الافتراضي
+          </button>
         </div>
-        <div className="card overview-card learning-flow">
-          <div className="card-head">
-            <div>
-              <span className="eyebrow">مسار المتعلم</span>
-              <h3>من الحضور إلى الإتقان</h3>
-            </div>
-            <GraduationCap size={20} />
+      )}
+      <DndContext
+        sensors={canReorder ? sensors : undefined}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={cardOrder}>
+          <div className="overview-card-grid" aria-label="بطاقات لوحة المؤشرات">
+            {cardOrder.map(cardId => (
+              <SortableOverviewCard
+                key={cardId}
+                id={cardId}
+                label={OVERVIEW_CARD_LABELS[cardId]}
+                disabled={!canReorder || savingOrder}
+              >
+                {overviewCards[cardId]}
+              </SortableOverviewCard>
+            ))}
           </div>
-          <div className="flow-steps">
-            <FlowStep number="١" label="حضور" icon={<CalendarCheck />} />
-            <ChevronLeft size={16} />
-            <FlowStep number="٢" label="شيتات" icon={<FileText />} />
-            <ChevronLeft size={16} />
-            <FlowStep number="٣" label="امتحان" icon={<ClipboardList />} />
-            <ChevronLeft size={16} />
-            <FlowStep number="٤" label="إتقان" icon={<Target />} />
-          </div>
-          <p className="muted">
-            تم تحميل {worksheets.length} شيتاً تعليمياً للمتابعة.
-          </p>
-        </div>
-      </div>
+        </SortableContext>
+      </DndContext>
     </section>
   );
 }
@@ -2276,6 +2456,92 @@ function OverviewKpi({
     </div>
   );
 }
+
+function SortableOverviewCard({
+  id,
+  label,
+  disabled,
+  children,
+}: {
+  id: OverviewCardId;
+  label: string;
+  disabled: boolean;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id, disabled });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`overview-sortable-card${isDragging ? " is-dragging" : ""}`}
+      style={{
+        transform: DndCss.Transform.toString(transform),
+        transition,
+      }}
+    >
+      {!disabled && (
+        <button
+          className="dashboard-card-drag-handle"
+          type="button"
+          aria-label={`اسحب لإعادة ترتيب بطاقة ${label}`}
+          title="اسحب لإعادة الترتيب"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={18} aria-hidden="true" />
+        </button>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function DashboardCardSkeletonGrid() {
+  return (
+    <section
+      className="live-page overview-dashboard dashboard-skeleton-shell"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label="جارٍ تحميل بطاقات لوحة المؤشرات"
+    >
+      <div className="dashboard-skeleton-hero">
+        <span className="dashboard-skeleton-block dashboard-skeleton-block--eyebrow" />
+        <span className="dashboard-skeleton-block dashboard-skeleton-block--title" />
+        <span className="dashboard-skeleton-block dashboard-skeleton-block--copy" />
+      </div>
+      <div className="overview-kpis dashboard-skeleton-kpis">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div className="overview-kpi dashboard-card-skeleton" key={index}>
+            <span className="dashboard-skeleton-icon" />
+            <div>
+              <span className="dashboard-skeleton-block dashboard-skeleton-block--label" />
+              <span className="dashboard-skeleton-block dashboard-skeleton-block--value" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="overview-card-grid">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div className="card overview-card dashboard-card-skeleton" key={index}>
+            <div className="dashboard-skeleton-card-head">
+              <span className="dashboard-skeleton-icon" />
+              <span className="dashboard-skeleton-block dashboard-skeleton-block--heading" />
+            </div>
+            <div className="dashboard-skeleton-chart">
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function FlowStep({
   number,
   label,

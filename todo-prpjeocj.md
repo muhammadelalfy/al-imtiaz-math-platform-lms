@@ -287,3 +287,11 @@
 - [x] Audit dashboard card layouts against the attached isolated dark-card analytics reference and identify reusable style boundaries.
 - [x] Introduce a reusable isolated-card visual system with clear spacing, hierarchy, borders, shadows, and interaction states across dashboard surfaces.
 - [x] Validate the updated dashboard cards on desktop and mobile, add regression coverage, and complete the release quality gate.
+- [x] Audit dashboard card loading flow, current card inventory, and teacher-owned settings/persistence conventions.
+- [x] Add a teacher-owned persisted dashboard card-order preference with validation, authorization, seed support, and API coverage.
+- [x] Add accessible teacher drag-and-drop dashboard-card reordering with save feedback and a reset-to-default action.
+- [x] Add polished skeleton loading states inside isolated dashboard cards and verify the loading-to-content transition.
+- [x] Add backend/frontend regression coverage, Arabic SRS traceability, responsive validation, and full quality checks for dashboard personalization.
+- [x] Verify the dashboard personalization working tree and release checklist before pull-request creation.
+- [ ] Save a release checkpoint and prepare the dashboard personalization feature branch for review.
+- [ ] Open a GitHub pull request with a concise implementation and validation summary.

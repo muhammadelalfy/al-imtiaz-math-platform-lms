@@ -31,6 +31,9 @@ export type ApiUser = {
 export type TeacherAcademyIdentity = {
   academy_name: string;
 };
+export type TeacherDashboardLayout = {
+  card_order: string[];
+};
 export type SubscriptionPackage = {
   id: number;
   code: string;
@@ -601,6 +604,18 @@ export const laravelApi = {
     );
     rememberTeacherAcademyName({ role: "teacher", ...response });
     return response;
+  },
+  async teacherDashboardLayout() {
+    return request<TeacherDashboardLayout>("/teacher/dashboard-layout");
+  },
+  async updateTeacherDashboardLayout(card_order: string[]) {
+    return request<TeacherDashboardLayout>("/teacher/dashboard-layout", {
+      method: "PUT",
+      body: JSON.stringify({ card_order }),
+    });
+  },
+  async resetTeacherDashboardLayout() {
+    return request<void>("/teacher/dashboard-layout", { method: "DELETE" });
   },
   async authorizationCatalog() {
     return request<AuthorizationCatalog>("/staff/authorization/catalog");

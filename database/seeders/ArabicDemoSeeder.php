@@ -22,6 +22,7 @@ use App\Models\Student;
 use App\Models\StudentAccount;
 use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
+use App\Models\TeacherDashboardLayout;
 use App\Models\TenantSubscription;
 use App\Models\User;
 use App\Models\Worksheet;
@@ -420,6 +421,9 @@ class ArabicDemoSeeder extends Seeder
             'name' => 'الامتياز', 'domain_status' => 'pending',
         ]);
         $teacher->forceFill(['tenant_id' => $tenant->id])->save();
+        TeacherDashboardLayout::updateOrCreate(['user_id' => $teacher->id], [
+            'card_order' => ['attendance', 'exam_performance', 'payments', 'learning_flow'],
+        ]);
         TenantSubscription::updateOrCreate(['tenant_id' => $tenant->id], [
             'subscription_package_id' => $growth->id, 'status' => 'active', 'payment_status' => 'paid',
             'starts_at' => now()->subDays(25), 'ends_at' => now()->addDays(5), 'paid_at' => now()->subDays(25),

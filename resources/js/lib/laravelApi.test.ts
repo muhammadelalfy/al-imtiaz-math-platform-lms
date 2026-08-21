@@ -70,6 +70,38 @@ describe("laravelApi", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/students", expect.anything());
   });
 
+  it("maps teacher dashboard layout preferences to read, save, and reset endpoints", async () => {
+    const order = [
+      "payments",
+      "learning_flow",
+      "attendance",
+      "exam_performance",
+    ];
+    const fetchMock = vi.fn().mockImplementation(
+      () => new Response(JSON.stringify({ card_order: order }), { status: 200 })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(laravelApi.teacherDashboardLayout()).resolves.toEqual({
+      card_order: order,
+    });
+    await expect(laravelApi.updateTeacherDashboardLayout(order)).resolves.toEqual({
+      card_order: order,
+    });
+    await laravelApi.resetTeacherDashboardLayout();
+
+    expect(
+      fetchMock.mock.calls.map(([url, init]) => [url, init?.method])
+    ).toEqual([
+      ["/api/teacher/dashboard-layout", undefined],
+      ["/api/teacher/dashboard-layout", "PUT"],
+      ["/api/teacher/dashboard-layout", "DELETE"],
+    ]);
+    expect(fetchMock.mock.calls[1]?.[1]?.body).toBe(
+      JSON.stringify({ card_order: order })
+    );
+  });
+
   it("maps attendance and exam CRUD operations to the Laravel resources", async () => {
     const fetchMock = vi
       .fn()
