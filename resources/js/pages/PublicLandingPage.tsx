@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   ArrowLeft,
   BarChart3,
@@ -8,6 +9,7 @@ import {
   CheckCircle2,
   CreditCard,
   LoaderCircle,
+  MessageCircle,
   ShieldCheck,
   Sparkles,
   Users,
@@ -24,6 +26,11 @@ import "./subscription-platform.scss";
 
 const heroImage = "/manus-storage/al-imtiaz-landing-system-visual_a887ee83.png";
 const ecosystemImage = "/manus-storage/al-imtiaz-platform-ecosystem-visual_8bfff868.png";
+const whatsAppConnectUrl = `https://wa.me/?text=${encodeURIComponent(
+  "مرحباً، أرغب في التعرف على منصة الامتياز في الرياضيات."
+)}`;
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function PublicLandingPage() {
   const [, navigate] = useLocation();
@@ -104,6 +111,42 @@ export default function PublicLandingPage() {
             node.textContent = Math.round(count.value).toLocaleString("ar-EG");
           },
         });
+      });
+
+      gsap.utils.toArray<HTMLElement>(".landing-scroll-section").forEach(section => {
+        gsap.from(section, {
+          opacity: 0,
+          y: 34,
+          duration: 0.8,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: section,
+            start: "top 82%",
+            once: true,
+          },
+        });
+      });
+
+      gsap.to(".landing-demo-counter-grid", {
+        y: -12,
+        ease: "none",
+        scrollTrigger: {
+          trigger: ".landing-demo-metrics",
+          start: "top bottom",
+          end: "bottom top",
+          scrub: 0.55,
+        },
+      });
+
+      gsap.to(".landing-ecosystem-grid", {
+        backgroundPosition: "56px 56px",
+        ease: "none",
+        scrollTrigger: {
+          trigger: ".landing-ecosystem",
+          start: "top bottom",
+          end: "bottom top",
+          scrub: 0.7,
+        },
       });
     }, root);
     return () => context.revert();
@@ -305,7 +348,7 @@ export default function PublicLandingPage() {
       </section>
 
       <section
-        className="landing-value-strip landing-reveal"
+        className="landing-value-strip landing-scroll-section"
         aria-label="قيم النظام"
       >
         <div>
@@ -331,7 +374,7 @@ export default function PublicLandingPage() {
         </div>
       </section>
 
-      <section className="landing-demo-metrics landing-reveal" aria-labelledby="demo-metrics-title">
+      <section className="landing-demo-metrics landing-scroll-section" aria-labelledby="demo-metrics-title">
         <div className="landing-demo-heading">
           <span className="landing-kicker"><FlaskConical size={15} /> عرض توضيحي للحركة داخل المنصة</span>
           <h2 id="demo-metrics-title">صورة حية لنمو المركز، وليست بيانات عملاء حقيقية.</h2>
@@ -359,7 +402,7 @@ export default function PublicLandingPage() {
         </div>
       </section>
 
-      <section className="landing-ecosystem landing-reveal" aria-labelledby="ecosystem-title">
+      <section className="landing-ecosystem landing-scroll-section" aria-labelledby="ecosystem-title">
         <div className="landing-ecosystem-copy">
           <span className="landing-kicker"><Sparkles size={15} /> لقطة من النظام بالكامل</span>
           <h2 id="ecosystem-title">من الحصة إلى القرار، كل نقطة مترابطة.</h2>
@@ -393,7 +436,7 @@ export default function PublicLandingPage() {
         </figure>
       </section>
 
-      <section className="landing-packages" id="packages">
+      <section className="landing-packages landing-scroll-section" id="packages">
         <div className="landing-section-heading">
           <span className="landing-kicker">اختر ما يناسب مرحلتك</span>
           <h2>باقات بسيطة. قيمة حقيقية.</h2>
@@ -451,6 +494,18 @@ export default function PublicLandingPage() {
         <b>الامتياز في الرياضيات</b>
         <span>نظام مركزك التعليمي، بوضوح وهدوء.</span>
       </footer>
+
+      <a
+        className="landing-whatsapp"
+        href={whatsAppConnectUrl}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="افتح واتساب لبدء محادثة عن منصة الامتياز في الرياضيات"
+        title="تواصل عبر واتساب"
+      >
+        <MessageCircle size={22} />
+        <span>واتساب</span>
+      </a>
 
       {selected && (
         <div

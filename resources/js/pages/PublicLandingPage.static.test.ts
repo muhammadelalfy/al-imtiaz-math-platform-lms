@@ -24,4 +24,13 @@ describe("creative subscription landing", () => {
     expect(landingStyles).toContain(".landing-ecosystem-art");
     expect(landingStyles).toContain(".landing-demo-counter-grid");
   });
+
+  it("uses ScrollTrigger for section storytelling and retains a labelled WhatsApp action", () => {
+    expect(landingSource).toContain('from "gsap/ScrollTrigger"');
+    expect(landingSource).toContain("gsap.registerPlugin(ScrollTrigger)");
+    expect(landingSource).toContain("landing-scroll-section");
+    expect(landingSource).toContain("landing-whatsapp");
+    expect(landingSource).toContain("افتح واتساب لبدء محادثة");
+    expect(landingStyles).toContain(".landing-whatsapp");
+  });
 });

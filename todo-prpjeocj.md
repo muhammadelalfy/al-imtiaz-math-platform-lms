@@ -259,3 +259,6 @@
 - [x] Add clearly labelled demonstration client-growth counters that do not imply real customer, review, rating, or testimonial data.
 - [x] Generate and integrate complementary managed visuals across the landing sections without weakening image fallbacks or Sass responsiveness.
 - [x] Add frontend tests, visual verification, and full quality validation for the creative landing refresh.
+- [x] Add reduced-motion-safe GSAP ScrollTrigger entrance and parallax choreography to the Arabic subscription landing sections.
+- [x] Add an accessible, clearly labelled WhatsApp connection action that uses a configuration-gated destination and never exposes provider credentials.
+- [x] Add regression coverage, desktop/mobile visual validation, and full frontend quality checks for the ScrollTrigger and WhatsApp landing update.
