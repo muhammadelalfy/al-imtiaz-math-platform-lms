@@ -284,3 +284,6 @@
 - [x] Add a teacher-owned academy display-name setting with validation, authorization, stable API output, seed support, and default value الامتياز for the current teacher.
 - [x] Render the teacher academy name in the settings surface and global loading overlay while retaining زويل as the shared platform brand.
 - [x] Add backend/frontend regression coverage, Arabic SRS traceability, and full quality validation for teacher academy identity.
+- [x] Audit dashboard card layouts against the attached isolated dark-card analytics reference and identify reusable style boundaries.
+- [x] Introduce a reusable isolated-card visual system with clear spacing, hierarchy, borders, shadows, and interaction states across dashboard surfaces.
+- [x] Validate the updated dashboard cards on desktop and mobile, add regression coverage, and complete the release quality gate.

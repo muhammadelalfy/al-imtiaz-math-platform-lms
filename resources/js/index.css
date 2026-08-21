@@ -6446,6 +6446,134 @@ nav {
   --shadow: 0 20px 54px rgba(0, 0, 0, 0.28);
   --focus: rgba(94, 234, 212, 0.42);
 }
+/* Isolated dashboard-card system: each data surface has a clear edge, depth, and reading rhythm. */
+.live-page .live-grid,
+.live-page .overview-grid,
+.live-page .overview-grid--charts,
+.live-page .overview-grid--lower,
+.live-page .live-stats {
+  gap: 20px;
+  align-items: start;
+}
+.live-page .card,
+.live-page .live-stat,
+.live-page .workflow-card,
+.live-page .overview-kpi {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72) inset,
+    0 16px 38px rgba(22, 45, 64, 0.08);
+  transition:
+    transform 0.18s var(--ease-out),
+    border-color 0.18s var(--ease-out),
+    box-shadow 0.18s var(--ease-out),
+    background-color 0.18s var(--ease-out);
+}
+.live-page .card,
+.live-page .overview-kpi {
+  padding: 24px;
+  background:
+    linear-gradient(145deg, var(--surface-raised), var(--surface)),
+    var(--surface);
+}
+.live-page .live-stat,
+.live-page .workflow-card {
+  background:
+    linear-gradient(145deg, var(--surface-raised), var(--surface-subtle)),
+    var(--surface);
+}
+.dark .live-page .card,
+.dark .live-page .overview-kpi,
+.dark .live-page .live-stat,
+.dark .live-page .workflow-card {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.035) inset,
+    0 18px 44px rgba(0, 0, 0, 0.26);
+}
+.live-page .card::after,
+.live-page .live-stat::after,
+.live-page .workflow-card::after,
+.live-page .overview-kpi::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.075), transparent 38%);
+  opacity: 0.7;
+}
+.dark .live-page .card::after,
+.dark .live-page .live-stat::after,
+.dark .live-page .workflow-card::after,
+.dark .live-page .overview-kpi::after {
+  opacity: 0.35;
+}
+.live-page .card-head {
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.live-page .card-head > svg {
+  box-sizing: content-box;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.live-page .live-row {
+  gap: 14px;
+  border-top-color: var(--line);
+}
+.live-page .live-row + .live-row {
+  margin-top: 2px;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .live-page .card:hover,
+  .live-page .live-stat:hover,
+  .live-page .workflow-card:hover,
+  .live-page .overview-kpi:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--accent) 36%, var(--line));
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.75) inset,
+      0 22px 44px rgba(22, 45, 64, 0.13);
+  }
+  .dark .live-page .card:hover,
+  .dark .live-page .live-stat:hover,
+  .dark .live-page .workflow-card:hover,
+  .dark .live-page .overview-kpi:hover {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.05) inset,
+      0 24px 52px rgba(0, 0, 0, 0.34);
+  }
+}
+@media (max-width: 700px) {
+  .live-page .live-grid,
+  .live-page .overview-grid,
+  .live-page .overview-grid--charts,
+  .live-page .overview-grid--lower,
+  .live-page .live-stats {
+    gap: 14px;
+  }
+  .live-page .card,
+  .live-page .overview-kpi {
+    padding: 18px;
+    border-radius: 18px;
+  }
+  .live-page .live-stat,
+  .live-page .workflow-card {
+    border-radius: 18px;
+  }
+  .live-page .card-head {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+}
 html,
 body,
 #root {
