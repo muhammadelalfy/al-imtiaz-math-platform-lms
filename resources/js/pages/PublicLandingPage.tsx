@@ -23,6 +23,7 @@ import {
 import "./subscription-platform.scss";
 
 const heroImage = "/manus-storage/al-imtiaz-landing-system-visual_a887ee83.png";
+const ecosystemImage = "/manus-storage/al-imtiaz-platform-ecosystem-visual_8bfff868.png";
 
 export default function PublicLandingPage() {
   const [, navigate] = useLocation();
@@ -44,6 +45,10 @@ export default function PublicLandingPage() {
 
   useEffect(() => {
     const context = gsap.context(() => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
+
       gsap.from(".landing-reveal", {
         opacity: 0,
         y: 26,
@@ -56,6 +61,49 @@ export default function PublicLandingPage() {
         duration: 22,
         repeat: -1,
         ease: "none",
+      });
+      gsap.to(".landing-copper-orbit", {
+        rotate: -360,
+        duration: 32,
+        repeat: -1,
+        ease: "none",
+      });
+      gsap.to(".landing-visual", {
+        y: -9,
+        duration: 3.8,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
+      gsap.to(".landing-float-card", {
+        y: -7,
+        duration: 2.6,
+        repeat: -1,
+        yoyo: true,
+        stagger: 0.3,
+        ease: "sine.inOut",
+      });
+      gsap.to(".landing-ecosystem-art", {
+        y: -8,
+        rotate: -1.4,
+        duration: 4.5,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
+
+      gsap.utils.toArray<HTMLElement>("[data-demo-count]").forEach(node => {
+        const target = Number(node.dataset.demoCount ?? 0);
+        const count = { value: 0 };
+        gsap.to(count, {
+          value: target,
+          duration: 1.7,
+          delay: 0.35,
+          ease: "power2.out",
+          onUpdate: () => {
+            node.textContent = Math.round(count.value).toLocaleString("ar-EG");
+          },
+        });
       });
     }, root);
     return () => context.revert();
@@ -114,6 +162,7 @@ export default function PublicLandingPage() {
   return (
     <main className="subscription-landing" ref={root} dir="rtl">
       <div className="landing-mesh landing-orbit" aria-hidden="true" />
+      <div className="landing-copper-orbit" aria-hidden="true" />
       <nav className="landing-nav landing-reveal" aria-label="التنقل الرئيسي">
         <button
           className="landing-brand"
@@ -280,6 +329,68 @@ export default function PublicLandingPage() {
             <small>حالة اشتراك وتجديد شفافة</small>
           </span>
         </div>
+      </section>
+
+      <section className="landing-demo-metrics landing-reveal" aria-labelledby="demo-metrics-title">
+        <div className="landing-demo-heading">
+          <span className="landing-kicker"><FlaskConical size={15} /> عرض توضيحي للحركة داخل المنصة</span>
+          <h2 id="demo-metrics-title">صورة حية لنمو المركز، وليست بيانات عملاء حقيقية.</h2>
+          <p>تُعرض العدادات التالية لتوضيح طريقة قراءة مؤشرات مركزك بعد التفعيل.</p>
+        </div>
+        <div className="landing-demo-counter-grid">
+          <article>
+            <span className="landing-counter-icon"><Users size={21} /></span>
+            <strong data-demo-count="3">٠</strong>
+            <b>مراكز تجريبية</b>
+            <small>مثال لعرض تعدد المساحات</small>
+          </article>
+          <article>
+            <span className="landing-counter-icon"><BarChart3 size={21} /></span>
+            <strong data-demo-count="240">٠</strong>
+            <b>ملف طالب نموذجي</b>
+            <small>مثال لمتابعة السعة التعليمية</small>
+          </article>
+          <article>
+            <span className="landing-counter-icon"><CheckCircle2 size={21} /></span>
+            <strong data-demo-count="18">٠</strong>
+            <b>جلسة حضور نموذجية</b>
+            <small>مثال لتدفق الحضور اليومي</small>
+          </article>
+        </div>
+      </section>
+
+      <section className="landing-ecosystem landing-reveal" aria-labelledby="ecosystem-title">
+        <div className="landing-ecosystem-copy">
+          <span className="landing-kicker"><Sparkles size={15} /> لقطة من النظام بالكامل</span>
+          <h2 id="ecosystem-title">من الحصة إلى القرار، كل نقطة مترابطة.</h2>
+          <p>تصوّر بصري يشرح كيف تتجاور إدارة الطلاب، الحضور، الواجبات، الاختبارات، ومتابعة الاشتراك داخل تجربة واحدة.</p>
+          <div className="landing-ecosystem-points">
+            <span><CheckCircle2 size={16} /> رحلة الطالب واضحة</span>
+            <span><CheckCircle2 size={16} /> لوحة واحدة للمعلم</span>
+            <span><CheckCircle2 size={16} /> قرار أسرع للإدارة</span>
+          </div>
+        </div>
+        <figure className="landing-ecosystem-art">
+          <div className="landing-ecosystem-grid" aria-hidden="true" />
+          <div className="landing-ecosystem-fallback" aria-hidden="true">
+            <div className="landing-fallback-core">
+              <span>مركزك اليوم</span>
+              <div className="landing-fallback-bars"><i /><i /><i /><i /><i /></div>
+              <div className="landing-fallback-pills"><b>الحضور</b><b>الاختبارات</b><b>الاشتراك</b></div>
+            </div>
+            <div className="landing-fallback-node landing-node-students"><Users size={17} /><span>الطلاب</span></div>
+            <div className="landing-fallback-node landing-node-exams"><BarChart3 size={17} /><span>الاختبارات</span></div>
+            <div className="landing-fallback-node landing-node-status"><CheckCircle2 size={17} /><span>جاهز للقرار</span></div>
+          </div>
+          <img
+            src={ecosystemImage}
+            alt="تصور بصري لمنصة مركز رياضيات تجمع الحضور والاختبارات والمجموعات والمدفوعات"
+            onError={event => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+          <figcaption>تصور واجهة توضيحي للمنصة، وليس لقطة بيانات حقيقية.</figcaption>
+        </figure>
       </section>
 
       <section className="landing-packages" id="packages">

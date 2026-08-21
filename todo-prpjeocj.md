@@ -255,3 +255,7 @@
 - [x] Add mock onboarding API/UI tests, Arabic SRS traceability, visual verification, and full quality validation without exposing this workflow as a production activation path.
 - [x] Generate a bespoke Arabic RTL mathematics-centre system visual for the subscription landing hero and upload it to managed project storage.
 - [x] Integrate and visually verify the responsive landing hero asset without regressing the existing fallback dashboard visual or Sass build.
+- [x] Redesign the Arabic subscription landing with a more distinctive editorial visual system, richer GSAP motion, and reduced-motion-safe interactions.
+- [x] Add clearly labelled demonstration client-growth counters that do not imply real customer, review, rating, or testimonial data.
+- [x] Generate and integrate complementary managed visuals across the landing sections without weakening image fallbacks or Sass responsiveness.
+- [x] Add frontend tests, visual verification, and full quality validation for the creative landing refresh.
