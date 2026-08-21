@@ -465,6 +465,7 @@ describe("subscription platform API", () => {
       tenant_slug: "mona-math",
       package_id: 3,
     });
+    await laravelApi.createDevelopmentMockTenant();
     await laravelApi.teacherSubscription();
     await laravelApi.superAdminOverview();
     await laravelApi.superAdminPackages();
@@ -480,6 +481,7 @@ describe("subscription platform API", () => {
     ).toEqual([
       ["/api/public/subscription-packages", undefined],
       ["/api/public/teacher-register", "POST"],
+      ["/api/public/mock-tenant-registration", "POST"],
       ["/api/teacher/subscription", undefined],
       ["/api/super-admin/overview", undefined],
       ["/api/super-admin/packages", undefined],

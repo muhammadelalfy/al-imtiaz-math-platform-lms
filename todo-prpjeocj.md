@@ -251,3 +251,5 @@
 - [x] Push the latest subscription-platform checkpoint and open or update a GitHub pull request containing that work. Published as PR #10; CI is running.
 - [x] Diagnose, repair, push, and confirm completion of any blocked or failing CI checks on subscription-platform PR #10. All required checks passed after the production-backed browser-test repair.
 - [x] Keep tenant onboarding operational on the current Manus-managed development database, while deferring live PostgreSQL credentials and production domain activation until deployment.
+- [x] Add a clearly marked development-only mock tenant registration flow on the Arabic landing page that exercises tenant onboarding, shared-development provisioning, and pending-domain feedback.
+- [x] Add mock onboarding API/UI tests, Arabic SRS traceability, visual verification, and full quality validation without exposing this workflow as a production activation path.

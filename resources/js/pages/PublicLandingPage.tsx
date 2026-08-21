@@ -4,6 +4,7 @@ import { gsap } from "gsap";
 import {
   ArrowLeft,
   BarChart3,
+  FlaskConical,
   CheckCircle2,
   CreditCard,
   LoaderCircle,
@@ -17,6 +18,7 @@ import {
   ApiError,
   laravelApi,
   type SubscriptionPackage,
+  type DevelopmentMockRegistration,
 } from "@/lib/laravelApi";
 import "./subscription-platform.scss";
 
@@ -29,6 +31,8 @@ export default function PublicLandingPage() {
   const [selected, setSelected] = useState<SubscriptionPackage | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [mocking, setMocking] = useState(false);
+  const [mockResult, setMockResult] = useState<DevelopmentMockRegistration | null>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -91,6 +95,19 @@ export default function PublicLandingPage() {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const registerMockTenant = async () => {
+    setMocking(true);
+    try {
+      const result = await laravelApi.createDevelopmentMockTenant();
+      setMockResult(result);
+      toast("تم تجهيز المركز التجريبي بنجاح");
+    } catch (error) {
+      toast(error instanceof ApiError ? error.message : "تعذر تجهيز المركز التجريبي");
+    } finally {
+      setMocking(false);
     }
   };
 
@@ -157,7 +174,18 @@ export default function PublicLandingPage() {
             >
               لدي حساب بالفعل
             </button>
+            <button
+              className="landing-dev-action"
+              disabled={mocking}
+              onClick={() => void registerMockTenant()}
+            >
+              {mocking ? <LoaderCircle className="spin" size={17} /> : <FlaskConical size={17} />}
+              جرّب تهيئة مركز تجريبي
+            </button>
           </div>
+          <p className="landing-dev-note landing-reveal">
+            تجربة Manus للتطوير فقط: لا تنشئ دفعاً حقيقياً ولا نطاقاً منشوراً.
+          </p>
           <div className="landing-trust landing-reveal">
             <span>
               <CheckCircle2 size={16} /> واجهة عربية RTL
@@ -404,6 +432,26 @@ export default function PublicLandingPage() {
               <ArrowLeft size={17} />
             </button>
           </form>
+        </div>
+      )}
+
+      {mockResult && (
+        <div className="landing-dialog-backdrop" role="presentation" onMouseDown={() => setMockResult(null)}>
+          <section className="landing-dialog landing-mock-result" onMouseDown={event => event.stopPropagation()} aria-labelledby="mock-onboarding-title">
+            <button className="landing-close" type="button" onClick={() => setMockResult(null)}>
+              <X size={18} />
+            </button>
+            <span className="landing-kicker"><FlaskConical size={15} /> تجربة Manus مكتملة</span>
+            <h2 id="mock-onboarding-title">تم تجهيز مركزك التجريبي</h2>
+            <p>{mockResult.message}</p>
+            <dl className="landing-mock-status">
+              <div><dt>المركز</dt><dd>{mockResult.subscription.tenant?.name}</dd></div>
+              <div><dt>معرّف المساحة</dt><dd>{mockResult.subscription.tenant?.database_schema}</dd></div>
+              <div><dt>حالة التجهيز</dt><dd>{mockResult.subscription.tenant?.schema_status === "ready" ? "جاهز للتجربة" : "قيد التجهيز"}</dd></div>
+              <div><dt>النطاق</dt><dd>{mockResult.subscription.tenant?.login_domain ?? "ينتظر إعداد DNS للإنتاج"}</dd></div>
+            </dl>
+            <button className="landing-primary" type="button" onClick={() => setMockResult(null)}>فهمت، أغلِق التجربة <CheckCircle2 size={17} /></button>
+          </section>
         </div>
       )}
     </main>

@@ -13,6 +13,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Throwable;
 
 class SubscriptionLifecycleService
@@ -128,5 +129,55 @@ class SubscriptionLifecycleService
         }
 
         return ['subscription' => $subscription, 'show_expiry_reminder' => $shouldShow];
+    }
+
+    public function createDevelopmentMockTenant(): TenantSubscription
+    {
+        if (config('tenancy.mode') !== 'shared_development') {
+            throw new SubscriptionStorageException('تجربة التهيئة متاحة في بيئة التطوير المشتركة فقط.');
+        }
+
+        try {
+            $subscription = DB::transaction(function (): TenantSubscription {
+                $package = $this->packages->activeCatalog()->sortBy('sort_order')->first();
+                if (! $package instanceof SubscriptionPackage) {
+                    throw new SubscriptionStorageException('لا توجد باقة نشطة لتجربة تهيئة المركز.');
+                }
+
+                $suffix = Str::lower(Str::random(10));
+                $tenant = Tenant::query()->create([
+                    'name' => 'مركز تجريبي '.$suffix,
+                    'slug' => "demo-{$suffix}",
+                    'domain_status' => 'pending',
+                ]);
+                User::query()->create([
+                    'name' => 'معلم تجريبي',
+                    'email' => "demo-{$suffix}@local.test",
+                    'password' => Str::random(48),
+                    'role' => 'teacher',
+                    'tenant_id' => $tenant->id,
+                ]);
+
+                return TenantSubscription::query()->create([
+                    'tenant_id' => $tenant->id,
+                    'subscription_package_id' => $package->id,
+                    'status' => 'active',
+                    'payment_status' => 'paid',
+                    'starts_at' => now(),
+                    'ends_at' => now()->addDays($package->duration_days),
+                    'paid_at' => now(),
+                    'payment_reference' => 'MANUS-MOCK',
+                ])->load(['tenant', 'package']);
+            }, 3);
+
+            $tenant = $subscription->getRelation('tenant');
+            if ($tenant instanceof Tenant) {
+                $this->domains->assignSubscriptionDomain($this->schemas->provision($tenant));
+            }
+
+            return $subscription->refresh()->load(['tenant', 'package', 'activatedBy']);
+        } catch (Throwable $exception) {
+            throw new SubscriptionStorageException('تعذر إنشاء المركز التجريبي. حاول مرة أخرى.', previous: $exception);
+        }
     }
 }

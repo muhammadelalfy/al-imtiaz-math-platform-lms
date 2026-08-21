@@ -30,6 +30,8 @@ Route::post('/auth/parent/login', fn (\Illuminate\Http\Request $request, AuthCon
 Route::post('/auth/student/login', fn (\Illuminate\Http\Request $request, AuthController $controller) => $controller->loginAsRole($request, 'student'));
 Route::get('/public/subscription-packages', [PublicSubscriptionController::class, 'packages']);
 Route::post('/public/teacher-register', [PublicSubscriptionController::class, 'registerTeacher']);
+Route::post('/public/mock-tenant-registration', [PublicSubscriptionController::class, 'mockRegistration'])
+    ->middleware('throttle:3,60');
 Route::post('/scheduled/notifications/drain', ScheduledNotificationQueueController::class)
     ->middleware('signed')
     ->name('scheduled.notifications.drain');

@@ -44,7 +44,11 @@ export type Tenant = {
   name: string;
   slug: string;
   login_domain?: string | null;
-  domain_status: "pending" | "active";
+  domain_status: "pending" | "pending_dns" | "active";
+  database_schema?: string | null;
+  schema_status?: "pending" | "provisioning" | "ready" | "failed";
+  schema_version?: string | null;
+  schema_provisioned_at?: string | null;
 };
 export type TenantSubscription = {
   id: number;
@@ -58,6 +62,11 @@ export type TenantSubscription = {
   days_remaining?: number | null;
   tenant?: Tenant;
   package?: SubscriptionPackage;
+};
+export type DevelopmentMockRegistration = {
+  message: string;
+  development_only: true;
+  subscription: TenantSubscription;
 };
 export type TeacherSubscriptionStatus = {
   subscription: TenantSubscription | null;
@@ -1096,6 +1105,11 @@ export const laravelApi = {
     }>("/public/teacher-register", {
       method: "POST",
       body: JSON.stringify(payload),
+    });
+  },
+  async createDevelopmentMockTenant() {
+    return request<DevelopmentMockRegistration>("/public/mock-tenant-registration", {
+      method: "POST",
     });
   },
   async teacherSubscription() {

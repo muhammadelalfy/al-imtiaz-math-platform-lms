@@ -194,6 +194,38 @@ class SubscriptionPlatformTest extends TestCase
         $this->assertSame('manus-shared-development', $ready->schema_version);
     }
 
+    public function test_shared_development_mock_registration_creates_an_active_ready_demo_tenant(): void
+    {
+        config([
+            'tenancy.mode' => 'shared_development',
+            'tenancy.enabled' => false,
+            'tenancy.database_url' => null,
+            'tenancy.provisioning_database_url' => null,
+        ]);
+        $this->package();
+
+        $this->postJson('/api/public/mock-tenant-registration')
+            ->assertCreated()
+            ->assertJsonPath('development_only', true)
+            ->assertJsonPath('subscription.status', 'active')
+            ->assertJsonPath('subscription.payment_status', 'paid')
+            ->assertJsonPath('subscription.tenant.schema_status', 'ready')
+            ->assertJsonPath('subscription.tenant.schema_version', 'manus-shared-development');
+
+        $this->assertDatabaseHas('tenant_subscriptions', [
+            'status' => 'active',
+            'payment_status' => 'paid',
+            'payment_reference' => 'MANUS-MOCK',
+        ]);
+    }
+
+    public function test_mock_registration_is_not_exposed_when_production_schema_mode_is_selected(): void
+    {
+        config(['tenancy.mode' => 'postgres_schema']);
+
+        $this->postJson('/api/public/mock-tenant-registration')->assertNotFound();
+    }
+
     private function package(): SubscriptionPackage
     {
         return SubscriptionPackage::query()->firstOrCreate(['code' => 'growth'], [
