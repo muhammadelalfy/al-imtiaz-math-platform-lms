@@ -22,7 +22,7 @@ import {
 } from "@/lib/laravelApi";
 import "./subscription-platform.scss";
 
-const heroImage = "/manus-storage/al-imtiaz-subscription-hero_79200590.png";
+const heroImage = "/manus-storage/al-imtiaz-landing-system-visual_a887ee83.png";
 
 export default function PublicLandingPage() {
   const [, navigate] = useLocation();

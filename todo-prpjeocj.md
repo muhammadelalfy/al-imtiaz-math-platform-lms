@@ -253,3 +253,5 @@
 - [x] Keep tenant onboarding operational on the current Manus-managed development database, while deferring live PostgreSQL credentials and production domain activation until deployment.
 - [x] Add a clearly marked development-only mock tenant registration flow on the Arabic landing page that exercises tenant onboarding, shared-development provisioning, and pending-domain feedback.
 - [x] Add mock onboarding API/UI tests, Arabic SRS traceability, visual verification, and full quality validation without exposing this workflow as a production activation path.
+- [x] Generate a bespoke Arabic RTL mathematics-centre system visual for the subscription landing hero and upload it to managed project storage.
+- [x] Integrate and visually verify the responsive landing hero asset without regressing the existing fallback dashboard visual or Sass build.
