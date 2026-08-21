@@ -15,6 +15,12 @@ const NextLmsShell = dynamic(
   }
 );
 
-export function LmsRouteClient({ initialPortal }: { initialPortal: PortalRoute }) {
-  return <NextLmsShell initialPortal={initialPortal} />;
+export function LmsRouteClient({
+  initialPortal,
+  lockPortal = false,
+}: {
+  initialPortal: PortalRoute;
+  lockPortal?: boolean;
+}) {
+  return <NextLmsShell initialPortal={initialPortal} lockPortal={lockPortal} />;
 }

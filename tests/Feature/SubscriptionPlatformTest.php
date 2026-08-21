@@ -59,7 +59,11 @@ class SubscriptionPlatformTest extends TestCase
         Sanctum::actingAs($admin);
         $this->getJson('/api/super-admin/overview')
             ->assertOk()
-            ->assertJsonPath('health.database', 'healthy');
+            ->assertJsonPath('health.database', 'healthy')
+            ->assertJsonStructure([
+                'queue' => ['driver', 'pending_jobs', 'failed_jobs'],
+                'runtime' => ['memory_peak_mb', 'summary_duration_ms', 'observed_at'],
+            ]);
         $this->putJson("/api/super-admin/tenants/{$tenant->id}/domain", [
             'login_domain' => 'account.example.test',
         ])->assertUnprocessable()

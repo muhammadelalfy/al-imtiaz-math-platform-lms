@@ -81,12 +81,13 @@ type Tab =
   | "notifications"
   | "authorization"
   | "settings";
-type Portal = "admin" | "teacher" | "parent" | "student";
+type Portal = "admin" | "teacher" | "parent" | "student" | "super_admin";
 const portalLabels: Record<Portal, string> = {
-  admin: "إدارة المركز",
+  admin: "إدارة المؤسسة",
   teacher: "بوابة المدرس",
   parent: "ولي الأمر",
   student: "الطالب",
+  super_admin: "بوابة التحكم العليا",
 };
 const roleLabels: Record<Role, string> = {
   admin: "مدير النظام",
@@ -169,9 +170,11 @@ const formatFieldValue = (
 };
 
 export default function LiveDashboard({
-  initialPortal = "admin",
+  initialPortal = "teacher",
+  lockPortal = false,
 }: {
   initialPortal?: Portal;
+  lockPortal?: boolean;
 }) {
   const [user, setUser] = useState<Awaited<
     ReturnType<typeof laravelApi.me>
@@ -187,10 +190,17 @@ export default function LiveDashboard({
     }
     laravelApi
       .me()
-      .then(setUser)
+      .then(async authenticatedUser => {
+        if (lockPortal && !authenticatedUser.is_super_admin) {
+          await laravelApi.logout();
+          setError("هذه البوابة مخصصة للمشرف الأعلى على منصة زويل فقط.");
+          return;
+        }
+        setUser(authenticatedUser);
+      })
       .catch(() => laravelApi.logout().catch(() => undefined))
       .finally(() => setLoading(false));
-  }, []);
+  }, [lockPortal]);
   if (loading)
     return (
       <div className="live-loading">
@@ -206,6 +216,7 @@ export default function LiveDashboard({
         <LoginPanel
           portal={portal}
           setPortal={setPortal}
+          lockPortal={lockPortal}
           onSuccess={setUser}
           mode={loginMode}
           setMode={setLoginMode}
@@ -229,6 +240,7 @@ export default function LiveDashboard({
 function LoginPanel({
   portal,
   setPortal,
+  lockPortal,
   onSuccess,
   mode,
   setMode,
@@ -237,6 +249,7 @@ function LoginPanel({
 }: {
   portal: Portal;
   setPortal: (value: Portal) => void;
+  lockPortal: boolean;
   onSuccess: (user: Awaited<ReturnType<typeof laravelApi.me>>) => void;
   mode: boolean;
   setMode: (value: boolean) => void;
@@ -254,7 +267,10 @@ function LoginPanel({
     setError("");
     try {
       const user = mode
-        ? await laravelApi.loginAsRole(portal, { email, password })
+        ? await laravelApi.loginAsRole(
+            portal === "super_admin" ? "admin" : portal,
+            { email, password }
+          )
         : await laravelApi.register({
             name,
             email,
@@ -262,6 +278,11 @@ function LoginPanel({
             password_confirmation: password,
             role,
           });
+      if (portal === "super_admin" && !user.is_super_admin) {
+        await laravelApi.logout();
+        setError("هذه البوابة مخصصة للمشرف الأعلى على منصة زويل فقط.");
+        return;
+      }
       onSuccess(user);
     } catch (caught) {
       setError(
@@ -292,24 +313,26 @@ function LoginPanel({
             ? `تسجيل دخول ${portalLabels[portal]} إلى بوابة الامتياز في الرياضيات.`
             : "أنشئ حساب ولي أمر أو طالب للمتابعة التعليمية."}
         </p>
-        <div className="login-portals">
-          {(["admin", "teacher", "parent", "student"] as Portal[]).map(item => (
-            <button
-              type="button"
-              key={item}
-              className={
-                portal === item ? "login-portal active" : "login-portal"
-              }
-              onClick={() => {
-                setPortal(item);
-                setMode(true);
-                setError("");
-              }}
-            >
-              {portalLabels[item]}
-            </button>
-          ))}
-        </div>
+        {!lockPortal && (
+          <div className="login-portals">
+            {(["teacher", "parent", "student"] as Portal[]).map(item => (
+              <button
+                type="button"
+                key={item}
+                className={
+                  portal === item ? "login-portal active" : "login-portal"
+                }
+                onClick={() => {
+                  setPortal(item);
+                  setMode(true);
+                  setError("");
+                }}
+              >
+                {portalLabels[item]}
+              </button>
+            ))}
+          </div>
+        )}
         <form onSubmit={submit}>
           {!mode && (portal === "parent" || portal === "student") && (
             <>
@@ -356,7 +379,7 @@ function LoginPanel({
             {busy ? "جارٍ التنفيذ..." : "دخول"}
           </button>
         </form>
-        {(portal === "parent" || portal === "student") && (
+        {!lockPortal && (portal === "parent" || portal === "student") && (
           <button
             className="text-button live-switch"
             onClick={() => setMode(!mode)}
@@ -365,7 +388,7 @@ function LoginPanel({
           </button>
         )}
         <small className="login-note">
-          دخول الإدارة منفصل ومخصص للعاملين بالمركز.
+          استخدم بوابتك المناسبة للوصول إلى أدواتك التعليمية بأمان.
         </small>
       </div>
     </div>

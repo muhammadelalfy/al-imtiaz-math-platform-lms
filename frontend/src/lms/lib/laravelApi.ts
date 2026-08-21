@@ -19,6 +19,7 @@ export type ApiUser = {
   can_send_notifications?: boolean;
   can_manage_groups?: boolean;
   can_manage_notification_channels?: boolean;
+  is_super_admin?: boolean;
   student_account?: { student?: Student } | null;
 };
 export type AuthorizationPermission = {

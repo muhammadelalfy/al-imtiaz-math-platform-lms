@@ -1,4 +1,10 @@
 {
     "AttendanceInsights": true,
-    "Attendance": true
+    "Attendance": true,
+    "Auth": true,
+    "Teacher": true,
+    "Settings": true,
+    "Exams": true,
+    "Ui": true,
+    "Platform": true
 }

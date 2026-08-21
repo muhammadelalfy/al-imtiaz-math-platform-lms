@@ -295,3 +295,8 @@
 - [x] Verify the dashboard personalization working tree and release checklist before pull-request creation.
 - [x] Save a release checkpoint and prepare the dashboard personalization feature branch for review.
 - [x] Open a GitHub pull request with a concise implementation and validation summary.
+- [x] Audit public landing/login copy, super-admin routes and dashboard, and current Laravel module architecture for the المركز control-plane refactor.
+- [x] Remove المركز from public login and landing experiences; reserve it for protected super-admin control-plane usage only.
+- [x] Complete and protect the super-admin dashboard for platform operations, tenant oversight, subscriptions, and system health.
+- [x] Establish domain modules for teacher onboarding, authentication, settings, UI, exams, and shared contracts to support future microservice extraction.
+- [x] Add modular-boundary, authorization, and public-surface regression coverage; update Arabic SRS; run the full release quality gate.

@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest";
 import HomePage from "./page";
 
 describe("HomePage", () => {
-  it("selects the Arabic administrator portal shell", () => {
+  it("selects the Arabic teacher portal shell", () => {
     expect(HomePage()).toMatchObject({
-      props: { initialPortal: "admin" },
+      props: { initialPortal: "teacher" },
     });
   });
 });

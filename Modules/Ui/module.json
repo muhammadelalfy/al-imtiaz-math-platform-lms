@@ -1,0 +1,10 @@
+{
+  "name": "Ui",
+  "alias": "ui",
+  "description": "Shared user-interface contracts for the hosted React experience.",
+  "keywords": ["ui", "rtl", "frontend"],
+  "priority": 20,
+  "providers": ["Modules\\Ui\\Providers\\UiServiceProvider"],
+  "files": [],
+  "version": "1.0.0"
+}

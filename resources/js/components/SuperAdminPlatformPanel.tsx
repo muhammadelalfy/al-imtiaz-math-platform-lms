@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   CheckCircle2,
@@ -41,6 +41,8 @@ export default function SuperAdminPlatformPanel() {
   const [subscriptions, setSubscriptions] = useState<TenantSubscription[]>([]);
   const [draft, setDraft] = useState(emptyPackage);
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "needs_action" | "active">("all");
   const load = async () => {
     setBusy(true);
     try {
@@ -117,6 +119,28 @@ export default function SuperAdminPlatformPanel() {
       setBusy(false);
     }
   };
+  const visibleSubscriptions = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase("ar-EG");
+    return subscriptions.filter(item => {
+      const needsAction =
+        item.status !== "active" || item.payment_status !== "paid";
+      const isActive = item.status === "active" && item.payment_status === "paid";
+      const matchesFilter =
+        filter === "all" ||
+        (filter === "needs_action" && needsAction) ||
+        (filter === "active" && isActive);
+      const haystack = [
+        item.tenant?.name,
+        item.tenant?.slug,
+        item.tenant?.login_domain,
+        item.package?.name,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase("ar-EG");
+      return matchesFilter && (!normalizedQuery || haystack.includes(normalizedQuery));
+    });
+  }, [filter, query, subscriptions]);
   if (!overview)
     return (
       <div className="live-loading">
@@ -128,7 +152,7 @@ export default function SuperAdminPlatformPanel() {
       <div className="subscription-heading">
         <span className="eyebrow">المشرف الأعلى</span>
         <h2>تشغيل المنصة والاشتراكات</h2>
-        <p>تابع صحة النظام، واعتمد اشتراكات المراكز، وأدر الباقات والنطاقات.</p>
+        <p>تابع صحة النظام، واعتمد اشتراكات المؤسسات، وأدر الباقات والنطاقات.</p>
       </div>
       <div className="platform-health">
         <span>
@@ -141,11 +165,21 @@ export default function SuperAdminPlatformPanel() {
         <span>
           <CircleAlert /> PHP {overview.health.php_version}
         </span>
+        <span>
+          <Activity /> الطابور ({overview.queue.driver}):{" "}
+          <b>{overview.queue.pending_jobs}</b> معلّق
+        </span>
+        <span className={overview.queue.failed_jobs ? "platform-health-alert" : ""}>
+          <CircleAlert /> مهام فاشلة: <b>{overview.queue.failed_jobs}</b>
+        </span>
+        <span>
+          <CheckCircle2 /> ذاكرة العملية: <b>{overview.runtime.memory_peak_mb} MB</b>
+        </span>
       </div>
       <div className="subscription-status-grid platform-counts">
         <article>
           <Users />
-          <small>المراكز</small>
+          <small>المؤسسات</small>
           <b>{overview.counts.tenants}</b>
         </article>
         <article>
@@ -235,15 +269,44 @@ export default function SuperAdminPlatformPanel() {
         </form>
       </div>
       <section className="subscription-detail-card">
-        <h3>المشتركون وحالة التحصيل</h3>
+        <div className="platform-list-toolbar">
+          <div>
+            <h3>إدارة المؤسسات والاشتراكات</h3>
+            <small>
+              {visibleSubscriptions.length} من {subscriptions.length} اشتراك ظاهر
+            </small>
+          </div>
+          <div className="platform-list-controls">
+            <input
+              aria-label="البحث في المؤسسات والاشتراكات"
+              placeholder="بحث باسم المؤسسة أو النطاق"
+              value={query}
+              onChange={event => setQuery(event.target.value)}
+            />
+            <select
+              aria-label="تصفية الاشتراكات"
+              value={filter}
+              onChange={event =>
+                setFilter(event.target.value as "all" | "needs_action" | "active")
+              }
+            >
+              <option value="all">كل الحالات</option>
+              <option value="needs_action">تحتاج إجراء</option>
+              <option value="active">نشطة ومدفوعة</option>
+            </select>
+          </div>
+        </div>
         <div className="platform-subscription-list">
-          {subscriptions.map(item => (
+          {visibleSubscriptions.map(item => (
             <article className="platform-subscription-row" key={item.id}>
               <div>
                 <b>{item.tenant?.name}</b>
                 <small>
                   {item.package?.name} ·{" "}
                   {item.payment_status === "paid" ? "مدفوع" : "غير مدفوع"}
+                </small>
+                <small className={item.status === "active" ? "platform-status-good" : "platform-status-action"}>
+                  {item.status === "active" ? "مفعل" : "بانتظار الاعتماد"} · {item.tenant?.domain_status === "active" ? "النطاق مفعل" : "النطاق قيد الإعداد"}
                 </small>
                 <small>
                   ينتهي:{" "}
@@ -259,7 +322,7 @@ export default function SuperAdminPlatformPanel() {
                     disabled={busy}
                     onClick={() => void activate(item)}
                   >
-                    اعتماد
+                    اعتماد وتفعيل
                   </button>
                 )}
                 <button
@@ -272,6 +335,9 @@ export default function SuperAdminPlatformPanel() {
               </div>
             </article>
           ))}
+          {!visibleSubscriptions.length && (
+            <p className="platform-empty-state">لا توجد مؤسسات مطابقة للبحث أو التصفية الحالية.</p>
+          )}
         </div>
       </section>
     </section>

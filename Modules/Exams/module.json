@@ -1,0 +1,10 @@
+{
+  "name": "Exams",
+  "alias": "exams",
+  "description": "Exam authoring, delivery, monitoring, and reporting boundaries.",
+  "keywords": ["exams", "authoring", "monitoring"],
+  "priority": 20,
+  "providers": ["Modules\\Exams\\Providers\\ExamsServiceProvider"],
+  "files": [],
+  "version": "1.0.0"
+}

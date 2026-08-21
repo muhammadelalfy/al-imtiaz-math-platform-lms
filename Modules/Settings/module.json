@@ -1,0 +1,10 @@
+{
+  "name": "Settings",
+  "alias": "settings",
+  "description": "Teacher-owned settings boundaries for local operation and future service extraction.",
+  "keywords": ["settings", "academy", "preferences"],
+  "priority": 20,
+  "providers": ["Modules\\Settings\\Providers\\SettingsServiceProvider"],
+  "files": [],
+  "version": "1.0.0"
+}

@@ -123,7 +123,7 @@ export default function PublicLandingPage() {
       navigate("/teacher/login");
     } catch (error) {
       toast(
-        error instanceof ApiError ? error.message : "تعذر إنشاء حساب المركز"
+        error instanceof ApiError ? error.message : "تعذر إنشاء حساب المعلم"
       );
     } finally {
       setSaving(false);
@@ -135,9 +135,9 @@ export default function PublicLandingPage() {
     try {
       const result = await laravelApi.createDevelopmentMockTenant();
       setMockResult(result);
-      toast("تم تجهيز المركز التجريبي بنجاح");
+      toast("تم تجهيز المساحة التعليمية التجريبية بنجاح");
     } catch (error) {
-      toast(error instanceof ApiError ? error.message : "تعذر تجهيز المركز التجريبي");
+      toast(error instanceof ApiError ? error.message : "تعذر تجهيز المساحة التعليمية التجريبية");
     } finally {
       setMocking(false);
     }
@@ -169,9 +169,13 @@ export default function PublicLandingPage() {
           </button>
           <button
             className="landing-login"
-            onClick={() => navigate("/admin/login")}
+            onClick={() =>
+              document
+                .getElementById("packages")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
           >
-            دخول الإدارة <ArrowLeft size={15} />
+            أنشئ حساب معلم <ArrowLeft size={15} />
           </button>
         </div>
       </nav>
@@ -179,16 +183,16 @@ export default function PublicLandingPage() {
       <section className="landing-hero">
         <div className="landing-copy">
           <span className="landing-kicker landing-reveal">
-            <Sparkles size={15} /> منصة تشغيل مركزك التعليمية
+            <Sparkles size={15} /> منصة تشغيل مؤسستك التعليمية
           </span>
           <h1 className="landing-reveal">
-            كل ما يحتاجه مركز الرياضيات.
+            كل ما تحتاجه مؤسستك التعليمية.
             <br />
             <em>في مساحة واحدة أنيقة.</em>
           </h1>
           <p className="landing-reveal">
             الحضور الذكي، الاختبارات، الشيتات، المجموعات، والمدفوعات — مع باقة
-            واضحة تناسب مرحلة نمو مركزك.
+            واضحة تناسب مرحلة نمو مؤسستك.
           </p>
           <div className="landing-hero-actions landing-reveal">
             <button
@@ -213,7 +217,7 @@ export default function PublicLandingPage() {
               onClick={() => void registerMockTenant()}
             >
               {mocking ? <LoaderCircle className="spin" size={17} /> : <FlaskConical size={17} />}
-              جرّب تهيئة مركز تجريبي
+              جرّب مساحة تعليمية تجريبية
             </button>
           </div>
           <p className="landing-dev-note landing-reveal">
@@ -227,7 +231,7 @@ export default function PublicLandingPage() {
               <CheckCircle2 size={16} /> مزامنة عند الحاجة
             </span>
             <span>
-              <CheckCircle2 size={16} /> نمو مع مركزك
+              <CheckCircle2 size={16} /> نمو مع مؤسستك
             </span>
           </div>
         </div>
@@ -235,10 +239,10 @@ export default function PublicLandingPage() {
           <div className="landing-visual-glow" />
           <div
             className="landing-dashboard-visual"
-            aria-label="لوحة مركز تعليمية تعرض مؤشرات الحضور والاختبارات والاشتراكات"
+            aria-label="لوحة مؤسسة تعليمية تعرض مؤشرات الحضور والاختبارات والاشتراكات"
           >
             <div className="landing-dashboard-top">
-              <span>لوحة مركزك</span>
+              <span>لوحة مؤسستك</span>
               <b>اليوم</b>
             </div>
             <div className="landing-dashboard-main">
@@ -295,7 +299,7 @@ export default function PublicLandingPage() {
         <div>
           <Users size={21} />
           <span>
-            <b>مركزك منظّم</b>
+            <b>مؤسستك منظّمة</b>
             <small>طلاب ومجموعات وصفوف</small>
           </span>
         </div>
@@ -318,14 +322,14 @@ export default function PublicLandingPage() {
       <section className="landing-demo-metrics" aria-labelledby="demo-metrics-title">
         <div className="landing-demo-heading">
           <span className="landing-kicker"><FlaskConical size={15} /> عرض توضيحي للحركة داخل المنصة</span>
-          <h2 id="demo-metrics-title">صورة حية لنمو المركز، وليست بيانات عملاء حقيقية.</h2>
-          <p>تُعرض العدادات التالية لتوضيح طريقة قراءة مؤشرات مركزك بعد التفعيل.</p>
+          <h2 id="demo-metrics-title">صورة حية لنمو مؤسستك، وليست بيانات عملاء حقيقية.</h2>
+          <p>تُعرض العدادات التالية لتوضيح طريقة قراءة مؤشرات مؤسستك بعد التفعيل.</p>
         </div>
         <div className="landing-demo-counter-grid">
           <article>
             <span className="landing-counter-icon"><Users size={21} /></span>
             <strong data-demo-count="3">٣</strong>
-            <b>مراكز تجريبية</b>
+            <b>مساحات تجريبية</b>
             <small>مثال لعرض تعدد المساحات</small>
           </article>
           <article>
@@ -358,7 +362,7 @@ export default function PublicLandingPage() {
           <div className="landing-ecosystem-grid" aria-hidden="true" />
           <div className="landing-ecosystem-fallback" aria-hidden="true">
             <div className="landing-fallback-core">
-              <span>مركزك اليوم</span>
+              <span>مؤسستك اليوم</span>
               <div className="landing-fallback-bars"><i /><i /><i /><i /><i /></div>
               <div className="landing-fallback-pills"><b>الحضور</b><b>الاختبارات</b><b>الاشتراك</b></div>
             </div>
@@ -368,7 +372,7 @@ export default function PublicLandingPage() {
           </div>
           <img
             src={ecosystemImage}
-            alt="تصور بصري لمنصة مركز رياضيات تجمع الحضور والاختبارات والمجموعات والمدفوعات"
+            alt="تصور بصري لمنصة تعليمية تجمع الحضور والاختبارات والمجموعات والمدفوعات"
             onError={event => {
               event.currentTarget.style.display = "none";
             }}
@@ -433,7 +437,7 @@ export default function PublicLandingPage() {
 
       <footer className="landing-footer">
         <b>زويل التعليمية</b>
-        <span>نظام مركزك التعليمي، بوضوح وهدوء.</span>
+        <span>نظام مؤسستك التعليمية، بوضوح وهدوء.</span>
       </footer>
 
       <a
@@ -466,10 +470,10 @@ export default function PublicLandingPage() {
             >
               <X size={18} />
             </button>
-            <span className="landing-kicker">إنشاء مركز جديد</span>
+            <span className="landing-kicker">إنشاء حساب معلم جديد</span>
             <h2>ابدأ مع باقة {selected.name}</h2>
             <p>
-              يُنشأ حساب المعلم والمركز، ثم يراجع المشرف الأعلى حالة الاشتراك.
+              يُنشأ حساب المعلم ومساحة مؤسسته، ثم يراجع المشرف الأعلى حالة الاشتراك.
             </p>
             <div className="landing-form-grid">
               <label>
@@ -481,7 +485,7 @@ export default function PublicLandingPage() {
                 />
               </label>
               <label>
-                اسم المركز
+                اسم المؤسسة التعليمية
                 <input
                   required
                   value={form.organization_name}
@@ -500,7 +504,7 @@ export default function PublicLandingPage() {
                 />
               </label>
               <label>
-                معرّف المركز
+                معرّف المؤسسة
                 <input
                   required
                   pattern="[A-Za-z0-9-]{3,80}"
@@ -549,10 +553,10 @@ export default function PublicLandingPage() {
               <X size={18} />
             </button>
             <span className="landing-kicker"><FlaskConical size={15} /> تجربة Manus مكتملة</span>
-            <h2 id="mock-onboarding-title">تم تجهيز مركزك التجريبي</h2>
+            <h2 id="mock-onboarding-title">تم تجهيز مساحتك التعليمية التجريبية</h2>
             <p>{mockResult.message}</p>
             <dl className="landing-mock-status">
-              <div><dt>المركز</dt><dd>{mockResult.subscription.tenant?.name}</dd></div>
+              <div><dt>المؤسسة</dt><dd>{mockResult.subscription.tenant?.name}</dd></div>
               <div><dt>معرّف المساحة</dt><dd>{mockResult.subscription.tenant?.database_schema}</dd></div>
               <div><dt>حالة التجهيز</dt><dd>{mockResult.subscription.tenant?.schema_status === "ready" ? "جاهز للتجربة" : "قيد التجهيز"}</dd></div>
               <div><dt>النطاق</dt><dd>{mockResult.subscription.tenant?.login_domain ?? "ينتظر إعداد DNS للإنتاج"}</dd></div>

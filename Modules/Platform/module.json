@@ -1,0 +1,10 @@
+{
+  "name": "Platform",
+  "alias": "platform",
+  "description": "Super-admin control-plane boundaries for platform health, subscriptions, and tenant oversight.",
+  "keywords": ["platform", "super-admin", "subscriptions", "tenancy"],
+  "priority": 5,
+  "providers": ["Modules\\Platform\\Providers\\PlatformServiceProvider"],
+  "files": [],
+  "version": "1.0.0"
+}

@@ -965,6 +965,10 @@
 .platform-health svg {
   color: var(--emerald);
 }
+.platform-health-alert {
+  border-color: color-mix(in srgb, #ba3d24 38%, transparent) !important;
+  color: #9f321f;
+}
 .platform-counts {
   grid-template-columns: repeat(5, 1fr);
 }
@@ -1009,6 +1013,33 @@
   max-height: 360px;
   overflow: auto;
 }
+.platform-list-toolbar,
+.platform-list-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.platform-list-toolbar {
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.platform-list-toolbar h3 { margin: 0; }
+.platform-list-toolbar small,
+.platform-empty-state { color: #718783; font-size: 12px; }
+.platform-list-controls { flex-wrap: wrap; }
+.platform-list-controls input,
+.platform-list-controls select {
+  min-height: 38px;
+  border: 1px solid var(--line, rgba(21, 60, 61, 0.14));
+  border-radius: 10px;
+  padding: 7px 10px;
+  color: var(--ink);
+  background: var(--card, #fff);
+}
+.platform-list-controls input { min-width: 210px; }
+.platform-status-good { color: var(--emerald) !important; }
+.platform-status-action { color: #9f5c1d !important; }
+.platform-empty-state { padding: 18px 0; margin: 0; }
 .platform-subscription-row > div:last-child {
   display: flex;
   gap: 7px;
@@ -1038,6 +1069,10 @@
   .landing-demo-metrics {
     grid-template-columns: 1fr;
   }
+  .platform-list-toolbar { align-items: flex-start; flex-direction: column; }
+  .platform-list-controls { width: 100%; }
+  .platform-list-controls input,
+  .platform-list-controls select { flex: 1; min-width: 0; }
   .landing-demo-metrics {
     gap: 24px;
     padding: 24px;

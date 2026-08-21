@@ -16,11 +16,17 @@ export default function App() {
           <Switch>
             <Route
               path="/"
-              component={() => <LiveDashboard initialPortal="admin" />}
+              component={() => <LiveDashboard initialPortal="teacher" />}
             />
             <Route
-              path="/admin/login"
-              component={() => <LiveDashboard initialPortal="admin" />}
+              path="/teacher/login"
+              component={() => <LiveDashboard initialPortal="teacher" />}
+            />
+            <Route
+              path="/control/login"
+              component={() => (
+                <LiveDashboard initialPortal="super_admin" lockPortal />
+              )}
             />
             <Route
               path="/parent/login"

@@ -9,7 +9,13 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import LiveDashboard from "@/pages/LiveDashboard";
 import type { PortalRoute } from "../lib/portalRoute";
 
-export function NextLmsShell({ initialPortal }: { initialPortal: PortalRoute }) {
+export function NextLmsShell({
+  initialPortal,
+  lockPortal = false,
+}: {
+  initialPortal: PortalRoute;
+  lockPortal?: boolean;
+}) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
@@ -18,7 +24,7 @@ export function NextLmsShell({ initialPortal }: { initialPortal: PortalRoute }) 
         <ThemeProvider defaultTheme="light" switchable>
           <TooltipProvider>
             <Toaster />
-            <LiveDashboard initialPortal={initialPortal} />
+            <LiveDashboard initialPortal={initialPortal} lockPortal={lockPortal} />
           </TooltipProvider>
         </ThemeProvider>
       </ErrorBoundary>

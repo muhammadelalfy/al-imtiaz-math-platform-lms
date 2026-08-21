@@ -90,6 +90,16 @@ export type PlatformOverview = {
     storage: string;
     php_version: string;
   };
+  queue: {
+    driver: string;
+    pending_jobs: number;
+    failed_jobs: number;
+  };
+  runtime: {
+    memory_peak_mb: number;
+    summary_duration_ms: number;
+    observed_at: string;
+  };
   counts: {
     tenants: number;
     teachers: number;
