@@ -8,6 +8,10 @@ import {
   type OfflineScope,
 } from "./offlineStore";
 import { trackRequestActivity } from "./requestActivity";
+import {
+  clearTeacherAcademyName,
+  rememberTeacherAcademyName,
+} from "./appBrand";
 
 export type Role = "admin" | "teacher" | "parent" | "student";
 
@@ -21,7 +25,11 @@ export type ApiUser = {
   can_manage_groups?: boolean;
   can_manage_notification_channels?: boolean;
   is_super_admin?: boolean;
+  academy_name?: string | null;
   student_account?: { student?: Student } | null;
+};
+export type TeacherAcademyIdentity = {
+  academy_name: string;
 };
 export type SubscriptionPackage = {
   id: number;
@@ -378,6 +386,7 @@ function saveToken(token: string): void {
 
 function rememberOfflineScope(user: ApiUser): void {
   activeOfflineScope = { userId: user.id, role: user.role };
+  rememberTeacherAcademyName(user);
 }
 
 export function offlineScopeForUser(user: ApiUser): OfflineScope {
@@ -582,6 +591,17 @@ export const laravelApi = {
     rememberOfflineScope(user);
     return user;
   },
+  async teacherAcademyIdentity() {
+    return request<TeacherAcademyIdentity>("/teacher/academy-identity");
+  },
+  async updateTeacherAcademyIdentity(academy_name: string) {
+    const response = await request<TeacherAcademyIdentity>(
+      "/teacher/academy-identity",
+      { method: "PUT", body: JSON.stringify({ academy_name }) }
+    );
+    rememberTeacherAcademyName({ role: "teacher", ...response });
+    return response;
+  },
   async authorizationCatalog() {
     return request<AuthorizationCatalog>("/staff/authorization/catalog");
   },
@@ -652,6 +672,7 @@ export const laravelApi = {
     await request("/auth/logout", { method: "POST" });
     if (activeOfflineScope) await clearOfflineScope(activeOfflineScope);
     activeOfflineScope = null;
+    clearTeacherAcademyName();
     window.localStorage.removeItem(TOKEN_KEY);
   },
   async students(

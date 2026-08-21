@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\TeacherSlackLogDestinationController;
 use App\Http\Controllers\Api\WorksheetController;
 use App\Http\Controllers\Api\PublicSubscriptionController;
 use App\Http\Controllers\Api\TeacherSubscriptionController;
+use App\Http\Controllers\Api\TeacherAcademyIdentityController;
 use App\Http\Controllers\Api\SuperAdminSubscriptionController;
 use Illuminate\Support\Facades\Route;
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -38,6 +39,12 @@ Route::post('/scheduled/notifications/drain', ScheduledNotificationQueueControll
 Route::middleware(['auth:sanctum', \App\Http\Middleware\DispatchTeacherSlackRequestLog::class])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::middleware('role.guard:teacher')->get('/teacher/subscription', [TeacherSubscriptionController::class, 'show']);
+    Route::middleware('role.guard:teacher')
+        ->prefix('teacher/academy-identity')
+        ->group(function (): void {
+            Route::get('/', [TeacherAcademyIdentityController::class, 'show']);
+            Route::put('/', [TeacherAcademyIdentityController::class, 'update']);
+        });
     Route::prefix('super-admin')->group(function (): void {
         Route::get('/overview', [SuperAdminSubscriptionController::class, 'overview']);
         Route::get('/packages', [SuperAdminSubscriptionController::class, 'packages']);

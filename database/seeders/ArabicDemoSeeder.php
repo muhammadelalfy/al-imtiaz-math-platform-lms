@@ -417,7 +417,7 @@ class ArabicDemoSeeder extends Seeder
         ]);
 
         $tenant = Tenant::updateOrCreate(['slug' => 'al-imtiaz-demo'], [
-            'name' => 'مركز الامتياز التجريبي', 'domain_status' => 'pending',
+            'name' => 'الامتياز', 'domain_status' => 'pending',
         ]);
         $teacher->forceFill(['tenant_id' => $tenant->id])->save();
         TenantSubscription::updateOrCreate(['tenant_id' => $tenant->id], [

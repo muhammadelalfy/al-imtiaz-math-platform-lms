@@ -12,8 +12,9 @@ const styles = readFileSync(
 );
 
 describe("global request loader branding", () => {
-  it("uses the managed Al-Imtiaz logo with an image-failure fallback mark", () => {
-    expect(source).toContain("al-imtiaz-mark_99680b5d.png");
+  it("uses the verified Zewal logo with an image-failure fallback mark", () => {
+    expect(source).toContain("ZEWAL_LOGO_URL");
+    expect(source).toContain("ز");
     expect(source).toContain("onError={() => setLogoFailed(true)}");
     expect(source).toContain("global-request-loader__logo-fallback");
     expect(styles).toContain(".global-request-loader__brand.is-fallback");

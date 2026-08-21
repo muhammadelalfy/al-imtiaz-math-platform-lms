@@ -271,3 +271,16 @@
 - [x] Add CRUD, authorization, validation, relationship, and repeatable-seeding regression coverage for the expanded level data.
 - [x] Update the Arabic SRS and validate the full quality gate for the academic-level data expansion.
 - [x] Scale the academic-level development seeder from 500 to 5,000 deterministic Arabic learner records and verify repeatable bulk performance.
+- [x] Create an original scalable brand logo for the mathematics platform and retain it as a managed visual asset.
+- [x] Recommend a concise Arabic-first system name that fits the platform’s learning and SaaS positioning.
+- [x] Define an Arabic-first cross-subject brand name for the school and teacher platform.
+- [x] Create a scalable managed logo asset that represents multiple academic subjects rather than mathematics alone.
+- [x] Repair the inaccessible generated Madar logo link and provide a verified working managed asset URL.
+- [x] Replace the global loading overlay logo with the verified Madar managed asset and retain its fallback behavior.
+- [x] Rename the visible product identity, application title, and brand copy from Al-Imtiaz to Madar without changing internal tenant records or historical data.
+- [x] Add regression coverage and verify desktop/mobile presentation for the Madar-branded loading overlay and title.
+- [x] Replace the in-progress Madar product identity with the confirmed Zewal / زويل name across visible platform surfaces and title configuration.
+- [x] Keep the loading mark operational with a Zewal-compatible branded fallback while the managed-logo delivery route is repaired.
+- [x] Add a teacher-owned academy display-name setting with validation, authorization, stable API output, seed support, and default value الامتياز for the current teacher.
+- [x] Render the teacher academy name in the settings surface and global loading overlay while retaining زويل as the shared platform brand.
+- [x] Add backend/frontend regression coverage, Arabic SRS traceability, and full quality validation for teacher academy identity.

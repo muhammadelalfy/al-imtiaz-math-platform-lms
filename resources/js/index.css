@@ -3743,11 +3743,11 @@ nav {
   width: 62px;
   height: 62px;
   place-items: center;
-  border: 2px solid #d2eee4;
+  border: 2px solid #d8e4ff;
   border-radius: 22px;
   color: #fff;
-  background: linear-gradient(145deg, #147d68, #0b4f50);
-  box-shadow: 0 10px 22px rgba(18, 102, 90, 0.24);
+  background: linear-gradient(145deg, #1d2f5f, #14a6a0);
+  box-shadow: 0 10px 22px rgba(29, 47, 95, 0.24);
   font: 800 41px/1 Cairo, sans-serif;
   opacity: 0;
 }
@@ -3779,6 +3779,28 @@ nav {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+}
+.academy-identity-settings {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+.academy-identity-settings > p {
+  margin: 0;
+  color: #67716c;
+  line-height: 1.7;
+}
+.academy-identity-settings label {
+  display: grid;
+  gap: 8px;
+  color: #173b49;
+  font-weight: 800;
+}
+.academy-identity-settings input {
+  width: 100%;
+}
+.academy-identity-settings .primary {
+  width: fit-content;
 }
 .slack-log-settings {
   display: grid;

@@ -247,12 +247,12 @@ export default function Home() {
       <aside className="sidebar">
         <div className="brand-block">
           <img
-            src="/manus-storage/al-imtiaz-mark_99680b5d.png"
-            alt="شعار الامتياز"
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663473185782/qLYMEkUYKHpFOzUe.svg"
+            alt="شعار زويل"
           />
           <div>
-            <strong>الامتياز</strong>
-            <span>في الرياضيات</span>
+            <strong>زويل</strong>
+            <span>منصة تعليمية</span>
           </div>
         </div>
         <button
@@ -441,10 +441,10 @@ export default function Home() {
 function Login({ onEnter }: { onEnter: () => void }) {
   const [mode, setMode] = useState("admin");
   return (
-    <div className="login-page" dir="rtl">
-      <div className="login-art">
-        <div className="art-overlay">
-          <img src="/manus-storage/al-imtiaz-mark_99680b5d.png" alt="" />
+      <div className="login-page" dir="rtl">
+        <div className="login-art">
+          <div className="art-overlay">
+          <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663473185782/qLYMEkUYKHpFOzUe.svg" alt="" />
           <p>
             كل طالب أمامك.
             <br />
@@ -456,12 +456,12 @@ function Login({ onEnter }: { onEnter: () => void }) {
       <div className="login-panel">
         <div className="login-brand">
           <img
-            src="/manus-storage/al-imtiaz-mark_99680b5d.png"
-            alt="شعار الامتياز"
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663473185782/qLYMEkUYKHpFOzUe.svg"
+            alt="شعار زويل"
           />
           <div>
-            <b>الامتياز</b>
-            <span>في الرياضيات</span>
+            <b>زويل</b>
+            <span>منصة تعليمية</span>
             <i>منصة الأستاذ أحمد عاطف الشافعى</i>
           </div>
         </div>
@@ -1640,7 +1640,7 @@ function SettingsPanel() {
   const [centerName, setCenterName] = useState(
     () =>
       window.localStorage.getItem("al-imtiaz-center-name") ||
-      "الامتياز في الرياضيات"
+      "زويل التعليمية"
   );
   const [emailAlerts, setEmailAlerts] = useState(
     () => window.localStorage.getItem("al-imtiaz-email-alerts") !== "off"
@@ -1650,7 +1650,7 @@ function SettingsPanel() {
     event.preventDefault();
     window.localStorage.setItem(
       "al-imtiaz-center-name",
-      centerName.trim() || "الامتياز في الرياضيات"
+      centerName.trim() || "زويل التعليمية"
     );
     window.localStorage.setItem(
       "al-imtiaz-email-alerts",
@@ -2158,14 +2158,14 @@ function downloadStudentsExcel(rows: Student[]) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "طلاب-الامتياز.xls";
+  link.download = "طلاب-زويل.xls";
   link.click();
   URL.revokeObjectURL(url);
   toast("تم تصدير بيانات الطلاب إلى Excel");
 }
 
 function printStudentsPdf(rows: Student[]) {
-  const content = `<html dir="rtl"><head><meta charset="utf-8"><title>تقرير طلاب الامتياز</title><style>body{font-family:Arial;padding:32px;color:#173b49}h1{color:#147d68}table{width:100%;border-collapse:collapse;margin-top:22px}th,td{border:1px solid #dfe5de;padding:9px;text-align:right;font-size:12px}th{background:#e4f2eb}</style></head><body><h1>تقرير طلاب الامتياز في الرياضيات</h1><p>عدد الطلاب: ${rows.length}</p><table><tr><th>الاسم</th><th>المجموعة</th><th>الصف</th><th>الحالة</th><th>الاشتراك</th><th>آخر امتحان</th></tr>${rows.map(s => `<tr><td>${s.name}</td><td>${s.group}</td><td>${s.grade}</td><td>${s.status}</td><td>${s.paid ? "دفع" : "لم يدفع"}</td><td>${s.exam}</td></tr>`).join("")}</table><script>window.onload=()=>window.print()</script></body></html>`;
+  const content = `<html dir="rtl"><head><meta charset="utf-8"><title>تقرير طلاب زويل</title><style>body{font-family:Arial;padding:32px;color:#173b49}h1{color:#1d2f5f}table{width:100%;border-collapse:collapse;margin-top:22px}th,td{border:1px solid #dfe5de;padding:9px;text-align:right;font-size:12px}th{background:#e4f2eb}</style></head><body><h1>تقرير طلاب زويل التعليمية</h1><p>عدد الطلاب: ${rows.length}</p><table><tr><th>الاسم</th><th>المجموعة</th><th>الصف</th><th>الحالة</th><th>الاشتراك</th><th>آخر امتحان</th></tr>${rows.map(s => `<tr><td>${s.name}</td><td>${s.group}</td><td>${s.grade}</td><td>${s.status}</td><td>${s.paid ? "دفع" : "لم يدفع"}</td><td>${s.exam}</td></tr>`).join("")}</table><script>window.onload=()=>window.print()</script></body></html>`;
   const win = window.open("", "_blank");
   if (win) {
     win.document.write(content);

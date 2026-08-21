@@ -27,7 +27,7 @@ import "./subscription-platform.scss";
 const heroImage = "/manus-storage/al-imtiaz-landing-system-visual_a887ee83.png";
 const ecosystemImage = "/manus-storage/al-imtiaz-platform-ecosystem-visual_8bfff868.png";
 const whatsAppConnectUrl = `https://wa.me/?text=${encodeURIComponent(
-  "مرحباً، أرغب في التعرف على منصة الامتياز في الرياضيات."
+  "مرحباً، أرغب في التعرف على منصة زويل التعليمية."
 )}`;
 
 gsap.registerPlugin(ScrollTrigger);
@@ -156,8 +156,8 @@ export default function PublicLandingPage() {
             <Sparkles size={19} />
           </span>
           <span>
-            <b>الامتياز</b>
-            <small>في الرياضيات</small>
+            <b>زويل</b>
+            <small>منصة تعليمية</small>
           </span>
         </button>
         <div className="landing-nav-actions">
@@ -432,7 +432,7 @@ export default function PublicLandingPage() {
       </section>
 
       <footer className="landing-footer">
-        <b>الامتياز في الرياضيات</b>
+        <b>زويل التعليمية</b>
         <span>نظام مركزك التعليمي، بوضوح وهدوء.</span>
       </footer>
 
@@ -441,7 +441,7 @@ export default function PublicLandingPage() {
         href={whatsAppConnectUrl}
         target="_blank"
         rel="noreferrer"
-        aria-label="افتح واتساب لبدء محادثة عن منصة الامتياز في الرياضيات"
+        aria-label="افتح واتساب لبدء محادثة عن منصة زويل التعليمية"
         title="تواصل عبر واتساب"
       >
         <MessageCircle size={22} />

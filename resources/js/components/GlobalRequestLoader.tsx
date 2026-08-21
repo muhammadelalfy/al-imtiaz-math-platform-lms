@@ -3,6 +3,12 @@ import {
   getActiveRequestCount,
   subscribeToRequestActivity,
 } from "@/lib/requestActivity";
+import {
+  readTeacherAcademyName,
+  teacherAcademyNameChangedEvent,
+  ZEWAL_LOGO_URL,
+  ZEWAL_PLATFORM_NAME_AR,
+} from "@/lib/appBrand";
 
 const REQUEST_DELAY_MS = 140;
 
@@ -14,6 +20,17 @@ export default function GlobalRequestLoader() {
   );
   const [visible, setVisible] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
+  const [academyName, setAcademyName] = useState(readTeacherAcademyName);
+
+  useEffect(() => {
+    const refreshAcademyName = () => setAcademyName(readTeacherAcademyName());
+    window.addEventListener(teacherAcademyNameChangedEvent, refreshAcademyName);
+    return () =>
+      window.removeEventListener(
+        teacherAcademyNameChangedEvent,
+        refreshAcademyName
+      );
+  }, []);
 
   useEffect(() => {
     if (!activeRequestCount) {
@@ -35,18 +52,22 @@ export default function GlobalRequestLoader() {
           className={`global-request-loader__brand${logoFailed ? " is-fallback" : ""}`}
           aria-hidden="true"
         >
-          <span className="global-request-loader__logo-fallback">ا</span>
+          <span className="global-request-loader__logo-fallback">ز</span>
           {!logoFailed && (
             <img
               className="global-request-loader__logo"
-              src="/manus-storage/al-imtiaz-mark_99680b5d.png"
+              src={ZEWAL_LOGO_URL}
               alt=""
               onError={() => setLogoFailed(true)}
             />
           )}
         </div>
-        <strong>جارٍ تجهيز بيانات الامتياز</strong>
-        <span>لحظة واحدة من فضلك</span>
+        <strong>
+          جارٍ تجهيز بيانات {academyName || ZEWAL_PLATFORM_NAME_AR}
+        </strong>
+        <span className="global-request-loader__platform">
+          {academyName ? `بإدارة ${ZEWAL_PLATFORM_NAME_AR}` : "لحظة واحدة من فضلك"}
+        </span>
       </div>
     </div>
   );

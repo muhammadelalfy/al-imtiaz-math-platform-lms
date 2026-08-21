@@ -1,6 +1,6 @@
 # LMS
 
-**Al-Imtiaz Math Platform** is an Arabic RTL learning-management system for mathematics education. The platform uses Laravel 13 as its API and domain backend with a standalone Next.js 16 frontend, Eloquent models, monitored exams, attendance QR workflows, reports, payments, worksheets, and dimensioned geometry questions.
+**Zewal Education Platform** is an Arabic RTL learning-management system. The current implementation focuses on mathematics education while the Zewal product identity is designed to extend to schools, teachers, and additional subjects. The platform uses Laravel 13 as its API and domain backend with a standalone Next.js 16 frontend, Eloquent models, monitored exams, attendance QR workflows, reports, payments, worksheets, and dimensioned geometry questions.
 
 ## Architecture
 

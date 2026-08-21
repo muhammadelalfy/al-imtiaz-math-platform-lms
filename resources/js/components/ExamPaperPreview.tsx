@@ -146,20 +146,20 @@ export function ExamPaper({
         style={{ opacity: template.watermark_opacity / 100 }}
         aria-hidden="true"
       >
-        {template.watermark_text || "الامتياز في الرياضيات"}
+        {template.watermark_text || "زويل التعليمية"}
       </div>
       <div
         className="exam-paper-watermark exam-paper-watermark--secondary"
         style={{ opacity: template.watermark_opacity / 100 }}
         aria-hidden="true"
       >
-        {template.watermark_text || "الامتياز في الرياضيات"}
+        {template.watermark_text || "زويل التعليمية"}
       </div>
       <header className="exam-paper-header">
         <div>
           <span className="eyebrow exam-paper-brand" dir="rtl">
             <CheckCircle2 size={14} aria-hidden="true" />
-            <bdi>الامتياز في الرياضيات</bdi>
+            <bdi>زويل التعليمية</bdi>
           </span>
           <h2>{template.title}</h2>
           <p>{template.department?.name || "اختبار رياضيات"}</p>
@@ -192,7 +192,7 @@ export function ExamPaper({
             key={question.id || `${question.sort_order}-${index}`}
           >
             <div className="exam-paper-question-watermark" aria-hidden="true">
-              {template.watermark_text || "الامتياز في الرياضيات"}
+              {template.watermark_text || "زويل التعليمية"}
             </div>
             <div className="exam-paper-question-head">
               <strong>

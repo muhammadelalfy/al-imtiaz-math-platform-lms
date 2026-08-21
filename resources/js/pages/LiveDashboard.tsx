@@ -282,19 +282,19 @@ function LoginPanel({
       <div className="live-login-card">
         <div className="login-brand">
           <img
-            src="/manus-storage/al-imtiaz-mark_99680b5d.png"
-            alt="شعار الامتياز"
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663473185782/qLYMEkUYKHpFOzUe.svg"
+            alt="شعار زويل"
           />
           <div>
-            <b>الامتياز في الرياضيات</b>
-            <span>تعلم أوضح. نتائج أقوى.</span>
+            <b>زويل التعليمية</b>
+            <span>تعليم متكامل. أثر أوضح.</span>
           </div>
         </div>
-        <span className="eyebrow">بوابة الامتياز الآمنة</span>
+        <span className="eyebrow">بوابة زويل الآمنة</span>
         <h1>{portalLabels[portal]}</h1>
         <p>
           {mode
-            ? `تسجيل دخول ${portalLabels[portal]} إلى بوابة الامتياز في الرياضيات.`
+            ? `تسجيل دخول ${portalLabels[portal]} إلى بوابة زويل التعليمية.`
             : "أنشئ حساب ولي أمر أو طالب للمتابعة التعليمية."}
         </p>
         <div className="login-portals">
@@ -517,12 +517,12 @@ function AuthenticatedDashboard({
       <aside className="live-sidebar">
         <div className="brand-block">
           <img
-            src="/manus-storage/al-imtiaz-mark_99680b5d.png"
-            alt="شعار الامتياز"
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663473185782/qLYMEkUYKHpFOzUe.svg"
+            alt="شعار زويل"
           />
           <div>
-            <strong>الامتياز</strong>
-            <span>في الرياضيات</span>
+            <strong>زويل</strong>
+            <span>منصة تعليمية</span>
           </div>
         </div>
         <div className="live-user">
@@ -1441,7 +1441,7 @@ function SettingsView({ role }: { role: Role }) {
       </div>
       <div className="card settings-card">
         <h3>الأستاذ / أحمد عاطف الشافعى</h3>
-        <p>الامتياز في الرياضيات · إدارة الحساب والصلاحيات والمزامنة</p>
+        <p>زويل التعليمية · إدارة الحساب والصلاحيات والمزامنة</p>
         <div className="live-row">
           <span>حالة النظام</span>
           <b className="payment-paid">متصل</b>
@@ -1451,8 +1451,85 @@ function SettingsView({ role }: { role: Role }) {
           <b>تلقائية عند عودة الاتصال</b>
         </div>
       </div>
+      {role === "teacher" && <TeacherAcademyIdentitySettings />}
       {role === "teacher" && <TeacherSlackLogSettings />}
     </section>
+  );
+}
+
+function TeacherAcademyIdentitySettings() {
+  const [academyName, setAcademyName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void laravelApi
+      .teacherAcademyIdentity()
+      .then(identity => setAcademyName(identity.academy_name))
+      .catch(caught =>
+        toast(
+          caught instanceof ApiError
+            ? caught.message
+            : "تعذر تحميل اسم الأكاديمية"
+        )
+      )
+      .finally(() => setLoading(false));
+  }, []);
+
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const identity = await laravelApi.updateTeacherAcademyIdentity(
+        academyName
+      );
+      setAcademyName(identity.academy_name);
+      toast("تم حفظ اسم الأكاديمية. سيظهر في شاشة التحميل الخاصة بك.");
+    } catch (caught) {
+      toast(
+        caught instanceof ApiError
+          ? caught.message
+          : "تعذر حفظ اسم الأكاديمية"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form className="card academy-identity-settings" onSubmit={save}>
+      <div className="settings-card__head">
+        <div>
+          <span className="eyebrow">هوية أكاديميتك</span>
+          <h3>اسم النظام الخاص بك</h3>
+        </div>
+        <GraduationCap size={20} aria-hidden="true" />
+      </div>
+      <p>
+        يظهر هذا الاسم لطلابك وأولياء الأمور في شاشة التحميل، بينما تبقى زويل
+        المنصة التعليمية المشتركة.
+      </p>
+      <label>
+        اسم الأكاديمية أو النظام
+        <input
+          value={academyName}
+          onChange={event => setAcademyName(event.target.value)}
+          maxLength={120}
+          minLength={2}
+          disabled={loading || saving}
+          placeholder="مثال: الامتياز"
+          required
+        />
+      </label>
+      <button
+        className="primary"
+        type="submit"
+        disabled={loading || saving || academyName.trim().length < 2}
+      >
+        {saving ? <RefreshCw className="spin" size={15} /> : <Settings size={15} />}
+        {saving ? "جارٍ الحفظ" : "حفظ الاسم"}
+      </button>
+    </form>
   );
 }
 
@@ -2235,7 +2312,7 @@ function ExamManagementPanel({
   const [departmentId, setDepartmentId] = useState("");
   const [grade, setGrade] = useState("");
   const [duration, setDuration] = useState("60");
-  const [watermark, setWatermark] = useState("الامتياز في الرياضيات");
+  const [watermark, setWatermark] = useState("زويل التعليمية");
   const [instructions, setInstructions] = useState("");
   const [prompt, setPrompt] = useState("");
   const [questionType, setQuestionType] = useState<
@@ -2885,7 +2962,7 @@ function ExamRunner({
         className="exam-watermark"
         style={{ opacity: session.template.watermark_opacity / 100 }}
       >
-        {session.template.watermark_text || "الامتياز في الرياضيات"}
+        {session.template.watermark_text || "زويل التعليمية"}
       </div>
       <div className="exam-questions">
         {session.template.questions.map((question, index) => (
