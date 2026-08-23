@@ -1,0 +1,35 @@
+{
+    "name": "زويل التعليمية",
+    "short_name": "زويل",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#F8F7F1",
+    "theme_color": "#117D73",
+    "description": "تطبيق زويل التعليمي المرافق لإدارة التعلم والحضور والنتائج.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

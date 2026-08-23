@@ -300,3 +300,10 @@
 - [x] Complete and protect the super-admin dashboard for platform operations, tenant oversight, subscriptions, and system health.
 - [x] Establish domain modules for teacher onboarding, authentication, settings, UI, exams, and shared contracts to support future microservice extraction.
 - [x] Add modular-boundary, authorization, and public-surface regression coverage; update Arabic SRS; run the full release quality gate.
+- [x] Audit the Laravel API contracts and local toolchain for a Flutter companion application without duplicating backend business rules.
+- [x] Scaffold a maintainable Flutter application with Arabic RTL theming, secure session storage, typed API boundaries, and feature-first architecture.
+- [x] Implement role-aware authentication and core mobile dashboard workflows for teachers, parents, students, and super-admins.
+- [x] Implement mobile views for students, QR attendance, worksheets, assessments, payments, notifications, and reports using existing Laravel APIs.
+- [x] Add Flutter unit/widget coverage, build validation, Arabic SRS traceability, and release documentation for the mobile app.
+- [x] Enforce Clean Architecture, SOLID boundaries, repository contracts, dependency injection, and measured performance safeguards across the Flutter implementation.
+- [x] Proceed autonomously with recommended mobile architecture, UX, and validation decisions while preserving platform security and API compatibility.
