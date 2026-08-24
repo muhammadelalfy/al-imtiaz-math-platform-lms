@@ -18,7 +18,7 @@ import {
   type SubscriptionPackage,
   type TenantSubscription,
 } from "@/lib/laravelApi";
-import "@/pages/subscription-platform.css";
+import "@/pages/subscription-platform.scss";
 
 const emptyPackage = {
   code: "",

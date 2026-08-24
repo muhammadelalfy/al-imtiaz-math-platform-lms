@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -45,13 +46,7 @@ class AuthController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
-        $user->load(['studentAccount.student', 'roles.permissions', 'permissions']);
-        $user->setAttribute('can_manage_authorization', $user->can('authorization.manage'));
-        $user->setAttribute('can_send_notifications', $user->can('notifications.send'));
-        $user->setAttribute('can_manage_groups', $user->can('groups.manage'));
-        $user->setAttribute('can_manage_notification_channels', $user->can('notifications.channels.manage'));
-
-        return $user;
+        return $this->decorateApiUser($user);
     }
 
     public function logout(Request $request)
@@ -81,15 +76,25 @@ class AuthController extends Controller
     private function tokenResponse(User $user, ?string $loginType = null): array
     {
         return [
-            'user' => tap($user->load(['studentAccount.student', 'roles.permissions', 'permissions']), function (User $loadedUser): void {
-                $loadedUser->setAttribute('can_manage_authorization', $loadedUser->can('authorization.manage'));
-                $loadedUser->setAttribute('can_send_notifications', $loadedUser->can('notifications.send'));
-                $loadedUser->setAttribute('can_manage_groups', $loadedUser->can('groups.manage'));
-                $loadedUser->setAttribute('can_manage_notification_channels', $loadedUser->can('notifications.channels.manage'));
-                $loadedUser->setAttribute('is_super_admin', $loadedUser->is_super_admin);
-            }),
+            'user' => $this->decorateApiUser($user),
             'token' => $user->createToken('lms-'.$loginType, ['guard:'.$loginType])->plainTextToken,
             'login_type' => $loginType ?? $user->role,
         ];
+    }
+
+    private function decorateApiUser(User $user): User
+    {
+        $user->load(['studentAccount.student', 'roles.permissions', 'permissions']);
+        $academyName = $user->role === 'teacher' && $user->tenant_id !== null
+            ? Tenant::query()->whereKey($user->tenant_id)->value('name')
+            : null;
+        $user->setAttribute('academy_name', is_string($academyName) ? $academyName : null);
+        $user->setAttribute('can_manage_authorization', $user->can('authorization.manage'));
+        $user->setAttribute('can_send_notifications', $user->can('notifications.send'));
+        $user->setAttribute('can_manage_groups', $user->can('groups.manage'));
+        $user->setAttribute('can_manage_notification_channels', $user->can('notifications.channels.manage'));
+        $user->setAttribute('is_super_admin', $user->is_super_admin);
+
+        return $user;
     }
 }

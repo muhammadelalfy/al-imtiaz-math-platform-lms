@@ -6,7 +6,9 @@ use App\Models\SubscriptionPackage;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use App\Models\User;
+use App\Contracts\Services\TenantSchemaProvisionerInterface;
 use App\Services\TenantDomainService;
+use App\Services\PostgresTenantSchemaProvisioner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -121,6 +123,107 @@ class SubscriptionPlatformTest extends TestCase
             Request::create("https://{$expectedTenant->login_domain}/api/auth/teacher/login"),
             User::query()->where('email', 'teacher@other.test')->firstOrFail(),
         );
+    }
+
+    public function test_paid_subscription_activation_invokes_the_tenant_schema_provisioner(): void
+    {
+        $provisioner = new class implements TenantSchemaProvisionerInterface
+        {
+            public int $provisioned = 0;
+
+            public function provision(Tenant $tenant): Tenant
+            {
+                $this->provisioned++;
+
+                return $tenant;
+            }
+
+            public function isReady(Tenant $tenant): bool
+            {
+                return false;
+            }
+        };
+        $this->app->instance(TenantSchemaProvisionerInterface::class, $provisioner);
+        $admin = User::factory()->create(['role' => 'admin', 'is_super_admin' => true]);
+        $tenant = Tenant::query()->create(['name' => 'مركز التهيئة', 'slug' => 'provisioning-center']);
+        $subscription = TenantSubscription::query()->create([
+            'tenant_id' => $tenant->id,
+            'subscription_package_id' => $this->package()->id,
+            'status' => 'pending',
+            'payment_status' => 'unpaid',
+        ]);
+
+        Sanctum::actingAs($admin);
+        $this->putJson("/api/super-admin/subscriptions/{$subscription->id}", [
+            'status' => 'active',
+            'payment_status' => 'paid',
+        ])->assertOk();
+
+        $this->assertSame(1, $provisioner->provisioned);
+    }
+
+    public function test_schema_ready_tenant_receives_a_deterministic_pending_login_domain(): void
+    {
+        config(['tenancy.domain_base' => 'centres.example.test']);
+        $tenant = Tenant::query()->create([
+            'name' => 'مركز النطاق التلقائي',
+            'slug' => 'automatic-domain',
+            'database_schema' => 'tenant_1',
+            'schema_status' => 'ready',
+        ]);
+
+        $resolved = app(TenantDomainService::class)->assignSubscriptionDomain($tenant);
+
+        $this->assertSame('automatic-domain.centres.example.test', $resolved->login_domain);
+        $this->assertSame('pending_dns', $resolved->domain_status);
+    }
+
+    public function test_manus_development_mode_marks_the_tenant_ready_without_external_postgres_credentials(): void
+    {
+        config([
+            'tenancy.enabled' => false,
+            'tenancy.database_url' => null,
+            'tenancy.provisioning_database_url' => null,
+        ]);
+        $tenant = Tenant::query()->create(['name' => 'مركز Manus', 'slug' => 'manus-development']);
+
+        $ready = app(PostgresTenantSchemaProvisioner::class)->provision($tenant);
+
+        $this->assertSame("tenant_{$tenant->id}", $ready->database_schema);
+        $this->assertSame('ready', $ready->schema_status);
+        $this->assertSame('manus-shared-development', $ready->schema_version);
+    }
+
+    public function test_shared_development_mock_registration_creates_an_active_ready_demo_tenant(): void
+    {
+        config([
+            'tenancy.mode' => 'shared_development',
+            'tenancy.enabled' => false,
+            'tenancy.database_url' => null,
+            'tenancy.provisioning_database_url' => null,
+        ]);
+        $this->package();
+
+        $this->postJson('/api/public/mock-tenant-registration')
+            ->assertCreated()
+            ->assertJsonPath('development_only', true)
+            ->assertJsonPath('subscription.status', 'active')
+            ->assertJsonPath('subscription.payment_status', 'paid')
+            ->assertJsonPath('subscription.tenant.schema_status', 'ready')
+            ->assertJsonPath('subscription.tenant.schema_version', 'manus-shared-development');
+
+        $this->assertDatabaseHas('tenant_subscriptions', [
+            'status' => 'active',
+            'payment_status' => 'paid',
+            'payment_reference' => 'MANUS-MOCK',
+        ]);
+    }
+
+    public function test_mock_registration_is_not_exposed_when_production_schema_mode_is_selected(): void
+    {
+        config(['tenancy.mode' => 'postgres_schema']);
+
+        $this->postJson('/api/public/mock-tenant-registration')->assertNotFound();
     }
 
     private function package(): SubscriptionPackage

@@ -278,7 +278,7 @@ final class OfflineSyncService implements OfflineSyncServiceInterface
                 'id' => $record->id,
                 'student_id' => $record->student_id,
                 'date_at' => Carbon::parse((string) $record->date_at)->toIso8601String(),
-                'attendance_date' => $record->attendance_date,
+                'attendance_date' => $record->getAttribute('attendance_date'),
                 'status' => $record->status,
                 'note' => $record->note,
                 'updated_at' => Carbon::parse((string) $record->updated_at)->toIso8601String(),

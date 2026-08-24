@@ -41,4 +41,24 @@ class TenantDomainService
 
         return $tenant->refresh();
     }
+
+    public function assignSubscriptionDomain(Tenant $tenant): Tenant
+    {
+        $baseDomain = strtolower(trim((string) config('tenancy.domain_base')));
+        if ($baseDomain === '' || $tenant->login_domain || $tenant->schema_status !== 'ready') {
+            return $tenant;
+        }
+
+        $domain = strtolower("{$tenant->slug}.{$baseDomain}");
+        if (! preg_match('/\A[a-z0-9][a-z0-9-]{0,62}(?:\.[a-z0-9][a-z0-9-]{0,62})+\z/', $domain)) {
+            throw ValidationException::withMessages(['login_domain' => 'يتعذر إنشاء نطاق دخول صالح لهذا المركز.']);
+        }
+
+        $tenant->forceFill([
+            'login_domain' => $domain,
+            'domain_status' => 'pending_dns',
+        ])->save();
+
+        return $tenant->refresh();
+    }
 }

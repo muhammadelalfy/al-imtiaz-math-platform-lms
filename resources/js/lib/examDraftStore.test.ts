@@ -8,7 +8,7 @@ const baseDraft = {
   grade: "",
   duration: "60",
   instructions: "",
-  watermark: "الامتياز في الرياضيات",
+  watermark: "زويل التعليمية",
   printHeader: "",
   printFooter: "",
   questions: [],

@@ -175,7 +175,7 @@ export default function PluginStorePanel({ onRefresh, role }: Props) {
     <section className="live-page plugin-store" dir="rtl">
       <div className="page-heading">
         <div>
-          <span className="eyebrow">إضافات الامتياز</span>
+          <span className="eyebrow">إضافات زويل</span>
           <h2>متجر الوحدات</h2>
           <p>
             اختر وسيلة الدفع، أرسل الرقم المرجعي، ثم تُمنح الإضافة بعد اعتماد
@@ -300,7 +300,7 @@ export default function PluginStorePanel({ onRefresh, role }: Props) {
                   <h3>{plugin.name}</h3>
                   <p>
                     {plugin.description ||
-                      "وحدة تعليمية جاهزة للإضافة إلى لوحة الامتياز."}
+                      "وحدة تعليمية جاهزة للإضافة إلى لوحة زويل."}
                   </p>
                   <small>
                     <Box size={13} /> {plugin.module_name}

@@ -30,7 +30,7 @@ class TeacherSlackRequestLogDispatcher
             ->replaceMatches('/\\b\\d+\\b/', ':id')
             ->toString();
         $text = implode("\n", [
-            '🧮 *سجل منصة الامتياز*',
+            '📚 *سجل منصة زويل*',
             "العملية: {$request->method()} /{$route}",
             "الحالة: HTTP {$response->getStatusCode()} · {$durationMilliseconds}ms",
         ]);
