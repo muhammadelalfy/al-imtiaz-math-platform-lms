@@ -1,0 +1,169 @@
+name: Mobile CI
+
+on:
+  push:
+    paths:
+      - "mobile/**"
+      - ".github/workflows/mobile-ci.yml"
+  pull_request:
+    paths:
+      - "mobile/**"
+      - ".github/workflows/mobile-ci.yml"
+  workflow_dispatch:
+    inputs:
+      build_aab:
+        description: "Build a signed production Android App Bundle when release secrets are configured"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Flutter quality and web build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Analyze Dart code
+        run: flutter analyze
+
+      - name: Run unit and widget tests
+        run: flutter test
+
+      - name: Build staging web bundle
+        run: >-
+          flutter build web --release
+          --dart-define=ZEWAL_ENV=staging
+          --dart-define=ZEWAL_STAGING_API_URL=https://staging.invalid/api
+
+      - name: Upload web bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: zewal-mobile-web
+          path: mobile/build/web
+          if-no-files-found: error
+
+  android-debug:
+    name: Android debug build
+    needs: quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build debug Android package
+        run: >-
+          flutter build apk --debug
+          --dart-define=ZEWAL_ENV=staging
+          --dart-define=ZEWAL_STAGING_API_URL=https://staging.invalid/api
+
+      - name: Upload debug Android package
+        uses: actions/upload-artifact@v4
+        with:
+          name: zewal-mobile-debug-apk
+          path: mobile/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+
+  android-release:
+    name: Signed Android App Bundle
+    needs: quality
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.build_aab == true &&
+      vars.MOBILE_RELEASE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Materialize upload signing configuration
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          test -n "$ANDROID_STORE_PASSWORD"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_STORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Build signed production App Bundle
+        env:
+          ZEWAL_PRODUCTION_API_URL: ${{ secrets.ZEWAL_PRODUCTION_API_URL }}
+        run: |
+          test -n "$ZEWAL_PRODUCTION_API_URL"
+          flutter build appbundle --release \
+            --dart-define=ZEWAL_ENV=production \
+            --dart-define=ZEWAL_PRODUCTION_API_URL="$ZEWAL_PRODUCTION_API_URL"
+
+      - name: Upload signed Android App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: zewal-mobile-production-aab
+          path: mobile/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error

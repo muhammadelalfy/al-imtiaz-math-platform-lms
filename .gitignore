@@ -131,3 +131,8 @@ Homestead.yaml
 **/caddy
 frankenphp
 frankenphp-worker.php
+
+# Flutter Android signing material
+/mobile/android/key.properties
+/mobile/android/*.jks
+/mobile/android/*.keystore

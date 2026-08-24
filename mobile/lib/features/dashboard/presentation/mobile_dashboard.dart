@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/errors/app_failure.dart';
+import '../../attendance/domain/entities/attendance_scan_result.dart';
 import '../../auth/domain/entities/app_user.dart';
 import '../domain/entities/dashboard_snapshot.dart';
 
@@ -292,20 +297,208 @@ class _StudentQrSheet extends StatelessWidget {
   }
 }
 
-class _AttendanceView extends StatelessWidget {
+class _AttendanceView extends ConsumerWidget {
   const _AttendanceView({required this.records});
 
   final List<AttendanceRecord> records;
 
   @override
-  Widget build(BuildContext context) {
-    if (records.isEmpty) return const _EmptyState(message: 'لا توجد سجلات حضور متاحة.');
+  Widget build(BuildContext context, WidgetRef ref) {
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
-      itemCount: records.length,
+      itemCount: records.length + 1,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (_, int index) => Card(child: _AttendanceTile(record: records[index])),
+      itemBuilder: (_, int index) {
+        if (index == 0) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text('تسجيل حضور عبر QR', style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  const Text('استخدم كاميرا الجهاز لمسح رمز الطالب مرة واحدة وتسجيل حضوره بأمان.'),
+                  const SizedBox(height: 14),
+                  FilledButton.icon(
+                    onPressed: () => showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (BuildContext context) => const _AttendanceScannerSheet(),
+                    ),
+                    icon: const Icon(Icons.qr_code_scanner_rounded),
+                    label: const Text('فتح الكاميرا'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        if (records.isEmpty) {
+          return const _EmptyState(message: 'لا توجد سجلات حضور متاحة.');
+        }
+        return Card(child: _AttendanceTile(record: records[index - 1]));
+      },
+    );
+  }
+}
+
+class _AttendanceScannerSheet extends ConsumerStatefulWidget {
+  const _AttendanceScannerSheet();
+
+  @override
+  ConsumerState<_AttendanceScannerSheet> createState() => _AttendanceScannerSheetState();
+}
+
+class _AttendanceScannerSheetState extends ConsumerState<_AttendanceScannerSheet>
+    with WidgetsBindingObserver {
+  final MobileScannerController _scannerController = MobileScannerController(
+    formats: const <BarcodeFormat>[BarcodeFormat.qrCode],
+    detectionSpeed: DetectionSpeed.noDuplicates,
+  );
+
+  var _isSubmitting = false;
+  AttendanceScanResult? _result;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_scannerController.value.hasCameraPermission || _isSubmitting || _result != null) return;
+    switch (state) {
+      case AppLifecycleState.resumed:
+        unawaited(_scannerController.start());
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        unawaited(_scannerController.stop());
+      case AppLifecycleState.detached:
+      case AppLifecycleState.paused:
+        break;
+    }
+  }
+
+  Future<void> _submitCapture(BarcodeCapture capture) async {
+    if (_isSubmitting || _result != null || capture.barcodes.isEmpty) return;
+    final String? payload = capture.barcodes.first.rawValue;
+    if (payload == null || payload.trim().isEmpty) return;
+    setState(() {
+      _isSubmitting = true;
+      _error = null;
+    });
+    await _scannerController.stop();
+    try {
+      final AttendanceScanResult result = await ref
+          .read(attendanceRepositoryProvider)
+          .scanQrPayload(payload);
+      if (!mounted) return;
+      setState(() => _result = result);
+    } on AppFailure catch (failure) {
+      if (!mounted) return;
+      setState(() => _error = failure.message);
+    } on Object {
+      if (!mounted) return;
+      setState(() => _error = 'تعذر تسجيل الحضور. حاول مرة أخرى.');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _scanAnother() async {
+    setState(() {
+      _result = null;
+      _error = null;
+    });
+    await _scannerController.start();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_scannerController.dispose());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool hasCompletion = _result != null || _error != null;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text('مسح حضور الطالب', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            const Text('وجّه الكاميرا نحو رمز QR الخاص بالطالب.'),
+            const SizedBox(height: 16),
+            if (!hasCompletion)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: MobileScanner(
+                    controller: _scannerController,
+                    onDetect: _submitCapture,
+                  ),
+                ),
+              )
+            else
+              _ScanOutcome(result: _result, error: _error),
+            const SizedBox(height: 16),
+            if (_isSubmitting)
+              const Center(child: CircularProgressIndicator.adaptive())
+            else if (hasCompletion)
+              FilledButton.icon(
+                onPressed: _scanAnother,
+                icon: const Icon(Icons.qr_code_scanner_rounded),
+                label: const Text('مسح رمز آخر'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScanOutcome extends StatelessWidget {
+  const _ScanOutcome({this.result, this.error});
+
+  final AttendanceScanResult? result;
+  final String? error;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool succeeded = result != null;
+    final String message = succeeded
+        ? result!.alreadyRecorded
+            ? 'حضور ${result!.attendance.studentName ?? 'الطالب'} مسجل بالفعل اليوم.'
+            : 'تم تسجيل حضور ${result!.attendance.studentName ?? 'الطالب'} بنجاح.'
+        : error ?? 'تعذر تسجيل الحضور.';
+    return Container(
+      height: 260,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(succeeded ? Icons.check_circle_outline : Icons.error_outline, size: 48),
+            const SizedBox(height: 12),
+            Text(message, textAlign: TextAlign.center),
+          ],
+        ),
+      ),
     );
   }
 }

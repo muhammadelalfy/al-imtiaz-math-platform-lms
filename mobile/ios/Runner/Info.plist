@@ -16,6 +16,8 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>Zewal</string>
+	<key>NSCameraUsageDescription</key>
+	<string>تستخدم زويل الكاميرا لمسح رموز QR وتسجيل حضور الطلاب.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

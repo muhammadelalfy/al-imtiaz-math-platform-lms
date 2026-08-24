@@ -3,6 +3,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../core/network/laravel_api_client.dart';
 import '../core/security/secure_session_store.dart';
+import '../features/attendance/data/laravel_attendance_repository.dart';
+import '../features/attendance/domain/repositories/attendance_repository.dart';
 import '../features/auth/data/auth_remote_data_source.dart';
 import '../features/auth/data/laravel_auth_repository.dart';
 import '../features/auth/domain/entities/app_user.dart';
@@ -39,6 +41,13 @@ final Provider<AuthRepository> authRepositoryProvider = Provider<AuthRepository>
 final Provider<DashboardRepository> dashboardRepositoryProvider =
     Provider<DashboardRepository>(
       (Ref ref) => LaravelDashboardRepository(
+        ref.watch(laravelApiClientProvider),
+      ),
+    );
+
+final Provider<AttendanceRepository> attendanceRepositoryProvider =
+    Provider<AttendanceRepository>(
+      (Ref ref) => LaravelAttendanceRepository(
         ref.watch(laravelApiClientProvider),
       ),
     );

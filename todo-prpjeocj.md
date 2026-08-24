@@ -308,3 +308,9 @@
 - [x] Enforce Clean Architecture, SOLID boundaries, repository contracts, dependency injection, and measured performance safeguards across the Flutter implementation.
 - [x] Proceed autonomously with recommended mobile architecture, UX, and validation decisions while preserving platform security and API compatibility.
 - [x] Fix the temporary Flutter web preview that remains on its loading screen, then verify the rendered Arabic login interface in a browser.
+- [x] Audit the existing GitHub Actions conventions, mobile package constraints, and current branch baseline for a dedicated Flutter delivery branch.
+- [x] Add environment-specific Flutter API configuration with safe staging and production compile-time values and no committed secrets.
+- [x] Implement a device camera QR scanner for authorized staff attendance, using the existing Laravel scan endpoint and accessible feedback states.
+- [x] Expand Flutter unit and widget test coverage for configuration, QR parsing, attendance submission, and role-aware controls.
+- [x] Add GitHub Actions mobile CI and release workflows that analyze, test, build web, and build a signed Android AAB only when securely configured.
+- [ ] Create and push a dedicated mobile release branch with the validated changes and CI workflow.
