@@ -307,3 +307,4 @@
 - [x] Add Flutter unit/widget coverage, build validation, Arabic SRS traceability, and release documentation for the mobile app.
 - [x] Enforce Clean Architecture, SOLID boundaries, repository contracts, dependency injection, and measured performance safeguards across the Flutter implementation.
 - [x] Proceed autonomously with recommended mobile architecture, UX, and validation decisions while preserving platform security and API compatibility.
+- [x] Fix the temporary Flutter web preview that remains on its loading screen, then verify the rendered Arabic login interface in a browser.
